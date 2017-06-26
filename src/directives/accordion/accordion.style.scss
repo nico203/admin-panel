@@ -15,7 +15,9 @@
     }
     
     .accordion-title {
-        @include accordion-title;
+        @if mixin-exists(accordion-title) {
+            @include accordion-title;
+        }
         
         box-sizing: border-box;
         width: 100%;
