@@ -1,0 +1,34 @@
+{
+  "name": "admin-panel",
+  "version": "1.0.0",
+  "description": "Componentes para aplicaciones",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nico203/admin-panel.authentication"
+  },
+  "keywords": [
+    "admin-panel",
+    "users"
+  ],
+  "author": "nico203",
+  "license": "MIT",
+  "dependencies": {
+    "angular": "1.6.x",
+    "angular-animate": "1.6.x",
+    "foundation-sites": "^6.3.1",
+    "foundation-datepicker": "^1.5.6"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-bower-task": "^0.5.0",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-uglify": "^3.0.1",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-html2js": "^0.3.8"
+  }
+}

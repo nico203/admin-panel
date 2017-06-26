@@ -1,0 +1,10 @@
+<div class="accordion-top">
+    <button type="button" class="accordion-title" ng-click="toggleTab()" ng-bind="title"></button>
+    <div class="accordion-button">
+        <button type="button" ng-if="deleteButton" class="button alert" ng-click="deleteElement()">
+            <i class="fa fa-remove"></i>
+        </button>
+    </div>
+</div>
+<!--a href="#" class="accordion-title" ng-bind="itemTitle"></a-->
+<div class="accordion-content" data-tab-content ng-transclude></div>
