@@ -28,7 +28,7 @@ module.exports = function (grunt) {
             },
             dist: {
                 src: ['src/**/*.js', 'tmp/*.js'],
-                dest: 'dist/js/admin-panel.js'
+                dest: 'dist/js/<%= pkg.name %>.js'
             }
         },
         clean: {
@@ -46,7 +46,7 @@ module.exports = function (grunt) {
             },
             dist: {
                 files: {
-                    'dist/js/admin-panel.min.js': ['dist/js/admin-panel.js']
+                    'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
                 }
 //                options: {
 //                    mangle: false
@@ -75,14 +75,14 @@ module.exports = function (grunt) {
                     style: 'expanded'
                 },
                 files: {
-                    'dist/css/admin-panel.css': 'src/admin-panel.style.scss'
+                    'dist/css/<%= pkg.name %>.css': 'src/admin-panel.style.scss'
                 }
             }
         },
         cssmin: {
             dist: {
                 files: {
-                    'dist/css/admin-panel.min.css': 'dist/css/admin-panel.css'
+                    'dist/css/<%= pkg.name %>.min.css': 'dist/css/<%= pkg.name %>.css'
                 }
             }
         }
