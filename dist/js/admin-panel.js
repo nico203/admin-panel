@@ -242,7 +242,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 scope.hide();
             });
         },
-        controller: function($scope) {
+        controller: ['$scope', function($scope) {
             this.show = function(message) {
                 $scope.show(message);
             };
@@ -250,7 +250,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
             this.hide = function() {
                 $scope.hide();
             };
-        },
+        }],
         templateUrl: 'directives/load/load.template.html'
     };
 });

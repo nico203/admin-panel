@@ -23,7 +23,7 @@ angular.module('adminPanel').directive('apLoad', function(){
                 scope.hide();
             });
         },
-        controller: function($scope) {
+        controller: ['$scope', function($scope) {
             this.show = function(message) {
                 $scope.show(message);
             };
@@ -31,7 +31,7 @@ angular.module('adminPanel').directive('apLoad', function(){
             this.hide = function() {
                 $scope.hide();
             };
-        },
+        }],
         templateUrl: 'directives/load/load.template.html'
     };
 });
