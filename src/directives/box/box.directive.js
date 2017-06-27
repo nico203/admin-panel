@@ -1,6 +1,6 @@
 //Mirar el componente cars de foundation
 
-angular.module('adminPanel').directive('apBox', function($rootScope){
+angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScope){
     return {
         restrict: 'AE',
         transclude: true,
@@ -49,4 +49,4 @@ angular.module('adminPanel').directive('apBox', function($rootScope){
         },
         templateUrl: 'components/admin-panel/directives/box/box.template.html'
     };
-});
+}]);
