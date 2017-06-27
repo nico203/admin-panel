@@ -17,6 +17,21 @@ module.exports = function (grunt) {
             all: ['Gruntfile.js', 'src/*.js', 'src/**/*.js']
         },
         html2js: {
+            options: {
+                module: 'adminPanel',
+                htmlmin: {
+                    collapseBooleanAttributes: true,
+                    collapseWhitespace: true,
+                    removeAttributeQuotes: true,
+                    removeComments: true,
+                    removeEmptyAttributes: true,
+                    removeRedundantAttributes: true,
+                    removeScriptTypeAttributes: true,
+                    removeStyleLinkTypeAttributes: true
+                },
+                singleModule: true,
+                existingModule: true
+            },
             dist: {
                 src: ['src/**/*.html'],
                 dest: 'tmp/templates.js'

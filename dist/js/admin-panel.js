@@ -367,101 +367,21 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
         return $sce.trustAsHtml(text);
     };
 }]);
-;angular.module('templates-dist', ['directives/accordion/accordion.template.html', 'directives/accordion/accordionItem.template.html', 'directives/box/box.template.html', 'directives/dateTimePicker/dateTimePicker.template.html', 'directives/load/load.template.html', 'directives/select/select.template.html']);
-
-angular.module("directives/accordion/accordion.template.html", []).run(["$templateCache", function ($templateCache) {
+;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("directives/accordion/accordion.template.html",
-    "<div ng-if=\"addButtonText\" class=\"row column\">\n" +
-    "    <button type=\"button\" class=\"button secondary\" ng-click=\"addElement()\" ng-bind=\"addButtonText\"></button>\n" +
-    "</div>\n" +
-    "<div class=\"accordion\" ng-transclude></div>");
-}]);
-
-angular.module("directives/accordion/accordionItem.template.html", []).run(["$templateCache", function ($templateCache) {
+    "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",
-    "<div class=\"accordion-top\">\n" +
-    "    <button type=\"button\" class=\"accordion-title\" ng-click=\"toggleTab()\" ng-bind=\"title\"></button>\n" +
-    "    <div class=\"accordion-button\">\n" +
-    "        <button type=\"button\" ng-if=\"deleteButton\" class=\"button alert\" ng-click=\"deleteElement()\">\n" +
-    "            <i class=\"fa fa-remove\"></i>\n" +
-    "        </button>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "<!--a href=\"#\" class=\"accordion-title\" ng-bind=\"itemTitle\"></a-->\n" +
-    "<div class=\"accordion-content\" data-tab-content ng-transclude></div>");
-}]);
-
-angular.module("directives/box/box.template.html", []).run(["$templateCache", function ($templateCache) {
+    "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
-    "<div class=\"card\">\n" +
-    "    <button ng-if=\"closeButton\" class=\"close-button\" type=\"button\" ng-click=\"close()\">\n" +
-    "        <span>&times;</span>\n" +
-    "    </button>\n" +
-    "    <div class=\"card-divider\">\n" +
-    "        <h5 ng-bind=\"title\"></h5>\n" +
-    "    </div>\n" +
-    "    <div class=\"card-section\" ap-load>\n" +
-    "        <div ng-transclude></div>\n" +
-    "    </div>\n" +
-    "</div>");
-}]);
-
-angular.module("directives/dateTimePicker/dateTimePicker.template.html", []).run(["$templateCache", function ($templateCache) {
+    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section ap-load><div ng-transclude></div></div></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
-    "<div class=\"input-group\">\n" +
-    "    <span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span>\n" +
-    "    <input class=\"input-group-field ap-date\" type=\"text\" readonly>\n" +
-    "    <span class=\"input-group-label\">Hs</span>\n" +
-    "    <input class=\"input-group-field\" type=\"number\" style=\"width: 60px;\"\n" +
-    "           ng-model=\"hours\"\n" +
-    "           ng-change=\"changeHour()\">\n" +
-    "    <span class=\"input-group-label\" >Min</span>\n" +
-    "    <input class=\"input-group-field\" type=\"number\" style=\"width: 60px;\"\n" +
-    "           ng-model=\"minutes\"\n" +
-    "           ng-change=\"changeMinute()\">\n" +
-    "</div>\n" +
-    "    ");
-}]);
-
-angular.module("directives/load/load.template.html", []).run(["$templateCache", function ($templateCache) {
+    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span> <input class=\"input-group-field ap-date\" readonly> <span class=input-group-label>Hs</span> <input class=input-group-field type=number style=\"width: 60px\" ng-model=hours ng-change=changeHour()> <span class=input-group-label>Min</span> <input class=input-group-field type=number style=\"width: 60px\" ng-model=minutes ng-change=changeMinute()></div>");
   $templateCache.put("directives/load/load.template.html",
-    "<div ng-show=\"loading\" class=\"ap-load-image\">\n" +
-    "    <img src=\"img/ring.svg\">\n" +
-    "</div>\n" +
-    "<div ng-hide=\"loading\" class=\"ap-load-content\">\n" +
-    "    <div ng-if=\"message\" class=\"callout\" ng-class=\"{\n" +
+    "<div ng-show=loading class=ap-load-image><img src=img/ring.svg></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{\n" +
     "        'success':message.type === 'success',\n" +
     "        'warning':message.type === 'warning',\n" +
     "        'alert':message.type === 'error'\n" +
-    "    }\" ng-bind=\"message.message\"></div>\n" +
-    "    <div ng-transclude></div>\n" +
-    "</div>");
-}]);
-
-angular.module("directives/select/select.template.html", []).run(["$templateCache", function ($templateCache) {
+    "    }\" ng-bind=message.message></div><div ng-transclude></div></div>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=\"input-group\">\n" +
-    "    <input class=\"input-group-field\" type=\"text\" ng-model=\"input\" ng-change=\"onInputChange()\"\n" +
-    "           ng-focus=\"onFocus()\"\n" +
-    "           ng-blur=\"onBlur()\" />\n" +
-    "    <div class=\"input-group-button\">\n" +
-    "        <button type=\"button\" class=\"button secondary\" ng-click=\"buttonClick()\">\n" +
-    "            <span class=\"caret\"></span>\n" +
-    "        </button>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "<div class=\"dropdown-ap\">\n" +
-    "    <ul ng-if=\"loading\" class=\"list-group\">\n" +
-    "        <li style=\"font-weight: bold;\">Cargando...</li>\n" +
-    "    </ul>\n" +
-    "    <ul ng-if=\"!loading && options.length > 0\" class=\"list-group\">\n" +
-    "        <li ng-repeat=\"option in options\" \n" +
-    "            ng-bind-html=\"option.name | highlight:input\"\n" +
-    "            ng-click=\"optionSelected(option)\"></li>\n" +
-    "    </ul>\n" +
-    "    <ul ng-if=\"!loading && options.length === 0\" class=\"list-group\">\n" +
-    "        <li style=\"font-weight: bold;\">No hay resultados</li>\n" +
-    "    </ul>\n" +
-    "</div>\n" +
-    "");
+    "<div class=input-group><input class=input-group-field ng-model=input ng-change=onInputChange() ng-focus=onFocus() ng-blur=onBlur()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=buttonClick()><span class=caret></span></button></div></div><div class=dropdown-ap><ul ng-if=loading class=list-group><li style=\"font-weight: bold\">Cargando...</li></ul><ul ng-if=\"!loading && options.length > 0\" class=list-group><li ng-repeat=\"option in options\" ng-bind-html=\"option.name | highlight:input\" ng-click=optionSelected(option)></li></ul><ul ng-if=\"!loading && options.length === 0\" class=list-group><li style=\"font-weight: bold\">No hay resultados</li></ul></div>");
 }]);
