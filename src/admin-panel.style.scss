@@ -1,7 +1,7 @@
-$padding: 1.25rem 1rem;
-$font-size: 0.75rem;
-$alert-color: red;
-$highlight-color: yellow;
+$padding: 1.25rem 1rem !default;
+$font-size: 0.75rem !default;
+$alert-color: red !default;
+$highlight-color: yellow !default;
 
 @import 'directives/accordion/accordion.style';
 @import 'directives/box/box.style';

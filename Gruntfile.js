@@ -21,11 +21,13 @@ module.exports = function (grunt) {
                 module: 'adminPanel',
                 htmlmin: {
                     collapseBooleanAttributes: true,
+                    collapseInlineTagWhitespace: true,
                     collapseWhitespace: true,
+                    customAttrCollapse: /ng-class/,
+                    minifyCSS: true,
+                    minifyJS: true,
                     removeAttributeQuotes: true,
                     removeComments: true,
-                    removeEmptyAttributes: true,
-                    removeRedundantAttributes: true,
                     removeScriptTypeAttributes: true,
                     removeStyleLinkTypeAttributes: true
                 },
