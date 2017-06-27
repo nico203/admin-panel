@@ -70,6 +70,6 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
                 changeDateTime(scope.date, scope.hours, scope.minutes);
             };
         },
-        templateUrl: 'components/admin-panel/directives/dateTimePicker/dateTimePicker.template.html'
+        templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
     };
 }]);

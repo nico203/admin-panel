@@ -49,7 +49,7 @@ angular.module('adminPanel', [
                 Foundation.reInit($scope.accordion.$element);
             };
         }],
-        templateUrl: 'components/admin-panel/directives/accordion/accordion.template.html'
+        templateUrl: 'directives/accordion/accordion.template.html'
     };
 });
 ;angular.module('adminPanel').directive('apAccordionItem', function(){
@@ -87,7 +87,7 @@ angular.module('adminPanel', [
             }
             
         },
-        templateUrl: 'components/admin-panel/directives/accordion/accordionItem.template.html'
+        templateUrl: 'directives/accordion/accordionItem.template.html'
     };
 });
 ;//Mirar el componente cars de foundation
@@ -139,7 +139,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 scope.init();
             }
         },
-        templateUrl: 'components/admin-panel/directives/box/box.template.html'
+        templateUrl: 'directives/box/box.template.html'
     };
 }]);
 ;angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function($timeout) {
@@ -214,7 +214,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 changeDateTime(scope.date, scope.hours, scope.minutes);
             };
         },
-        templateUrl: 'components/admin-panel/directives/dateTimePicker/dateTimePicker.template.html'
+        templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
     };
 }]);
 ;angular.module('adminPanel').directive('apLoad', function(){
@@ -251,7 +251,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 $scope.hide();
             };
         },
-        templateUrl: 'components/admin-panel/directives/load/load.template.html'
+        templateUrl: 'directives/load/load.template.html'
     };
 });
 ;angular.module('adminPanel').directive('apSelect', ['$timeout', function($timeout){
@@ -355,7 +355,7 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 scope.input = input;
             });
         },
-        templateUrl: 'components/admin-panel/directives/select/select.template.html'
+        templateUrl: 'directives/select/select.template.html'
     };
 }]);
 ;angular.module('adminPanel').filter('highlight', ['$sce', function ($sce) {

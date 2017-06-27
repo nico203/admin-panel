@@ -47,6 +47,6 @@ angular.module('adminPanel').directive('apBox', ['$rootScope',function($rootScop
                 scope.init();
             }
         },
-        templateUrl: 'components/admin-panel/directives/box/box.template.html'
+        templateUrl: 'directives/box/box.template.html'
     };
 }]);

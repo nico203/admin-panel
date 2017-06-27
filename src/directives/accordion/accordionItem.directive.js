@@ -33,6 +33,6 @@ angular.module('adminPanel').directive('apAccordionItem', function(){
             }
             
         },
-        templateUrl: 'components/admin-panel/directives/accordion/accordionItem.template.html'
+        templateUrl: 'directives/accordion/accordionItem.template.html'
     };
 });

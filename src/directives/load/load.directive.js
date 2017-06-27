@@ -32,6 +32,6 @@ angular.module('adminPanel').directive('apLoad', function(){
                 $scope.hide();
             };
         },
-        templateUrl: 'components/admin-panel/directives/load/load.template.html'
+        templateUrl: 'directives/load/load.template.html'
     };
 });

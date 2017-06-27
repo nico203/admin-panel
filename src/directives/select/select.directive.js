@@ -99,6 +99,6 @@ angular.module('adminPanel').directive('apSelect', ['$timeout', function($timeou
                 scope.input = input;
             });
         },
-        templateUrl: 'components/admin-panel/directives/select/select.template.html'
+        templateUrl: 'directives/select/select.template.html'
     };
 }]);

@@ -47,6 +47,6 @@ angular.module('adminPanel').directive('apAccordion',function(){
                 Foundation.reInit($scope.accordion.$element);
             };
         }],
-        templateUrl: 'components/admin-panel/directives/accordion/accordion.template.html'
+        templateUrl: 'directives/accordion/accordion.template.html'
     };
 });
