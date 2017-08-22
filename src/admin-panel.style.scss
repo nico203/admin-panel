@@ -1,0 +1,141 @@
+
+$padding: 1.25rem 1rem;
+$font-size: 0.75rem;
+
+
+@import 'components/navigation/navigation.style';
+@import 'components/top-bar/top-bar.style';
+@import 'directives/accordion/accordion.style';
+@import 'directives/box/box.style';
+@import 'directives/load/load.style'; 
+@import 'directives/pagination/pagination.style';
+@import 'directives/select/select.style';
+@import 'directives/form/formValidation.style';
+@import 'directives/dateTimePicker/dateTimePicker.style';
+@import 'filters/highlight.style';
+
+@include foundation-global-styles;
+@include foundation-grid;
+@include foundation-flex-grid;
+@include foundation-flex-classes;
+@include foundation-typography;
+@include foundation-forms;
+@include foundation-button;
+@include foundation-accordion;
+@include foundation-accordion-menu;
+@include foundation-badge;
+@include foundation-breadcrumbs;
+@include foundation-button-group;
+@include foundation-callout;
+@include foundation-card;
+@include foundation-close-button;
+@include foundation-menu;
+@include foundation-menu-icon;
+@include foundation-drilldown-menu;
+@include foundation-dropdown;
+@include foundation-dropdown-menu;
+@include foundation-responsive-embed;
+@include foundation-label;
+@include foundation-media-object;
+@include foundation-off-canvas;
+@include foundation-orbit;
+@include foundation-pagination;
+@include foundation-progress-bar;
+@include foundation-slider;
+@include foundation-sticky;
+@include foundation-reveal;
+@include foundation-switch;
+@include foundation-table;
+@include foundation-tabs;
+@include foundation-thumbnail;
+@include foundation-title-bar;
+@include foundation-tooltip;
+@include foundation-top-bar;
+@include foundation-visibility-classes;
+@include foundation-float-classes;
+
+body {
+    background: $content-background;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.wrapper-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+}
+
+#parent {
+    margin-top: 56px;
+    margin-left: 250px;
+}
+#content {
+    position: relative;
+    padding: 20px;
+    margin-top: 56px;
+    background: $content-background;
+    border-left: 1px solid $content-border-color;
+}
+
+/* iconos */
+i {
+    .animate {
+        transition: font-size 0.2s linear;
+        
+        .small {
+            font-size: 1rem;
+        }
+        .medium {
+            font-size: 1.2rem;
+        }
+        .large {
+            font-size: 1.4rem;
+        }
+    }
+    
+    .small {
+        font-size: 0.9rem;
+    }
+    .medium {
+        font-size: 1rem;
+    }
+    .large {
+        font-size: 1.2rem;
+    }
+}
+.stack-for-icon {
+    color: transparent;
+    
+    .small {
+        font-size: 1rem;
+    }
+    .medium {
+        font-size: 1.2rem;
+    }
+    .large {
+        font-size: 1.4rem;
+    }
+}
+
+/* transition entre paginas */
+.transition {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+}
+.transition.ng-enter         { 
+    z-index: -2;
+    animation: slideInRight 0.2s both ease; 
+}
+.transition.ng-leave         { 
+    z-index: -1;
+    transform-origin: 0% 0%; 
+    animation: slideOutLeft .2s both ease; 
+}
+

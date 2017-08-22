@@ -1,0 +1,32 @@
+.ap-box {
+    
+    .box {
+        position: relative;
+        background: $white;
+        padding: 20px;
+        border: 1px solid darken( $white, 15% );
+    }
+    
+    display: block;
+    position: relative;
+    opacity: 1;
+    transition: opacity 1s;
+    
+    &.no-visible {
+        opacity: 0.5;
+    }
+    
+    .card {
+        position: relative;
+        overflow: visible;
+    }
+    
+    .top {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+}
+

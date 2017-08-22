@@ -1,0 +1,32 @@
+<ul class="pagination text-center" role="navigation">
+    <!-- First Page -->
+    <li ng-if="pagination.activeLastFirst"
+        class="pagination-previous" 
+        ng-class="{'disabled': !pagination.enablePreviousPage}">
+        <a ng-if="pagination.enablePreviousPage" ng-click="pagination.changePage(1)"></a>
+    </li>
+    <!-- Previous Page -->
+    <li ng-class="{'disabled': !pagination.enablePreviousPage}">
+        <a ng-if="pagination.enablePreviousPage" ng-click="pagination.previousPage()">&lsaquo;</a>
+        <span ng-if="!pagination.enablePreviousPage">&lsaquo;</span>
+    </li>
+
+    <!-- Current Page -->
+    <li ng-repeat="page in pagination.pages track by $index" 
+        ng-class="{'current':page === pagination.currentPage}">
+        <a ng-if="page !== pagination.currentPage" ng-bind="page" ng-click="pagination.changePage(page)"></a>
+        <span ng-if="page === pagination.currentPage" ng-bind="page"></span>
+    </li>
+
+    <!-- Next Page -->
+    <li ng-class="{'disabled': !pagination.enableNextPage}">
+        <a ng-if="pagination.enableNextPage" ng-click="pagination.nextPage()">&rsaquo;</a>
+        <span ng-if="!pagination.enableNextPage">&rsaquo;</span>
+    </li>
+    <!-- Last Page -->
+    <li ng-if="pagination.activeLastFirst" 
+        class="pagination-next" 
+        ng-class="{'disabled': !pagination.enableNextPage}">
+        <a ng-if="pagination.enableNextPage" ng-click="pagination.changePage(pagination.pageCount)"></a>
+    </li>
+</ul>

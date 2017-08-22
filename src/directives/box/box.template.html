@@ -1,0 +1,17 @@
+<div class="card">
+    <button ng-if="closeButton" class="close-button" type="button" ng-click="close()">
+        <span>&times;</span>
+    </button>
+    <div class="card-divider">
+        <h5 ng-bind="title"></h5>
+    </div>
+    <div class="card-section">
+        <div ng-if="message" class="callout" ng-class="{
+            'success':message.type === 'success',
+            'warning':message.type === 'warning',
+            'alert':message.type === 'error'
+        }" ng-bind="message.message"></div>
+        <div ng-transclude ap-load></div>
+        <div class="pager"></div>
+    </div>
+</div>

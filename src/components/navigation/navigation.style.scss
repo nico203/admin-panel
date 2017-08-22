@@ -1,0 +1,41 @@
+navigation {
+    position: fixed;
+    overflow: hidden;
+    overflow-y: auto;
+    top: 56px;
+    left: 0px;
+    bottom: 0px;
+    width: 250px;
+    padding-top: 8px;
+    background: $side-bar-background;
+    
+    > .menu {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .3s linear,visibility .3s linear;
+
+        &.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+    
+    .menu {
+        > li > a {
+            color: $white;
+
+            &:hover {
+                color: darken( $white, 15% );
+            }
+        }
+
+        .nested {
+            margin-left: 0;
+            padding-left: 1rem;
+            background: darken( $side-bar-background, 5% );
+            border-top: 1px solid darken( $side-bar-background, 2% );
+            border-bottom: 1px solid darken( $side-bar-background, 2% );
+        }
+    }
+}
+    
