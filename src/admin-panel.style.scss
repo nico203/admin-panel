@@ -4,7 +4,6 @@ $side-bar-background: #263238;
 $padding: 1.25rem 1rem;
 $font-size: 0.75rem;
 
-@import '../bower_components/foundation-sites/scss/foundation';
 @import 'components/navigation/navigation.style';
 @import 'components/top-bar/top-bar.style';
 @import 'directives/accordion/accordion.style';
