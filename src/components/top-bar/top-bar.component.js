@@ -9,7 +9,7 @@ function topBarController($scope, AuthenticationService, $location) {
     };
 }
 
-angular.module('topBar', [
+angular.module('adminPanel.topBar', [
     'adminPanel.authentication'
 ]).component('topBar', {
     templateUrl: 'components/top-bar/top-bar.template.html',

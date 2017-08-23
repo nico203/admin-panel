@@ -1,7 +1,9 @@
 angular.module('adminPanel', [
     'ngAnimate',
     'adminPanel.authentication',
-    'adminPanel.crud'
+    'adminPanel.crud',
+    'adminPanel.topBar',
+    'adminPanel.navigation'
 ]).directive('adminPanel', [
     function() {
         return {
@@ -429,7 +431,7 @@ angular.module('adminPanel.crud').service('NormalizeService', [
     };
 }
 
-angular.module('navigation', [
+angular.module('adminPanel.navigation', [
     'adminPanel'
 ]).component('navigation', {
     templateUrl: 'components/navigation/navigation.template.html',
@@ -445,7 +447,7 @@ angular.module('navigation', [
     };
 }
 
-angular.module('topBar', [
+angular.module('adminPanel.topBar', [
     'adminPanel.authentication'
 ]).component('topBar', {
     templateUrl: 'components/top-bar/top-bar.template.html',

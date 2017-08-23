@@ -20,7 +20,7 @@ function navigationController($scope, $timeout, AdminPanelConfig) {
     };
 }
 
-angular.module('navigation', [
+angular.module('adminPanel.navigation', [
     'adminPanel'
 ]).component('navigation', {
     templateUrl: 'components/navigation/navigation.template.html',

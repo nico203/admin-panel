@@ -1,7 +1,9 @@
 angular.module('adminPanel', [
     'ngAnimate',
     'adminPanel.authentication',
-    'adminPanel.crud'
+    'adminPanel.crud',
+    'adminPanel.topBar',
+    'adminPanel.navigation'
 ]).directive('adminPanel', [
     function() {
         return {
