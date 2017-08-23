@@ -3,16 +3,16 @@ module.exports = function (grunt) {
     // Project configuration.
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        bower: {
-            install: {
-                options: {
-                    install: true,
-                    copy: false,
-                    targetDir: './lib',
-                    cleanTargetDir: true
-                }
-            }
-        },
+//        bower: {
+//            install: {
+//                options: {
+//                    install: true,
+//                    copy: false,
+//                    targetDir: './lib',
+//                    cleanTargetDir: true
+//                }
+//            }
+//        },
         jshint: {
             all: ['Gruntfile.js', 'src/*.js', 'src/**/*.js']
         },
@@ -85,24 +85,24 @@ module.exports = function (grunt) {
                     atBegin: true
                 }
             }
-        },
-        sass: {
-            dist: {
-                options: {
-                    style: 'expanded'
-                },
-                files: {
-                    'dist/css/<%= pkg.name %>.css': 'scss/admin-panel.scss'
-                }
-            }
-        },
-        cssmin: {
-            dist: {
-                files: {
-                    'dist/css/<%= pkg.name %>.min.css': 'dist/css/<%= pkg.name %>.css'
-                }
-            }
         }
+//        sass: {
+//            dist: {
+//                options: {
+//                    style: 'expanded'
+//                },
+//                files: {
+//                    'dist/css/<%= pkg.name %>.css': 'scss/admin-panel.scss'
+//                }
+//            }
+//        },
+//        cssmin: {
+//            dist: {
+//                files: {
+//                    'dist/css/<%= pkg.name %>.min.css': 'dist/css/<%= pkg.name %>.css'
+//                }
+//            }
+//        }
     });
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-clean');
@@ -110,13 +110,11 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-html2js');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-bower-task');
-    grunt.loadNpmTasks('grunt-contrib-sass');
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
+//    grunt.loadNpmTasks('grunt-bower-task');
+//    grunt.loadNpmTasks('grunt-contrib-sass');
+//    grunt.loadNpmTasks('grunt-contrib-cssmin');
     
-    grunt.registerTask('dev', ['connect:server', 'watch:dev']);
     grunt.registerTask('test', ['jshint']);
     grunt.registerTask('minified', ['watch:min']);
-    grunt.registerTask('package', ['jshint', 'html2js:dist', 'concat:dist', 'sass:dist', 'cssmin',
-        'uglify:dist', 'clean:temp']);
+    grunt.registerTask('package', ['jshint', 'html2js:dist', 'concat:dist', 'uglify:dist', 'clean:temp']);
 };
