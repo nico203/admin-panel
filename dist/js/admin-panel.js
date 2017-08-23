@@ -6,7 +6,7 @@ angular.module('adminPanel', [
     function() {
         return {
             restrict: 'E',
-            templateUrl: 'components/admin-panel/admin-panel.template.html'
+            templateUrl: 'admin-panel.template.html'
         };
     }
 ]);;angular.module('adminPanel.crud', [
