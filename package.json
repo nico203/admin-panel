@@ -1,6 +1,6 @@
 {
   "name": "admin-panel",
-  "version": "1.0.1",
+  "version": "0.3",
   "description": "Componentes para aplicaciones",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

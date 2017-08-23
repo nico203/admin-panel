@@ -26,7 +26,7 @@ angular.module('adminPanel').directive('apLoad', [
             }
             init();
         },
-        controller: function($scope) {
+        controller: ['$scope',function($scope) {
             
             this.getName = function() {
                 return $scope.name;
@@ -40,7 +40,7 @@ angular.module('adminPanel').directive('apLoad', [
                 $scope.hide();
             };
             
-        }
+        }]
     };
 }
 ]);

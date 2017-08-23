@@ -92,7 +92,7 @@ module.exports = function (grunt) {
                     style: 'expanded'
                 },
                 files: {
-                    'dist/css/<%= pkg.name %>.css': 'src/admin-panel.style.scss'
+                    'dist/css/<%= pkg.name %>.css': 'scss/admin-panel.scss'
                 }
             }
         },
@@ -114,9 +114,9 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-sass');
     grunt.loadNpmTasks('grunt-contrib-cssmin');
     
-    grunt.registerTask('dev', ['bower', 'connect:server', 'watch:dev']);
-    grunt.registerTask('test', ['bower', 'jshint']);
-    grunt.registerTask('minified', ['bower', 'watch:min']);
-    grunt.registerTask('package', ['bower', 'jshint', 'html2js:dist', 'concat:dist', 'sass:dist', 'cssmin',
+    grunt.registerTask('dev', ['connect:server', 'watch:dev']);
+    grunt.registerTask('test', ['jshint']);
+    grunt.registerTask('minified', ['watch:min']);
+    grunt.registerTask('package', ['jshint', 'html2js:dist', 'concat:dist', 'sass:dist', 'cssmin',
         'uglify:dist', 'clean:temp']);
 };

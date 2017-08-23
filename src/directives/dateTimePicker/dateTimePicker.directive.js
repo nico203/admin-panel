@@ -28,7 +28,7 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
                 }
             });
             
-            function changeDateTime(date, hours = null, minutes = null) {
+            function changeDateTime(date, hours, minutes) {
                 var h = (hours !== null) ? hours : scope.hours;
                 var m = (minutes !== null) ? minutes : scope.minutes;
                 date.setSeconds(0);
@@ -52,7 +52,7 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
             
             scope.changeHour = function() {
                 if(scope.hours < 0) {
-                    scope.hours = 00;
+                    scope.hours = 0;
                 }
                 if(scope.hours > 23) {
                     scope.hours = 23;
@@ -62,7 +62,7 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
             
             scope.changeMinute = function() {
                 if(scope.minutes < 0) {
-                    scope.minutes = 00;
+                    scope.minutes = 0;
                 }
                 if(scope.minutes > 59) {
                     scope.minutes = 59;
