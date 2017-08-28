@@ -36,6 +36,9 @@ angular.module('adminPanel.crud').service('CrudService', [
                         callbackError(responseError);
                     }
                 });
+                
+                //aregamos el request al scope para poderlo cancelar
+                scope.initRequest = request;
             };
 
             /**
@@ -66,6 +69,9 @@ angular.module('adminPanel.crud').service('CrudService', [
                         callbackError(responseError);
                     }
                 });
+                
+                //aregamos el request al scope para poderlo cancelar
+                scope.submitRequest = request;
             };
         };
         
@@ -95,6 +101,7 @@ angular.module('adminPanel.crud').service('CrudService', [
              */
             this.get = function (object, callbackSuccess, callbackError, actionDefault) {
                 //timeout requerido para terminar el binding de los componentes de la aplicacion
+                //termina el ciclo digest
                 $timeout(function () {
                     scope.$broadcast('apLoad:start',apLoadName);
                     var action = (actionDefault) ? actionDefault : 'get';
@@ -118,7 +125,10 @@ angular.module('adminPanel.crud').service('CrudService', [
                             callbackError(responseError);
                         }
                     });
-                }, 100);
+                    
+                    //aregamos el request al scope para poderlo cancelar
+                    scope.request = request;
+                });
             };
         };
         
@@ -172,6 +182,12 @@ angular.module('adminPanel.crud').service('CrudService', [
                     });
                 }
             };
+            
+            //cancelamos los request al destruir el controller
+            controller.$onDestroy = function() {
+                scope.submitRequest.$cancelRequest();
+                scope.initRequest.$cancelRequest();
+            };
         }
         
         /**
@@ -201,6 +217,11 @@ angular.module('adminPanel.crud').service('CrudService', [
                     });
                     if(callback) callback();
                 }, function(){}, actions);
+            };
+            
+            //cancelamos los request al destruir el controller
+            controller.$onDestroy = function() {
+                scope.request.$cancelRequest();
             };
             
             scope.$on('pagination:changepage', function(e, page) {
