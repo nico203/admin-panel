@@ -153,6 +153,7 @@ angular.module('adminPanel', [
          * @returns {CrudService.serviceL#3.Form}
          */
         var Form = function(scope, Resource, apLoadName) {
+            var self = this;
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
              * 
@@ -161,7 +162,7 @@ angular.module('adminPanel', [
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
              */
-            this.init = function(object, callbackSuccess, callbackError) {
+            self.init = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.get(object);
                 request.$promise.then(function(responseSuccess) {
@@ -180,7 +181,7 @@ angular.module('adminPanel', [
                 });
                 
                 //aregamos el request al scope para poderlo cancelar
-                scope.initRequest = request;
+                self.initRequest = request;
             };
 
             /**
@@ -191,7 +192,7 @@ angular.module('adminPanel', [
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
              */
-            this.submit = function(object, callbackSuccess, callbackError) {
+            self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.save(object);
                 request.$promise.then(function(responseSuccess) {
@@ -213,7 +214,18 @@ angular.module('adminPanel', [
                 });
                 
                 //aregamos el request al scope para poderlo cancelar
-                scope.submitRequest = request;
+                self.submitRequest = request;
+            };
+            
+            
+            //cancelamos los request
+            self.destroy = function() {
+                if(self.initRequest) {
+                    self.initRequest.$cancelRequest();
+                }
+                if(self.submitRequest) {
+                    self.submitRequest.$cancelRequest();
+                }
             };
         };
         
@@ -327,8 +339,7 @@ angular.module('adminPanel', [
             
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
-                scope.submitRequest.$cancelRequest();
-                scope.initRequest.$cancelRequest();
+                form.destroy();
             };
         }
         
@@ -1001,22 +1012,34 @@ angular.module('adminPanel').directive('formFieldError', [
     }
 ]);
 ;angular.module('adminPanel').directive('msfCoordenadas', [
-    function() {
+    '$timeout',
+    function($timeout) {
     return {
         require: 'ngModel',
         restrict: 'E',
         link: function(scope, elem, attr, ngModel) {
             scope.coordenadas = '';
             scope.error = false;
-            scope.model = {
-                latitud: angular.copy(ngModel.$modelValue.latitud),
-                longitud: angular.copy(ngModel.$modelValue.longitud)
-            };
             
+            //init function
+            $timeout(function() {
+                if(angular.isUndefined(ngModel.$modelValue)) {
+                    ngModel.$modelValue = {
+                        latitud: null,
+                        longitud: null
+                    };
+                    console.log('ngModel.$modelValue',ngModel.$modelValue);
+                }
+                scope.model = {
+                    latitud: angular.copy(ngModel.$modelValue.latitud),
+                    longitud: angular.copy(ngModel.$modelValue.longitud)
+                };
+            });
+            
+            //actualizacion externa
             scope.$watch(function() {
                 return ngModel.$modelValue;
             }, function(val) {
-                console.log(val);
                 if(val) {
                     scope.model = {
                         latitud: angular.copy(ngModel.$modelValue.latitud),
@@ -1055,9 +1078,10 @@ angular.module('adminPanel').directive('formFieldError', [
                 }
                 scope.model.latitud = latitud;
                 scope.model.longitud = longitud;
-                ngModel.$modelValue.latitud = latitud;
-                ngModel.$modelValue.longitud = longitud;
-                console.log(scope.model);
+                ngModel.$setViewValue({
+                    latitud: latitud,
+                    longitud: longitud
+                });
                 
                 scope.$emit('msfCoordenadas:change', this);
             };

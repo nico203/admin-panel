@@ -1,20 +1,32 @@
 angular.module('adminPanel').directive('msfCoordenadas', [
-    function() {
+    '$timeout',
+    function($timeout) {
     return {
         require: 'ngModel',
         restrict: 'E',
         link: function(scope, elem, attr, ngModel) {
             scope.coordenadas = '';
             scope.error = false;
-            scope.model = {
-                latitud: angular.copy(ngModel.$modelValue.latitud),
-                longitud: angular.copy(ngModel.$modelValue.longitud)
-            };
             
+            //init function
+            $timeout(function() {
+                if(angular.isUndefined(ngModel.$modelValue)) {
+                    ngModel.$modelValue = {
+                        latitud: null,
+                        longitud: null
+                    };
+                    console.log('ngModel.$modelValue',ngModel.$modelValue);
+                }
+                scope.model = {
+                    latitud: angular.copy(ngModel.$modelValue.latitud),
+                    longitud: angular.copy(ngModel.$modelValue.longitud)
+                };
+            });
+            
+            //actualizacion externa
             scope.$watch(function() {
                 return ngModel.$modelValue;
             }, function(val) {
-                console.log(val);
                 if(val) {
                     scope.model = {
                         latitud: angular.copy(ngModel.$modelValue.latitud),
@@ -53,9 +65,10 @@ angular.module('adminPanel').directive('msfCoordenadas', [
                 }
                 scope.model.latitud = latitud;
                 scope.model.longitud = longitud;
-                ngModel.$modelValue.latitud = latitud;
-                ngModel.$modelValue.longitud = longitud;
-                console.log(scope.model);
+                ngModel.$setViewValue({
+                    latitud: latitud,
+                    longitud: longitud
+                });
                 
                 scope.$emit('msfCoordenadas:change', this);
             };

@@ -11,6 +11,7 @@ angular.module('adminPanel.crud').service('CrudService', [
          * @returns {CrudService.serviceL#3.Form}
          */
         var Form = function(scope, Resource, apLoadName) {
+            var self = this;
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
              * 
@@ -19,7 +20,7 @@ angular.module('adminPanel.crud').service('CrudService', [
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
              */
-            this.init = function(object, callbackSuccess, callbackError) {
+            self.init = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.get(object);
                 request.$promise.then(function(responseSuccess) {
@@ -38,7 +39,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                 });
                 
                 //aregamos el request al scope para poderlo cancelar
-                scope.initRequest = request;
+                self.initRequest = request;
             };
 
             /**
@@ -49,7 +50,7 @@ angular.module('adminPanel.crud').service('CrudService', [
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
              */
-            this.submit = function(object, callbackSuccess, callbackError) {
+            self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.save(object);
                 request.$promise.then(function(responseSuccess) {
@@ -71,7 +72,18 @@ angular.module('adminPanel.crud').service('CrudService', [
                 });
                 
                 //aregamos el request al scope para poderlo cancelar
-                scope.submitRequest = request;
+                self.submitRequest = request;
+            };
+            
+            
+            //cancelamos los request
+            self.destroy = function() {
+                if(self.initRequest) {
+                    self.initRequest.$cancelRequest();
+                }
+                if(self.submitRequest) {
+                    self.submitRequest.$cancelRequest();
+                }
             };
         };
         
@@ -185,8 +197,7 @@ angular.module('adminPanel.crud').service('CrudService', [
             
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
-                scope.submitRequest.$cancelRequest();
-                scope.initRequest.$cancelRequest();
+                form.destroy();
             };
         }
         
