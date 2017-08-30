@@ -13,6 +13,7 @@ $font-size: 0.75rem;
 @import 'directives/select/select.style';
 @import 'directives/form/formValidation.style';
 @import 'directives/dateTimePicker/dateTimePicker.style';
+@import 'directives/timePicker/timePicker.style';
 @import 'filters/highlight.style';
 
 @include foundation-global-styles;

@@ -1314,6 +1314,71 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apTimePicker', ['$timeout', function($timeout) {
+    return {
+        restrict: 'AE',
+        require: 'ngModel',
+        link: function(scope, elem, attr, ngModel) {
+            elem.addClass('row collapse date ap-timepicker');
+            scope.hours = null;
+            scope.minutes = null;
+            
+            scope.$watch(function() {
+                return ngModel.$modelValue;
+            }, function(val) {
+                if(val) {
+                    var date = new Date(val);
+                    scope.hours = date.getHours();
+                    scope.minutes = date.getMinutes();
+                }
+            });
+            
+            
+            //Funcion que realiza el cambio de la hora en el modelo
+            function changeTime(hours, minutes) {
+                var h = (hours === null) ? 
+                        ((scope.hours !== null) ? scope.hours : 0) : hours;
+                var m = (minutes === null) ?  
+                        ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
+                
+                var date = new Date();
+                date.setSeconds(0);
+                date.setHours(h);
+                date.setMinutes(m);
+                
+                //cambio hecho al terminar el ciclo $digest actual
+                $timeout(function() {
+                    scope.$apply(function(){
+                        ngModel.$setViewValue(date);
+                    });
+                });
+            }
+            
+            //Funcion que se ejecuta al cambiar de hora en la vista
+            scope.changeHour = function() {
+                if(scope.hours < 0) {
+                    scope.hours = 0;
+                }
+                if(scope.hours > 23) {
+                    scope.hours = 23;
+                }
+                changeTime(scope.hours, scope.minutes);
+            };
+            
+            //Funcion que se ejecuta al cambiar de minuto en la vista
+            scope.changeMinute = function() {
+                if(scope.minutes < 0) {
+                    scope.minutes = 0;
+                }
+                if(scope.minutes > 59) {
+                    scope.minutes = 59;
+                }
+                changeTime(scope.hours, scope.minutes);
+            };
+        },
+        templateUrl: 'directives/timePicker/timePicker.template.html'
+    };
+}]);
 ;angular.module('adminPanel').filter('highlight', ['$sce', function ($sce) {
     return function (text, phrase) {
         if (phrase) {
@@ -1431,4 +1496,6 @@ angular.module('adminPanel').directive('formFieldError', [
     "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
     "<div class=input-group><input class=input-group-field type=text ng-model=input ng-change=onInputChange() ng-focus=onFocus() ng-blur=onBlur()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=buttonClick()><span class=caret></span></button></div></div><div class=dropdown-ap><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && options.length > 0\" class=list-group><li ng-repeat=\"option in options\" ng-bind-html=\"option.name | highlight:input\" ng-click=optionSelected(option)></li></ul><ul ng-if=\"!loading && options.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject()><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+  $templateCache.put("directives/timePicker/timePicker.template.html",
+    "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);
