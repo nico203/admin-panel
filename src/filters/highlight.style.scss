@@ -1,3 +1,5 @@
+$highlightColor: yellow !default;
+
 .highlighted {
-    background: yellow;
+    background: $highlightColor;
 }
