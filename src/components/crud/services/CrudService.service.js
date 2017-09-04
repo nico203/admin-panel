@@ -150,10 +150,12 @@ angular.module('adminPanel.crud').service('CrudService', [
          * @param {Controller} controller Controller del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
          * @param {Scope} scope Scope del componente
+         * @param {Funciton} callbackInit funcion que puede ser ejecutada luego del init
+         * @param {Funciton} function que puede ser ejecutada luego del submit
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          * @returns {undefined}
          */
-        function BasicFormController(controller, resource, scope, apLoadName) {
+        function BasicFormController(controller, resource, scope, callbackInit, callbackSubmit, apLoadName) {
             var name = resource.name;
             var form = new Form(scope, resource.$resource, apLoadName);
             scope[name] = {};
@@ -164,6 +166,9 @@ angular.module('adminPanel.crud').service('CrudService', [
                         if(r.data) {
                             scope[name] = r.data;
                         }
+                        if(callbackSubmit) {
+                            callbackSubmit();
+                        }
                     });
                 }
                 else if(scope.form.$valid) {
@@ -171,26 +176,50 @@ angular.module('adminPanel.crud').service('CrudService', [
                         if(r.data) {
                             scope[name] = r.data;
                         }
+                        if(callbackSubmit) {
+                            callbackSubmit();
+                        }
                     });
                 }
             };
 
             controller.$onInit = function() {
                 var property = resource.property;
-                if(property) {
+                
+                if(angular.isUndefined(this[name]) || this[name] === null) {
+                    throw 'BasicFormController: el nombre del recurso debe estar definido';
+                }
+                
+                //esta definida la propiedad, es decir tiene un sub recurso 
+                // pero este proviene de otro lugar y no hay que obtenerlo del servidor
+                if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
                     scope[name] = this[name];
                     if(scope[name][property]) {
                         scope[property] = scope[name][property];
                     } else {
                         scope[name][property] = scope[property];
                     }
+                    if(callbackInit) {
+                        callbackInit();
+                    }
                     return;
-                }
+                } 
+                //los datos se obtienen del servidor 
                 if(this[name] && this[name] !== 'nuevo') {
                     var obj = {};
                     obj[name] = this[name];
                     form.init(obj, function(r) {
                         scope[name] = r.data;
+                        if(property) {
+                            if(scope[name][property]) {
+                                scope[property] = scope[name][property];
+                            } else {
+                                scope[name][property] = {};
+                            }
+                        } 
+                        if(callbackInit) {
+                            callbackInit();
+                        }
                     });
                 }
             };
