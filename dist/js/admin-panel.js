@@ -35,13 +35,21 @@ angular.module('adminPanel', [
                 property = name.property;
             }
             var transforms = {};
-            transforms.query = (transform && transform.query) ? transform.query : function(data) {
+            transforms.query = (transform && transform.query) ? function(data) {
+                return {
+                    data: transform.query(data.data)
+                };
+            } : function(data) {
                 return data;
             };
             transforms.request = (transform && transform.request) ? transform.request : function(data) {
                 return data;
             };
-            transforms.response = (transform && transform.response) ? transform.response : function(data) {
+            transforms.response = (transform && transform.response) ? function(data) {
+                return {
+                    data: transform.response(data.data)
+                };
+            } : function(data) {
                 return data;
             };
             var paramDefaults = {};
@@ -171,6 +179,7 @@ angular.module('adminPanel', [
                         callbackSuccess(responseSuccess);
                     }
                 }, function(responseError) {
+                    console.log('responseError',responseError);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.loadError,
                         type: 'error'
@@ -328,10 +337,6 @@ angular.module('adminPanel', [
             controller.$onInit = function() {
                 var property = resource.property;
                 
-                if(angular.isUndefined(this[name]) || this[name] === null) {
-                    throw 'BasicFormController: el nombre del recurso debe estar definido';
-                }
-                
                 //esta definida la propiedad, es decir tiene un sub recurso 
                 // pero este proviene de otro lugar y no hay que obtenerlo del servidor
                 if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
@@ -346,6 +351,7 @@ angular.module('adminPanel', [
                     }
                     return;
                 } 
+                
                 //los datos se obtienen del servidor 
                 if(this[name] && this[name] !== 'nuevo') {
                     var obj = {};
@@ -356,9 +362,9 @@ angular.module('adminPanel', [
                             if(scope[name][property]) {
                                 scope[property] = scope[name][property];
                             } else {
-                                scope[name][property] = {};
+                                scope[name][property] = r.data[property];
                             }
-                        } 
+                        }
                         if(callbackInit) {
                             callbackInit();
                         }
@@ -691,7 +697,7 @@ angular.module('adminPanel').directive('apBox', [
 
                     //Ejecutada al comenzar la peticion al servidor
                     function startLoad(e, name) {
-                        console.log($.extend({}, e));
+//                        console.log($.extend({}, e));
                         scope.message = null;
                         var loadDirectiveName = (name) ? name : 'default';
                         if (!scope.loads[loadDirectiveName]) {

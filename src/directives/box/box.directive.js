@@ -45,7 +45,7 @@ angular.module('adminPanel').directive('apBox', [
 
                     //Ejecutada al comenzar la peticion al servidor
                     function startLoad(e, name) {
-                        console.log($.extend({}, e));
+//                        console.log($.extend({}, e));
                         scope.message = null;
                         var loadDirectiveName = (name) ? name : 'default';
                         if (!scope.loads[loadDirectiveName]) {

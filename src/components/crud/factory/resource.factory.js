@@ -19,13 +19,21 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 property = name.property;
             }
             var transforms = {};
-            transforms.query = (transform && transform.query) ? transform.query : function(data) {
+            transforms.query = (transform && transform.query) ? function(data) {
+                return {
+                    data: transform.query(data.data)
+                };
+            } : function(data) {
                 return data;
             };
             transforms.request = (transform && transform.request) ? transform.request : function(data) {
                 return data;
             };
-            transforms.response = (transform && transform.response) ? transform.response : function(data) {
+            transforms.response = (transform && transform.response) ? function(data) {
+                return {
+                    data: transform.response(data.data)
+                };
+            } : function(data) {
                 return data;
             };
             var paramDefaults = {};
