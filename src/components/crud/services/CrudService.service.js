@@ -247,7 +247,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                 controller.list();
             };
             
-            controller.list = function(params, actions, callback) {
+            controller.list = function(params, actionDefault, callback) {
                 var listParams = (params) ? params : {};
                 List.get(listParams, function(r) {
                     scope.list = r.data;
@@ -256,7 +256,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                         currentPageNumber: r.currentPageNumber
                     });
                     if(callback) callback();
-                }, function(){}, actions);
+                }, function(){}, actionDefault);
             };
             
             //cancelamos los request al destruir el controller

@@ -46,17 +46,28 @@ angular.module('adminPanel', [
             };
             var paramDefaults = {};
             paramDefaults[nameDefault] = '@id';
-            if(extras) {
-                for(var key in extras) {
-                    extras[key].url = CrudConfig.basePath + extras[key].url;
-                }
-            }
             
             var options = {
                 cancellable: true
             };
             
-            var actions = (extras) ? extras : {};
+            var actions = {};
+            for(var key in extras) {
+                var extra = extras[key];
+                //Le agregamos el basePath de la api a cada url del extra
+                if(extra.url) {
+                    extra.url = CrudConfig.basePath + extra.url;
+                }
+                //La establecemos que sea cancelable
+                extra.cancellable = true;
+                //Le ponemos como primer request el default de http
+                if(extra.transformResponse) {
+                    extra.transformResponse.unshift($http.defaults.transformResponse[0]);
+                }
+                
+                actions[key] = extra;
+            }
+            
             actions.query = {
                 method: 'GET',
                 transformResponse: [
@@ -389,7 +400,7 @@ angular.module('adminPanel', [
                 controller.list();
             };
             
-            controller.list = function(params, actions, callback) {
+            controller.list = function(params, actionDefault, callback) {
                 var listParams = (params) ? params : {};
                 List.get(listParams, function(r) {
                     scope.list = r.data;
@@ -398,7 +409,7 @@ angular.module('adminPanel', [
                         currentPageNumber: r.currentPageNumber
                     });
                     if(callback) callback();
-                }, function(){}, actions);
+                }, function(){}, actionDefault);
             };
             
             //cancelamos los request al destruir el controller
