@@ -261,7 +261,9 @@ angular.module('adminPanel.crud').service('CrudService', [
             
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
-                scope.request.$cancelRequest();
+                if(scope.request) {
+                    scope.request.$cancelRequest();
+                }
             };
             
             scope.$on('pagination:changepage', function(e, page) {
