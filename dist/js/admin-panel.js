@@ -414,7 +414,9 @@ angular.module('adminPanel', [
             
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
-                scope.request.$cancelRequest();
+                if(scope.request) {
+                    scope.request.$cancelRequest();
+                }
             };
             
             scope.$on('pagination:changepage', function(e, page) {
@@ -860,7 +862,30 @@ angular.module('adminPanel').directive('apBox', [
         templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
     };
 }]);
-;angular.module('adminPanel').directive('fieldErrorMessages', [
+;angular.module('adminPanel').directive('apFilters',[
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'E',
+            transclude: true,
+            link: function(scope, elem, attr) {
+                var accordionElem = null;
+
+                $timeout(function() {
+                    
+                    accordionElem = elem.find('.accordion.filtros');
+                    console.log('elem',accordionElem);
+                    accordionElem.foundation();
+                });
+                
+                scope.$on('$destroy', function() {
+                    accordionElem.foundation('_destroy');
+                });
+            },
+            templateUrl: 'directives/filter/filter.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('fieldErrorMessages', [
     function() {
         return {
             restrict: 'E',
@@ -1524,6 +1549,8 @@ angular.module('adminPanel').directive('formFieldError', [
     "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div><div class=pager></div></div></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
+  $templateCache.put("directives/filter/filter.template.html",
+    "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title>Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/load/load.template.html",
