@@ -339,9 +339,9 @@ angular.module('adminPanel', [
             controller.$onInit = function() {
                 var property = resource.property;
                 
-                if(angular.isUndefined(this[name]) || this[name] === null) {
-                    throw 'BasicFormController: el nombre del recurso debe estar definido';
-                }
+//                if(angular.isUndefined(this[name]) || this[name] === null) {
+//                    throw 'BasicFormController: el nombre del recurso debe estar definido';
+//                }
                 
                 //esta definida la propiedad, es decir tiene un sub recurso 
                 // pero este proviene de otro lugar y no hay que obtenerlo del servidor
