@@ -29,6 +29,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                         callbackSuccess(responseSuccess);
                     }
                 }, function(responseError) {
+                    console.log('responseError',responseError);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.loadError,
                         type: 'error'
@@ -186,10 +187,7 @@ angular.module('adminPanel.crud').service('CrudService', [
             controller.$onInit = function() {
                 var property = resource.property;
                 
-//                if(angular.isUndefined(this[name]) || this[name] === null) {
-//                    throw 'BasicFormController: el nombre del recurso debe estar definido';
-//                }
-                
+
                 //esta definida la propiedad, es decir tiene un sub recurso 
                 // pero este proviene de otro lugar y no hay que obtenerlo del servidor
                 if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
@@ -204,6 +202,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                     }
                     return;
                 } 
+                
                 //los datos se obtienen del servidor 
                 if(this[name] && this[name] !== 'nuevo') {
                     var obj = {};
@@ -214,9 +213,9 @@ angular.module('adminPanel.crud').service('CrudService', [
                             if(scope[name][property]) {
                                 scope[property] = scope[name][property];
                             } else {
-                                scope[name][property] = {};
+                                scope[name][property] = r.data[property];
                             }
-                        } 
+                        }
                         if(callbackInit) {
                             callbackInit();
                         }
