@@ -1024,6 +1024,29 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apImageLoader', [
+    function(){
+        return {
+            require: 'ngModel',
+            restrict: 'E',
+            link: function(scope, elem, attr, ngModel) {
+                elem.addClass('ap-image-loader');
+                
+                scope.imagePath = null;
+                
+                scope.$watch(function() {
+                    return ngModel.$modelValue;
+                }, function(val) {
+                    console.log('val image', val);
+                    scope.imagePath = val;
+                });
+            },
+            controller: ['$scope',function($scope) {
+
+            }]
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apLoad', [
     '$animate', '$compile', 
     function($animate, $compile){
@@ -1560,6 +1583,8 @@ angular.module('adminPanel').directive('formFieldError', [
     "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title>Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
+  $templateCache.put("directives/imageLoader/imageLoader.template.html",
+    "<div class=\"media-object stack-for-small\"><div class=media-object-section><div class=thumbnail><img ng-src={{imagePath}}></div></div></div>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
