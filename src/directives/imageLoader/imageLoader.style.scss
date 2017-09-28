@@ -1,3 +1,18 @@
 .ap-image-loader {
+    .image-view {
+        position: relative;
+        max-height: 250px;
+        margin-bottom: 10px;
+        
+        img {
+            display: block;
+            margin: auto;
+            box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.2);
+            max-height: 250px;
+        }
+    }
     
+    .file {
+        padding-top: 25%
+    }
 }

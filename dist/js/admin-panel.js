@@ -1025,25 +1025,48 @@ angular.module('adminPanel').directive('formFieldError', [
     }
 ]);
 ;angular.module('adminPanel').directive('apImageLoader', [
-    function(){
+    '$timeout',
+    function($timeout){
         return {
             require: 'ngModel',
             restrict: 'E',
             link: function(scope, elem, attr, ngModel) {
-                elem.addClass('ap-image-loader');
-                
+                elem.addClass('ap-image-loader row columns');
                 scope.imagePath = null;
-                
-                scope.$watch(function() {
-                    return ngModel.$modelValue;
-                }, function(val) {
-                    console.log('val image', val);
-                    scope.imagePath = val;
-                });
-            },
-            controller: ['$scope',function($scope) {
 
-            }]
+                var imageFileMimeTypes = [/^image*/g];
+                
+                function onLoadFile(event) {
+                    var fileMimeType = event.target.files[0].type;
+                    var bool = false;
+                    for(var i = 0; i < imageFileMimeTypes.length; i++) {
+                        if(fileMimeType.match(imageFileMimeTypes[0]) !== null) {
+                            bool = true;
+                            break;
+                        }
+                    }
+                    
+                    
+                    console.log('bool',bool);
+                   
+                }
+                
+                elem.find('input[type="file"]').bind('change', onLoadFile);
+
+                //evento que escucha el model para hacer el bindeo de las variables
+                scope.$watch(function () {
+                    return ngModel.$modelValue;
+                }, function (modelValue) {
+                    console.log('modelValue',modelValue);
+                });
+                
+                //Desacoplamos los eventos al eliminar el objeto
+                scope.$on('$destroy', function() {
+                    elem.find('input[type="file"]').unbind('change', onLoadFile);
+                });
+                
+            },
+            templateUrl: 'directives/imageLoader/imageLoader.template.html'
         };
     }
 ]);
@@ -1584,7 +1607,7 @@ angular.module('adminPanel').directive('formFieldError', [
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
-    "<div class=\"media-object stack-for-small\"><div class=media-object-section><div class=thumbnail><img ng-src={{imagePath}}></div></div></div>");
+    "<div class=image-view><img ng-src={{imagePath}}></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=imagePath></div>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
