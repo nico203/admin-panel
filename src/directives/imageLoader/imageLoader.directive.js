@@ -1,28 +1,31 @@
 angular.module('adminPanel').directive('apImageLoader', [
-    '$timeout',
-    function($timeout){
+    function(){
         return {
             require: 'ngModel',
             restrict: 'E',
             link: function(scope, elem, attr, ngModel) {
                 elem.addClass('ap-image-loader row columns');
+                var imageElement = elem.find('img');
                 scope.imagePath = null;
 
-                var imageFileMimeTypes = [/^image*/g];
+                var imageFileMimeType = /^image\//;
                 
                 function onLoadFile(event) {
-                    var fileMimeType = event.target.files[0].type;
-                    var bool = false;
-                    for(var i = 0; i < imageFileMimeTypes.length; i++) {
-                        if(fileMimeType.match(imageFileMimeTypes[0]) !== null) {
-                            bool = true;
-                            break;
-                        }
-                    }
+                    var file = event.target.files[0];
+                    if(!file || !imageFileMimeType.test(file.type)) return;
+                    console.log('file', file);
                     
-                    
-                    console.log('bool',bool);
-                   
+                    var reader = new FileReader();
+                    reader.onload = (function(img) {
+                        console.log('img', img);
+                        return function(e) {
+                            console.log('e',e);
+                            scope.$apply(function() {
+                                scope.imagePath = e.target.result;
+                            });
+                        };
+                    })(imageElement);
+                    reader.readAsBinaryString(file);
                 }
                 
                 elem.find('input[type="file"]').bind('change', onLoadFile);
