@@ -1029,35 +1029,39 @@ angular.module('adminPanel').directive('formFieldError', [
         return {
             require: 'ngModel',
             restrict: 'E',
+            scope: true,
             link: function(scope, elem, attr, ngModel) {
                 elem.addClass('ap-image-loader row columns');
-                var imageElement = elem.find('img');
-                scope.imagePath = null;
-
+                scope.image = {
+                    path: null,
+                    name: null
+                };
                 var imageFileMimeType = /^image\//;
                 
                 function onLoadFile(event) {
                     var file = event.target.files[0];
                     if(!file || !imageFileMimeType.test(file.type)) return;
-                    console.log('file', file);
                     
                     var reader = new FileReader();
-                    reader.onload = (function(img) {
-                        console.log('img', img);
-                        return function(e) {
-                            console.log('e',e);
-                            scope.$apply(function() {
-                                scope.imagePath = e.target.result;
-                            });
-                        };
-                    })(imageElement);
-                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        scope.$apply(function() {
+                            var result = e.target.result;
+                            scope.image.path = result;
+                            scope.image.name = file.name;
+                            ngModel.$setViewValue(file);
+                        });
+                    };
+                    reader.readAsDataURL(file);
                 }
                 
                 elem.find('input[type="file"]').bind('change', onLoadFile);
 
+                scope.loadImage = function() {
+                    
+                };
+                
                 //evento que escucha el model para hacer el bindeo de las variables
-                scope.$watch(function () {
+                var modelWatcher = scope.$watch(function () {
                     return ngModel.$modelValue;
                 }, function (modelValue) {
                     console.log('modelValue',modelValue);
@@ -1066,6 +1070,7 @@ angular.module('adminPanel').directive('formFieldError', [
                 //Desacoplamos los eventos al eliminar el objeto
                 scope.$on('$destroy', function() {
                     elem.find('input[type="file"]').unbind('change', onLoadFile);
+                    modelWatcher();
                 });
                 
             },
@@ -1610,7 +1615,7 @@ angular.module('adminPanel').directive('formFieldError', [
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
-    "<div class=image-view><img ng-src={{imagePath}}></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=imagePath></div>");
+    "<div class=image-view><img ng-src={{image.path}} ng-click=loadImage()></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=image.name></div>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
