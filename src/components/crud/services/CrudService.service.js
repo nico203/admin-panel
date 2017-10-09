@@ -10,7 +10,7 @@ angular.module('adminPanel.crud').service('CrudService', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          * @returns {CrudService.serviceL#3.Form}
          */
-        var Form = function(scope, Resource, apLoadName) {
+        var Form = function(scope, Resource, apLoadName, file) {
             var self = this;
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
@@ -54,13 +54,38 @@ angular.module('adminPanel.crud').service('CrudService', [
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.save(object);
+                
+                //Se hace el request para guardar el objeto
                 request.$promise.then(function(responseSuccess) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveSusccess,
-                        type: 'success'
-                    });
-                    if(callbackSuccess) {
-                        callbackSuccess(responseSuccess);
+                    //Si no hay archivos se sigue el curso actual
+                    if(file === null) {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            message: CrudConfig.messages.saveSusccess,
+                            type: 'success'
+                        });
+                        if(callbackSuccess) {
+                            callbackSuccess(responseSuccess);
+                        }
+                    } else {
+                        var requestFile = Resource[file.prop](object);
+                        requestFile.$promise.then(function(fileResponseSuccess) {
+                            scope.$emit('apLoad:finish', apLoadName, {
+                                message: CrudConfig.messages.saveSusccess,
+                                type: 'success'
+                            });
+                            if(callbackSuccess) {
+                                callbackSuccess(responseSuccess);
+                            }
+                        }, function(fileResponseError) {
+                            scope.$emit('apLoad:finish', apLoadName, {
+                                message: CrudConfig.messages.saveError,
+                                type: 'error'
+                            });
+                            if(callbackError) {
+                                callbackError(fileResponseError);
+                            }
+                            throw 'Form File Error: ' + fileResponseError;
+                        });
                     }
                 }, function(responseError) {
                     scope.$emit('apLoad:finish', apLoadName, {
@@ -70,6 +95,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                     if(callbackError) {
                         callbackError(responseError);
                     }
+                    throw 'Form Error: ' + responseError;
                 });
                 
                 //aregamos el request al scope para poderlo cancelar

@@ -6,10 +6,11 @@ angular.module('adminPanel.crud').factory('CrudResource', [
          * -url sin la base
          * -nombre del recurso
          * -funcion del transform request  del recurso al guardarlo
+         * -campo file
          * -datos extras
          * @type {type}
         */
-        function CrudResourceFactory(name, url, transform, extras) {
+        function CrudResourceFactory(name, url, transform, file, extras) {
             var nameDefault = null;
             var property = null;
             if(typeof(name) === 'string') {
@@ -18,6 +19,8 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 nameDefault = name.name;
                 property = name.property;
             }
+            
+            //Procesamos los transforms de los request y responses por defecto
             var transforms = {};
             transforms.query = (transform && transform.query) ? function(data) {
                 return {
@@ -43,6 +46,31 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 cancellable: true
             };
             
+            //Procesamos el campo file
+            var fileObj = null;
+            if(!angular.isUndefined(file) && file !== null && file !== false) {
+                if(file === true) {
+                    fileObj = {
+                        url: '/files',
+                        prop: 'file'
+                    };
+                } else if (typeof(file) === 'string') {
+                    fileObj = {
+                        url: '/' + file + 's',
+                        prop: file
+                    };
+                } else if (typeof(file) === 'object') {
+                    if(angular.isUndefined(file.url) || angular.isUndefined(file.prop)) {
+                        throw 'Debes especificar el campo url y el campo prop en file';
+                    }
+                    fileObj = file;
+                }
+                
+                
+            }
+            
+            
+            //Procesamos los extras
             var actions = {};
             for(var key in extras) {
                 var extra = extras[key];
@@ -58,6 +86,25 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 }
                 
                 actions[key] = extra;
+            }
+            if(fileObj !== null) {
+                //Se recibe como objeto en el request todo el objeto y se envia solamente la propiedad que contiene
+                //el archivo
+                actions[fileObj.prop] = {
+                    method: 'POST',
+                    transformRequest: [
+                        function(data) {
+                            var ret = {};
+                            ret[file.prop] = data[file.prop];
+                            return ret;
+                        },
+                        $http.defaults.transformRequest[0]
+                    ],
+//                    transformResponse: [
+//                        
+//                    ],
+                    cancellable: true
+                };
             }
             
             actions.query = {
@@ -96,6 +143,12 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                             ret[nameDefault] = NormalizeService.normalize(transforms.request(data));
                             delete ret[nameDefault].id;
                         }
+                        
+                        //Si hay archivo en el objeto se elimina la propiedad, dado que se guarda en otro request
+                        if(fileObj !== null) {
+                            delete ret[fileObj.prop];
+                        }
+                        
                         return ret;
                     },
                     $http.defaults.transformRequest[0]
@@ -106,6 +159,7 @@ angular.module('adminPanel.crud').factory('CrudResource', [
             return {
                 name: nameDefault,
                 property: property,
+                file: fileObj,
                 $resource: $resource(CrudConfig.basePath + url, paramDefaults, actions, options)
             };
         }

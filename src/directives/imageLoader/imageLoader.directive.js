@@ -10,7 +10,7 @@ angular.module('adminPanel').directive('apImageLoader', [
                     path: null,
                     name: null
                 };
-                var imageFileMimeType = /^image\//;
+                var imageFileMimeType = /^image\/[a-z]*/g;
                 
                 function onLoadFile(event) {
                     var file = event.target.files[0];

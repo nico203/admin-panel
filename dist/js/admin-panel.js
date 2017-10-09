@@ -22,10 +22,11 @@ angular.module('adminPanel', [
          * -url sin la base
          * -nombre del recurso
          * -funcion del transform request  del recurso al guardarlo
+         * -campo file
          * -datos extras
          * @type {type}
         */
-        function CrudResourceFactory(name, url, transform, extras) {
+        function CrudResourceFactory(name, url, transform, file, extras) {
             var nameDefault = null;
             var property = null;
             if(typeof(name) === 'string') {
@@ -34,6 +35,8 @@ angular.module('adminPanel', [
                 nameDefault = name.name;
                 property = name.property;
             }
+            
+            //Procesamos los transforms de los request y responses por defecto
             var transforms = {};
             transforms.query = (transform && transform.query) ? function(data) {
                 return {
@@ -59,6 +62,31 @@ angular.module('adminPanel', [
                 cancellable: true
             };
             
+            //Procesamos el campo file
+            var fileObj = null;
+            if(!angular.isUndefined(file) && file !== null && file !== false) {
+                if(file === true) {
+                    fileObj = {
+                        url: '/files',
+                        prop: 'file'
+                    };
+                } else if (typeof(file) === 'string') {
+                    fileObj = {
+                        url: '/' + file + 's',
+                        prop: file
+                    };
+                } else if (typeof(file) === 'object') {
+                    if(angular.isUndefined(file.url) || angular.isUndefined(file.prop)) {
+                        throw 'Debes especificar el campo url y el campo prop en file';
+                    }
+                    fileObj = file;
+                }
+                
+                
+            }
+            
+            
+            //Procesamos los extras
             var actions = {};
             for(var key in extras) {
                 var extra = extras[key];
@@ -74,6 +102,25 @@ angular.module('adminPanel', [
                 }
                 
                 actions[key] = extra;
+            }
+            if(fileObj !== null) {
+                //Se recibe como objeto en el request todo el objeto y se envia solamente la propiedad que contiene
+                //el archivo
+                actions[fileObj.prop] = {
+                    method: 'POST',
+                    transformRequest: [
+                        function(data) {
+                            var ret = {};
+                            ret[file.prop] = data[file.prop];
+                            return ret;
+                        },
+                        $http.defaults.transformRequest[0]
+                    ],
+//                    transformResponse: [
+//                        
+//                    ],
+                    cancellable: true
+                };
             }
             
             actions.query = {
@@ -112,6 +159,12 @@ angular.module('adminPanel', [
                             ret[nameDefault] = NormalizeService.normalize(transforms.request(data));
                             delete ret[nameDefault].id;
                         }
+                        
+                        //Si hay archivo en el objeto se elimina la propiedad, dado que se guarda en otro request
+                        if(fileObj !== null) {
+                            delete ret[fileObj.prop];
+                        }
+                        
                         return ret;
                     },
                     $http.defaults.transformRequest[0]
@@ -122,6 +175,7 @@ angular.module('adminPanel', [
             return {
                 name: nameDefault,
                 property: property,
+                file: fileObj,
                 $resource: $resource(CrudConfig.basePath + url, paramDefaults, actions, options)
             };
         }
@@ -171,7 +225,7 @@ angular.module('adminPanel', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          * @returns {CrudService.serviceL#3.Form}
          */
-        var Form = function(scope, Resource, apLoadName) {
+        var Form = function(scope, Resource, apLoadName, file) {
             var self = this;
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
@@ -215,13 +269,38 @@ angular.module('adminPanel', [
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 var request = Resource.save(object);
+                
+                //Se hace el request para guardar el objeto
                 request.$promise.then(function(responseSuccess) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveSusccess,
-                        type: 'success'
-                    });
-                    if(callbackSuccess) {
-                        callbackSuccess(responseSuccess);
+                    //Si no hay archivos se sigue el curso actual
+                    if(file === null) {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            message: CrudConfig.messages.saveSusccess,
+                            type: 'success'
+                        });
+                        if(callbackSuccess) {
+                            callbackSuccess(responseSuccess);
+                        }
+                    } else {
+                        var requestFile = Resource[file.prop](object);
+                        requestFile.$promise.then(function(fileResponseSuccess) {
+                            scope.$emit('apLoad:finish', apLoadName, {
+                                message: CrudConfig.messages.saveSusccess,
+                                type: 'success'
+                            });
+                            if(callbackSuccess) {
+                                callbackSuccess(responseSuccess);
+                            }
+                        }, function(fileResponseError) {
+                            scope.$emit('apLoad:finish', apLoadName, {
+                                message: CrudConfig.messages.saveError,
+                                type: 'error'
+                            });
+                            if(callbackError) {
+                                callbackError(fileResponseError);
+                            }
+                            throw 'Form File Error: ' + fileResponseError;
+                        });
                     }
                 }, function(responseError) {
                     scope.$emit('apLoad:finish', apLoadName, {
@@ -231,6 +310,7 @@ angular.module('adminPanel', [
                     if(callbackError) {
                         callbackError(responseError);
                     }
+                    throw 'Form Error: ' + responseError;
                 });
                 
                 //aregamos el request al scope para poderlo cancelar
@@ -1036,7 +1116,7 @@ angular.module('adminPanel').directive('formFieldError', [
                     path: null,
                     name: null
                 };
-                var imageFileMimeType = /^image\//;
+                var imageFileMimeType = /^image\/[a-z]*/g;
                 
                 function onLoadFile(event) {
                     var file = event.target.files[0];
