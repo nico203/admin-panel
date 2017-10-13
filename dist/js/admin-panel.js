@@ -27,16 +27,34 @@ angular.module('adminPanel', [
          * @type {type}
         */
         function CrudResourceFactory(name, url, transform, file, extras) {
+            //name
             var nameDefault = null;
             var property = null;
             if(typeof(name) === 'string') {
                 nameDefault = name;
-            } else {
+            } else if(typeof(name) === 'object') {
+                if(angular.isUndefined(name.name) || angular.isUndefined(name.property)) {
+                    console.error('CrudResourceFactory: si el parametro name es un objeto, name y property deben establecerse como propiedades');
+                    throw 'CrudResourceFactory: si el parametro name es un objeto, name y property deben establecerse como propiedades';
+                }
                 nameDefault = name.name;
                 property = name.property;
+            } else {
+                console.error('CrudResourceFactory: el parametro name debe ser string o object');
+                throw 'CrudResourceFactory: el parametro name debe ser string o object';
+            }
+            
+            //url
+            if(typeof(name) !== 'string') {
+                console.error('CrudResourceFactory: el parametro url debe ser string');
+                throw 'CrudResourceFactory: el parametro url debe ser string';
             }
             
             //Procesamos los transforms de los request y responses por defecto
+            if(!angular.isUndefined(transform) && transform !== null && typeof(transform) !== 'object') {
+                console.error('CrudResourceFactory: el parametro transform debe ser object');
+                throw 'CrudResourceFactory: el parametro transform debe ser object';
+            } 
             var transforms = {};
             transforms.query = (transform && transform.query) ? function(data) {
                 return {
@@ -77,12 +95,11 @@ angular.module('adminPanel', [
                     };
                 } else if (typeof(file) === 'object') {
                     if(angular.isUndefined(file.url) || angular.isUndefined(file.prop)) {
-                        throw 'Debes especificar el campo url y el campo prop en file';
+                        console.error('CrudResourceFactory: si el parametro file es un objeto, url y prop deben establecerse como propiedades');
+                        throw 'CrudResourceFactory: si el parametro file es un objeto, url y prop deben establecerse como propiedades';
                     }
                     fileObj = file;
                 }
-                
-                
             }
             
             
