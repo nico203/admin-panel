@@ -109,17 +109,17 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 //el archivo
                 actions[fileObj.prop] = {
                     method: 'POST',
+                    url: CrudConfig.basePath + url + fileObj.url,
                     transformRequest: [
                         function(data) {
                             var ret = {};
+                            ret.id = data.id;
+                            console.log('transformRequest, data',data);
                             ret[file.prop] = data[file.prop];
                             return ret;
                         },
                         $http.defaults.transformRequest[0]
                     ],
-//                    transformResponse: [
-//                        
-//                    ],
                     cancellable: true
                 };
             }
@@ -172,7 +172,9 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 ],
                 cancellable: true
             };
-
+            
+            console.log('actions',actions);
+            
             return {
                 name: nameDefault,
                 property: property,

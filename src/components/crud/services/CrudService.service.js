@@ -53,6 +53,7 @@ angular.module('adminPanel.crud').service('CrudService', [
              */
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
+                console.log('object', object);
                 var request = Resource.save(object);
                 
                 //Se hace el request para guardar el objeto
@@ -67,14 +68,14 @@ angular.module('adminPanel.crud').service('CrudService', [
                             callbackSuccess(responseSuccess);
                         }
                     } else {
-                        var requestFile = Resource[file.prop](object);
+                        var requestFile = Resource[file.prop](responseSuccess.data);
                         requestFile.$promise.then(function(fileResponseSuccess) {
                             scope.$emit('apLoad:finish', apLoadName, {
                                 message: CrudConfig.messages.saveSusccess,
                                 type: 'success'
                             });
                             if(callbackSuccess) {
-                                callbackSuccess(responseSuccess);
+                                callbackSuccess(fileResponseSuccess);
                             }
                         }, function(fileResponseError) {
                             scope.$emit('apLoad:finish', apLoadName, {
@@ -184,7 +185,7 @@ angular.module('adminPanel.crud').service('CrudService', [
          */
         function BasicFormController(controller, resource, scope, callbackInit, callbackSubmit, apLoadName) {
             var name = resource.name;
-            var form = new Form(scope, resource.$resource, apLoadName);
+            var form = new Form(scope, resource.$resource, apLoadName, resource.file);
             scope[name] = {};
             
             scope.submit = function() {
