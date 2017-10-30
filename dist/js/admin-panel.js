@@ -45,7 +45,7 @@ angular.module('adminPanel', [
             }
             
             //url
-            if(typeof(name) !== 'string') {
+            if(typeof(url) !== 'string') {
                 console.error('CrudResourceFactory: el parametro url debe ser string');
                 throw 'CrudResourceFactory: el parametro url debe ser string';
             }
