@@ -15,44 +15,48 @@ angular.module('adminPanel.crud').service('BasicReadController', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
         function BasicReadController(scope, resource, apLoadName) {
-            var request = null;
+            this.request = null;
+            var name = resource.name;
             
             this.get = function(params, actionDefault, callbackSuccess, callbackError) {
+                var paramRequest = (params) ? params : {};
                 
-
-                //esta definida la propiedad, es decir tiene un sub recurso 
-                // pero este proviene de otro lugar y no hay que obtenerlo del servidor
-                if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
-                    scope[name] = this[name];
-                    if(scope[name][property]) {
-                        scope[property] = scope[name][property];
-                    } else {
-                        scope[name][property] = scope[property];
-                    }
-                    if(callbackInit) {
-                        callbackInit();
-                    }
-                    return;
-                } 
+                //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
+                scope.$emit('apLoad:start',apLoadName);
                 
-                //los datos se obtienen del servidor 
-                if(this[name] && this[name] !== 'nuevo') {
-                    var obj = {};
-                    obj[name] = this[name];
-                    form.init(obj, function(r) {
-                        scope[name] = r.data;
-                        if(property) {
-                            if(scope[name][property]) {
-                                scope[property] = scope[name][property];
-                            } else {
-                                scope[name][property] = r.data[property];
-                            }
-                        }
-                        if(callbackInit) {
-                            callbackInit();
-                        }
-                    });
+                //si hay un request en proceso se lo cancela
+                if (this.request && !this.request.$promise.$resolved) {
+                    this.request.$cancelRequest();
                 }
+                
+                //se procesa el request
+                this.request = resource.$resource.get(paramRequest);
+                this.request.$promise.then(function(responseSuccess) {
+                    //se muestra la vista original
+                    scope.$broadcast('apLoad:finish',apLoadName);
+                    
+                    //se usa el nombre definido en el resource para establecer el nombre de la propiedad
+                    scope[name] = responseSuccess.data;
+                    
+                    //si hay un callback en caso de exito, se lo llama y se pasa como parametro la respuesta
+                    if(typeof(callbackSuccess) === 'function') {
+                        callbackSuccess(responseSuccess);
+                    }
+                }, function(responseError) {
+                    
+                    //se muestra el error, 
+                    scope.$emit('apLoad:finish', apLoadName, {
+                        message: CrudConfig.messages.loadError,
+                        type: 'error'
+                    });
+                    
+                    //si hay un callback en caso de error, se lo llama y se pasa como parametro la respuesta
+                    if (typeof (callbackError) === 'function') {
+                        callbackError(responseError);
+                    }
+                });
+                
+                return this;
             };
             
             
@@ -68,8 +72,8 @@ angular.module('adminPanel.crud').service('BasicReadController', [
             
             //cancelamos los request al destruir el controller
             this.destroy = function() {
-                if(scope.request) {
-                    scope.request.$cancelRequest();
+                if(this.request) {
+                    this.request.$cancelRequest();
                 }
             };
         }

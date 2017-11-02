@@ -23,7 +23,7 @@ angular.module('adminPanel.crud').service('BasicListController', [
          */
         function BasicListController(scope, resource, apLoadName) {
             scope.list = [];
-            var request = null;
+            this.request = null;
             
             /**
              * @description Inicializa el controlador
@@ -57,13 +57,13 @@ angular.module('adminPanel.crud').service('BasicListController', [
                     var action = (typeof(actionDefault) === 'string') ? actionDefault : 'get';
                     
                     //si hay un request en proceso se lo cancela
-                    if(request && !request.$promise.$resolved) {
-                        request.$cancelRequest();
+                    if(this.request && !this.request.$promise.$resolved) {
+                        this.request.$cancelRequest();
                     }
                     
                     //se procesa el request
-                    request = resource.$resource[action](listParams);
-                    request.$promise.then(function(responseSuccess) {
+                    this.request = resource.$resource[action](listParams);
+                    this.request.$promise.then(function(responseSuccess) {
                         //se muestra la vista original
                         scope.$broadcast('apLoad:finish',apLoadName);
                         
@@ -94,9 +94,6 @@ angular.module('adminPanel.crud').service('BasicListController', [
                             callbackError(responseError);
                         }
                     });
-                    
-                    //aregamos el request al scope para poderlo cancelar
-                    scope.request = request;
                 });
                 
                 return  this;
@@ -104,8 +101,8 @@ angular.module('adminPanel.crud').service('BasicListController', [
             
             //cancelamos los request al destruir el controller
             this.destroy = function() {
-                if(request) {
-                    request.$cancelRequest();
+                if(this.request) {
+                    this.request.$cancelRequest();
                 }
             };
             
