@@ -5,9 +5,9 @@
  * 
  * FALTA implementar busqueda
  */
-angular.module('adminPanel.crud').service('BasicListController', [
-    'CrudConfig','$timeout',
-    function(CrudConfig,$timeout) {
+angular.module('adminPanel.crud').factory('BasicListController', [
+    'CrudFactory','$timeout',
+    function(CrudFactory,$timeout) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -22,17 +22,18 @@ angular.module('adminPanel.crud').service('BasicListController', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
         function BasicListController(scope, resource, apLoadName) {
+            var self = this;
             scope.list = [];
-            this.request = null;
+            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
             /**
              * @description Inicializa el controlador
              * 
              * @returns {BasicListController}
              */
-            this.init = function () {
-                this.list();
-                return this;
+            self.init = function () {
+                self.list();
+                return self;
             };
             
             /**
@@ -48,26 +49,16 @@ angular.module('adminPanel.crud').service('BasicListController', [
              * 
              * @returns {BasicListController}
              */
-            this.list = function(params, actionDefault, callbackSuccess, callbackError) {
+            self.list = function(params, actionDefault) {
                 var listParams = (params) ? params : {};
+                var promise = null;
                 
                 $timeout(function () {
-                    //se muestra el gif de carga
-                    scope.$broadcast('apLoad:start',apLoadName);
-                    var action = (typeof(actionDefault) === 'string') ? actionDefault : 'get';
+                    var action = (actionDefault) ? actionDefault : 'get';
                     
-                    //si hay un request en proceso se lo cancela
-                    if(this.request && !this.request.$promise.$resolved) {
-                        this.request.$cancelRequest();
-                    }
-                    
-                    //se procesa el request
-                    this.request = resource.$resource[action](listParams);
-                    this.request.$promise.then(function(responseSuccess) {
-                        //se muestra la vista original
-                        scope.$broadcast('apLoad:finish',apLoadName);
+                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
+                        console.log('list responseSuccess', responseSuccess);
                         
-                        //se listan las entidades obtenidas del request
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -76,40 +67,28 @@ angular.module('adminPanel.crud').service('BasicListController', [
                             currentPageNumber: responseSuccess.currentPageNumber
                         });
                         
-                        //si hay un callback en caso de exito, se lo llama y se pasa como parametro la respuesta
-                        if(typeof(callbackSuccess) === 'function') {
-                            callbackSuccess(responseSuccess);
-                        }
-                    }, function(responseError) {
-                        if(responseError.status === -1) return;
+                        return responseSuccess;
+                    }, function (responseError) {
+                        console.log('list responseError', responseError);
                         
-                        //se muestra el error, 
-                        scope.$broadcast('apLoad:finish',apLoadName, {
-                            message: CrudConfig.messages.loadError,
-                            type: 'error'
-                        });
-                        
-                        //si hay un callback en caso de error, se lo llama y se pasa como parametro la respuesta
-                        if(typeof(callbackError) === 'function') {
-                            callbackError(responseError);
-                        }
+                        return responseError;
                     });
                 });
                 
-                return  this;
+                return promise;
             };
             
             //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                if(this.request) {
-                    this.request.$cancelRequest();
+            self.destroy = function() {
+                if(self.request) {
+                    self.$$crudFactory.cancelRequest();
                 }
             };
             
             //Evento capturado cuando se listan las entidades
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
-                this.list({
+                self.list({
                     page: page
                 });
             });
