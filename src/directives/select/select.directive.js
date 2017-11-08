@@ -18,6 +18,17 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.dropdownContainer = elem.find('.dropdown-ap');
                 scope.inputElem = elem.find('input');
                 elem.addClass('select-ap');
+                
+                //inicializamos los nombres que pueden ser un array o una cadena
+                var names = [];
+                var auxNames = (angular.isArray(scope.names)) ? scope.names : scope.names.split(',');
+                for(var i = 0; i < auxNames.length; i++) {
+                    //separamos los posibles puntos para denotar las entidades que pueden ser listadas
+                    // si es de la forma object.propery se traduce en un array [][] para que pueda ser accedido
+                    //sino se copia la cadena
+                    var points = auxNames[i].split('.');
+                    names.push((points.length === 1) ? points[0] : points);
+                }
 
                 //Se ejecuta cuando el usuario da click al boton nuevo.
                 //Lanza el evento para mostrar el box correspondiente
@@ -31,8 +42,8 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onInputChange = function (all) {
                     var search = scope.search || {};
                     if (!all) {
-                        for (var j = 0; j < scope.names.length; j++) {
-                            search[scope.names[j]] = scope.input;
+                        for (var j = 0; j < names.length; j++) {
+                            search[names[j]] = scope.input;
                         }
                     }
                     scope.loading = true;
@@ -46,17 +57,20 @@ angular.module('adminPanel').directive('apSelect', [
                         var options = r.data;
                         scope.options = [];
                         for (var i = 0; i < options.length; i++) {
-                            var name = '';
-                            for (var j = 0; j < scope.names.length; j++) {
-                                name += options[i][scope.names[j]] + ', ';
+                            var optionName = '';
+
+                            for (var j = 0; j < names.length; j++) {
+                                var name = names[j];
+                                
+                                optionName += (angular.isArray(name) ? options[i][name[0]][name[1]] : options[i][name]) + ', ';
                             }
-                            name = name.replace(/,\s*$/, "");
+                            optionName = optionName.replace(/,\s*$/, "");
 
                             var obj = options[i];
-                            obj.name = name;
+                            obj.name = optionName;
                             scope.options.push(obj);
                         }
-                    });
+                    });	
                 };
 
                 scope.optionSelected = function (option) {
