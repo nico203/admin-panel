@@ -117,8 +117,9 @@ angular.module('adminPanel').directive('apSelect', [
                     }
                     var input = '';
                     if (val) {
-                        for (var j = 0; j < scope.names.length; j++) {
-                            input += val[scope.names[j]] + ', ';
+                        for (var j = 0; j < names.length; j++) {
+                            var name = names[j];
+                            input += (angular.isArray(name) ? val[name[0]][name[1]] : val[name]) + ', ';
                         }
                         input = input.replace(/,\s*$/, "");
                     }
