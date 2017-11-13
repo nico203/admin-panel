@@ -1,23 +1,24 @@
 <div class="input-group">
-    <input class="input-group-field" type="text" ng-model="input" ng-change="onInputChange()"
-           ng-focus="onFocus()"
-           ng-blur="onBlur()" />
+    <input class="input-group-field" type="text" ng-model="input.model" 
+           ng-change="onChangeInput()"
+           ng-focus="onFocusInput()"
+           ng-blur="onBlurInput()" />
     <div class="input-group-button">
-        <button type="button" class="button secondary" ng-click="buttonClick()">
+        <button type="button" class="button secondary" ng-click="onClickButton()">
             <span class="caret"></span>
         </button>
     </div>
 </div>
 <div class="dropdown-ap">
-    <ul ng-if="loading" class="list-group">
+    <ul ng-if="lista.desplegado" class="list-group">
         <li style="font-weight: bold;">Cargando...</li>
     </ul>
-    <ul ng-if="!loading && options.length > 0" class="list-group">
-        <li ng-repeat="option in options" 
+    <ul ng-if="lista.desplegado && lista.items.length > 0" class="list-group">
+        <li ng-repeat="option in lista.items" 
             ng-bind-html="option.name | highlight:input"
-            ng-click="optionSelected(option)"></li>
+            ng-click="onClickItemList(option)"></li>
     </ul>
-    <ul ng-if="!loading && options.length === 0" class="list-group">
+    <ul ng-if="lista.desplegado && lista.items.length === 0" class="list-group">
         <li style="font-weight: bold;">No hay resultados</li>
     </ul>
     <ul ng-if="enableNewButton" class="list-group new">
