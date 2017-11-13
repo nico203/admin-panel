@@ -1907,10 +1907,9 @@ angular.module('adminPanel').directive('formFieldError', [
                 
                 scope.onBlurInput = function() {
                     timeoutPromise = $timeout(function(e) {
-                        console.log(e);
+                        console.log('timeoutPromise');
                         scope.lista.desplegado = false;
-                    });
-                    console.log('timeoutPromise', timeoutPromise);
+                    }, 100);
                 };
                 
                 //eventos relacionados con el boton
@@ -1918,6 +1917,10 @@ angular.module('adminPanel').directive('formFieldError', [
                     if(scope.input.vacio && !scope.lista.desplegado) {
                         scope.onFocusInput();
                     } else if(scope.lista.desplegado) {
+                        if(timeoutPromise !== null) {
+                            $timeout.cancel(timeoutPromise);
+                        }
+                        console.log('clickbtn');
                         scope.lista.desplegado = false;
                     }
                     

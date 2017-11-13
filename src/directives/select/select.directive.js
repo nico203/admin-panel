@@ -59,10 +59,8 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 scope.onBlurInput = function() {
                     timeoutPromise = $timeout(function(e) {
-                        console.log(e);
                         scope.lista.desplegado = false;
-                    });
-                    console.log('timeoutPromise', timeoutPromise);
+                    }, 100);
                 };
                 
                 //eventos relacionados con el boton
@@ -70,6 +68,9 @@ angular.module('adminPanel').directive('apSelect', [
                     if(scope.input.vacio && !scope.lista.desplegado) {
                         scope.onFocusInput();
                     } else if(scope.lista.desplegado) {
+                        if(timeoutPromise !== null) {
+                            $timeout.cancel(timeoutPromise);
+                        }
                         scope.lista.desplegado = false;
                     }
                     
