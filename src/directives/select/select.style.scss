@@ -9,6 +9,13 @@
         width: 100%;
         top: 100%;
         left: 0;
+        max-height: 0;
+        transition: max-height 0.2s;
+        overflow: hidden;
+        
+        &.is-open {
+            max-height: 300px;
+        }
 
         .list-group {
             list-style-type: none;

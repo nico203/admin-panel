@@ -1865,12 +1865,18 @@ angular.module('adminPanel').directive('formFieldError', [
                 names: '='
             },
             link: function (scope, elem, attr, ngModel) {
+                elem.addClass('select-ap');
+                
                 //habilitamos el boton para agregar entidades
                 scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
                 
                 //obtenemos el nombre del select dado el atributo name
                 var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
                 console.log('apSelect name',name);
+                
+                //se definen las propiedades del objeto a mostrar.
+                var objectProperties = angular.isArray(scope.names) ? scope.names : scope.names.split(',');
+                console.log('apSelect objectNames',objectProperties);
                 
                 //elemento seleccionado 
                 var itemSelected = null;
@@ -1884,22 +1890,53 @@ angular.module('adminPanel').directive('formFieldError', [
                     items: [],
                     desplegado: false
                 };
+                //Indica el estado del request.
+                scope.loading = false;
                 var timeoutPromise = null;
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var request = null;
                 
+                //Se ejecuta cuando el usuario da click al boton nuevo.
+                //Lanza el evento para mostrar el box correspondiente
+                scope.newObject = function () {
+                    $rootScope.$broadcast('apBox:show', attr.new);
+                };
+                
                 /**
                  * Se realiza el request. En caso de haber uno en proceso se lo cancela
                  * Emite un evento en donde se manda la promise.
+                 * 
                  */
                 function doRequest() {
+                    console.log('request');
                     if(request) {
                         request.$cancelRequest();
                     }
                     request = scope.reosource[defaultMethod]();
                     
+                    //seteamos en la vista que el request esta en proceso
+                    scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        scope.lista.items = rSuccess.data;
+                        
+                        //creamos la lista. Cada item es de la forma 
+                        //{name:'name',id:'id'}
+                        var list = [];
+                        for(var i = 0; i < rSuccess.data.length; i++) {
+                            var itemList = rSuccess.data[i];
+                            var name = '';
+                            //Seteamos solamente los campos seleccionados a mostrar
+                            for(j = 0; j < objectProperties.length; j++) {
+                                name += itemList[objectProperties[j]] + ', ';
+                            }
+                            //borramos la ultima coma
+                            name = name.replace(/,\s*$/, "");
+                            list.push({
+                                name: name,
+                                id: itemList.id
+                            });
+                        }
+                        scope.lista.items = list;
+                        
                         if(!scope.lista.desplegado) {
                             scope.lista.desplegado = true;
                         }
@@ -1908,10 +1945,16 @@ angular.module('adminPanel').directive('formFieldError', [
                     }, function(rError) {
                         $q.reject(rError);
                     });
+                    
+                    //steamos en la vista que el request se termino de procesar
+                    promise.finally(function() {
+                        scope.loading = false;
+                    });
                     scope.$emit('ap-select:request', name, promise);
                 }
                 
                 function closeList() {
+                    console.log('closeList');
                     //cerramos la lista
                     scope.lista.desplegado = false;
                     
@@ -1934,6 +1977,7 @@ angular.module('adminPanel').directive('formFieldError', [
                  * Si la lista no esta desplegada se la despliega. En todos los casos se hace el request
                  */
                 scope.onChangeInput = function() {
+                    console.log('onChangeInput');
                     if(!scope.lista.desplegado) {
                         scope.lista.desplegado = true;
                     }
@@ -1948,6 +1992,7 @@ angular.module('adminPanel').directive('formFieldError', [
                  * Solo se hace el request si la lista interna esta vacia
                  */
                 scope.onFocusInput = function () {
+                    console.log('onFocusInput');
                     if (!scope.lista.desplegado) {
                         scope.lista.desplegado = true;
                         //si la lista interna esta vacia se hace el request
@@ -1962,7 +2007,8 @@ angular.module('adminPanel').directive('formFieldError', [
                  * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
                  */
                 scope.onBlurInput = function() {
-                    timeoutPromise = $timeout(closeList(), 100);
+                    console.log('blur');
+                    timeoutPromise = $timeout(closeList, 100);
                 };
                 
                 //eventos relacionados con el boton
@@ -1975,9 +2021,10 @@ angular.module('adminPanel').directive('formFieldError', [
                  * tenga o no elementos.
                  */
                 scope.onClickButton = function() {
+                    console.log('onClickButton');
                     if(!scope.lista.desplegado) {
                         //le damos el foco al input
-                        elem.find('.input-group-field').focus();
+                        elem.find('input').focus();
                     } else if(scope.lista.desplegado) {
                         if(timeoutPromise !== null) {
                             $timeout.cancel(timeoutPromise);
@@ -1991,20 +2038,37 @@ angular.module('adminPanel').directive('formFieldError', [
                 /**
                  * Al seleccionar un item de la lista se guarda en el modelo y la lista pasa a estado no desplegado
                  */
-                scope.onClickItemList = function(item) {
+                scope.onClickItemList = function(e, item) {
+                    e.stopPropagation();
+                    console.log('onClickItemList', item);
+                    
                     //seteamos el item actual
                     itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
 //                    ngModel.$setViewValue(item.id);
                     if(timeoutPromise !== null) {
+                        console.log('canceltimeout');
                         $timeout.cancel(timeoutPromise);
                     }
-                    closeList();
+                    timeoutPromise = $timeout(closeList, 100);
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
                 };
+                
+                /**
+                 * 
+                 */
+                scope.onListClick = function() {
+                    console.log('onListClick');
+                    
+                    if(timeoutPromise !== null) {
+                        $timeout.cancel(timeoutPromise);
+                    }
+                };
+                
+                elem.find('.dropdown-ap').on('click', scope.onListClick);
                 
             },
             templateUrl: 'directives/select/select.template.html'
@@ -2313,7 +2377,7 @@ angular.module('adminPanel').directive('formFieldError', [
   $templateCache.put("directives/pagination/pagination.template.html",
     "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton()><span class=caret></span></button></div></div><div class=dropdown-ap><ul ng-if=lista.desplegado class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"lista.desplegado && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input\" ng-click=onClickItemList(option)></li></ul><ul ng-if=\"lista.desplegado && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject()><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton()><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input\" ng-click=\"onClickItemList($event, option)\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject()><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);
