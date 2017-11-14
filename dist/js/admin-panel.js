@@ -661,430 +661,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             messages: messages
         };
     };
-});;angular.module('adminPanel.crud').service('BasicFormController', [
-    'CrudConfig',
-    function(CrudConfig) {
-        /**
-         * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
-         * de formulario. Debe haber un solo de estos elementos por formulario.
-         * 
-         * @param {Scope} scope Scope al cual apunta los eventos
-         * @param {CrudResource} Resource | Resource que se utiliza para hacer las peticiones al servidor
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         * @returns {CrudService.serviceL#3.Form}
-         */
-        var Form = function(scope, Resource, apLoadName, file) {
-            var self = this;
-            /**
-             * @description metodo que inicializa el formulario con datos del servicor.
-             * 
-             * @param {Object} object Objeto a enviar al servidor para hacer la consulta 
-             * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
-             * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
-             * @returns {undefined}
-             */
-            self.init = function(object, callbackSuccess, callbackError) {
-                scope.$emit('apLoad:start',apLoadName);
-                var request = Resource.get(object);
-                request.$promise.then(function(responseSuccess) {
-                    scope.$emit('apLoad:finish', apLoadName);
-                    if(callbackSuccess) {
-                        callbackSuccess(responseSuccess);
-                    }
-                }, function(responseError) {
-                    console.log('responseError',responseError);
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.loadError,
-                        type: 'error'
-                    });
-                    if(callbackError) {
-                        callbackError(responseError);
-                    }
-                });
-                
-                //aregamos el request al scope para poderlo cancelar
-                self.initRequest = request;
-            };
-
-            /**
-             * @description Metodo que envia los datos del formulario al servidor para hacer la actualizacion
-             * 
-             * @param {Object} object Objeto a enviar al servidor para persistir los datos. 
-             * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
-             * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
-             * @returns {undefined}
-             */
-            self.submit = function(object, callbackSuccess, callbackError) {
-                scope.$emit('apLoad:start',apLoadName);
-                console.log('object', object);
-                var request = Resource.save(object);
-                
-                //Se hace el request para guardar el objeto
-                request.$promise.then(function(responseSuccess) {
-                    //Si no hay archivos se sigue el curso actual
-                    if(file === null) {
-                        scope.$emit('apLoad:finish', apLoadName, {
-                            message: CrudConfig.messages.saveSusccess,
-                            type: 'success'
-                        });
-                        if(callbackSuccess) {
-                            callbackSuccess(responseSuccess);
-                        }
-                    } else {
-                        var requestFile = Resource[file.prop](responseSuccess.data);
-                        requestFile.$promise.then(function(fileResponseSuccess) {
-                            scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveSusccess,
-                                type: 'success'
-                            });
-                            if(callbackSuccess) {
-                                callbackSuccess(fileResponseSuccess);
-                            }
-                        }, function(fileResponseError) {
-                            scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveError,
-                                type: 'error'
-                            });
-                            if(callbackError) {
-                                callbackError(fileResponseError);
-                            }
-                            throw 'Form File Error: ' + fileResponseError;
-                        });
-                    }
-                }, function(responseError) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveError,
-                        type: 'error'
-                    });
-                    if(callbackError) {
-                        callbackError(responseError);
-                    }
-                    throw 'Form Error: ' + responseError;
-                });
-                
-                //aregamos el request al scope para poderlo cancelar
-                self.submitRequest = request;
-            };
-            
-            
-            //cancelamos los request
-            self.destroy = function() {
-                if(self.initRequest) {
-                    self.initRequest.$cancelRequest();
-                }
-                if(self.submitRequest) {
-                    self.submitRequest.$cancelRequest();
-                }
-            };
-        };
-        
-        /**
-         * @description Inicializa el controlador del componente para tener el formulario del servidor
-         * 
-         * @param {Controller} controller Controller del componente
-         * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {Scope} scope Scope del componente
-         * @param {Funciton} callbackInit funcion que puede ser ejecutada luego del init
-         * @param {Funciton} function que puede ser ejecutada luego del submit
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         * @returns {undefined}
-         */
-        function BasicFormController(scope, resource, apLoadName) {
-            this.request = null;
-            var name = resource.name;
-            scope[name] = {};
-            
-            this.get = function(callbackSuccess, callbackError) {
-                var property = resource.property;
-                
-
-                //esta definida la propiedad, es decir tiene un sub recurso 
-                // pero este proviene de otro lugar y no hay que obtenerlo del servidor
-                if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
-                    scope[name] = this[name];
-                    if(scope[name][property]) {
-                        scope[property] = scope[name][property];
-                    } else {
-                        scope[name][property] = scope[property];
-                    }
-                    if(callbackInit) {
-                        callbackInit();
-                    }
-                    return;
-                } 
-                
-                //los datos se obtienen del servidor 
-                if(this[name] && this[name] !== 'nuevo') {
-                    var obj = {};
-                    obj[name] = this[name];
-                    form.init(obj, function(r) {
-                        scope[name] = r.data;
-                        if(property) {
-                            if(scope[name][property]) {
-                                scope[property] = scope[name][property];
-                            } else {
-                                scope[name][property] = r.data[property];
-                            }
-                        }
-                        if(callbackInit) {
-                            callbackInit();
-                        }
-                    });
-                }
-            };
-            
-            this.submit = function(callbackSuccess, callbackError) {
-                
-                
-                if(!scope.form) {
-                    form.submit(scope[name], function(r) {
-                        if(r.data) {
-                            scope[name] = r.data;
-                        }
-                        if(callbackSubmit) {
-                            callbackSubmit();
-                        }
-                    });
-                }
-                else if(scope.form.$valid) {
-                    form.submit(scope[name], function(r) {
-                        if(r.data) {
-                            scope[name] = r.data;
-                        }
-                        if(callbackSubmit) {
-                            callbackSubmit();
-                        }
-                    });
-                }
-            };
-
-            
-            
-            //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                if(this.request) {
-                    this.request.$cancelRequest();
-                }
-            };
-        }
-        
-        return BasicFormController;
-    }
-]);;/* 
- * Servicio para listar todos los elementos 
- * 
- * FALTA implementar los resultados en base a un hijo
- * 
- * FALTA implementar busqueda
- */
-angular.module('adminPanel.crud').service('BasicListController', [
-    'CrudConfig','$timeout',
-    function(CrudConfig,$timeout) {
-        
-        /**
-         * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
-         * object: {
-         *    totalItemCount: 'numero total de entidades en el servidor',
-         *    pageNumber: 'Numero de la pagina actual'
-         * }
-         * implementa paginacion sobre los elementos devueltos.
-         * 
-         * @param {Scope} scope Scope del componente
-         * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         */
-        function BasicListController(scope, resource, apLoadName) {
-            scope.list = [];
-            this.request = null;
-            
-            /**
-             * @description Inicializa el controlador
-             * 
-             * @returns {BasicListController}
-             */
-            this.init = function () {
-                this.list();
-                return this;
-            };
-            
-            /**
-             * @description Lista los elementos de la entidad en la base de datos.
-             * 
-             * @param {Object} params parametros adicionales para hacer en el request.
-             * @param {string} actionDefault accion a interpretar del servidor. Por defecto, 'get'.
-             * @param {function} callbackSuccess funcion que es llamada al traer los datos del servidor, luego de que
-             * se asignen los datos a la lista de la entidad y se cancele el evento de carga en la vista. 
-             * Recibe como parametro la respuesta del servidor
-             * @param {function} callbackError funcion que es llamada en caso de haber un error, luego de que se cancele 
-             * el evento de carga en la vista. Recibe como parametro la respuesta del servidor.
-             * 
-             * @returns {BasicListController}
-             */
-            this.list = function(params, actionDefault, callbackSuccess, callbackError) {
-                var listParams = (params) ? params : {};
-                
-                $timeout(function () {
-                    //se muestra el gif de carga
-                    scope.$broadcast('apLoad:start',apLoadName);
-                    var action = (typeof(actionDefault) === 'string') ? actionDefault : 'get';
-                    
-                    //si hay un request en proceso se lo cancela
-                    if(this.request && !this.request.$promise.$resolved) {
-                        this.request.$cancelRequest();
-                    }
-                    
-                    //se procesa el request
-                    this.request = resource.$resource[action](listParams);
-                    this.request.$promise.then(function(responseSuccess) {
-                        //se muestra la vista original
-                        scope.$broadcast('apLoad:finish',apLoadName);
-                        
-                        //se listan las entidades obtenidas del request
-                        scope.list = responseSuccess.data;
-                        
-                        //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
-                        scope.$broadcast('pagination:paginate', {
-                            totalPageCount: responseSuccess.totalPageCount,
-                            currentPageNumber: responseSuccess.currentPageNumber
-                        });
-                        
-                        //si hay un callback en caso de exito, se lo llama y se pasa como parametro la respuesta
-                        if(typeof(callbackSuccess) === 'function') {
-                            callbackSuccess(responseSuccess);
-                        }
-                    }, function(responseError) {
-                        if(responseError.status === -1) return;
-                        
-                        //se muestra el error, 
-                        scope.$broadcast('apLoad:finish',apLoadName, {
-                            message: CrudConfig.messages.loadError,
-                            type: 'error'
-                        });
-                        
-                        //si hay un callback en caso de error, se lo llama y se pasa como parametro la respuesta
-                        if(typeof(callbackError) === 'function') {
-                            callbackError(responseError);
-                        }
-                    });
-                });
-                
-                return  this;
-            };
-            
-            //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                if(this.request) {
-                    this.request.$cancelRequest();
-                }
-            };
-            
-            //Evento capturado cuando se listan las entidades
-            scope.$on('pagination:changepage', function(e, page) {
-                e.stopPropagation();
-                this.list({
-                    page: page
-                });
-            });
-        }
-        
-        return BasicListController;
-    }
-]);
-
-;/**
- * Servicio para obtener los datos de una entidad en especifico desde un servidor
- * 
- * FALTA implementar los resultados en base a un hijo
- */
-angular.module('adminPanel.crud').service('BasicReadController', [
-    'CrudConfig','$timeout',
-    function(CrudConfig,$timeout) {
-        
-        /**
-         * @description 
-         * 
-         * @param {Scope} scope Scope del componente
-         * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         */
-        function BasicReadController(scope, resource, apLoadName) {
-            this.request = null;
-            var name = resource.name;
-            
-            this.get = function(params, actionDefault, callbackSuccess, callbackError) {
-                var paramRequest = (params) ? params : {};
-                
-                //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
-                scope.$emit('apLoad:start',apLoadName);
-                
-                //si hay un request en proceso se lo cancela
-                if (this.request && !this.request.$promise.$resolved) {
-                    this.request.$cancelRequest();
-                }
-                
-                //se procesa el request
-                this.request = resource.$resource.get(paramRequest);
-                this.request.$promise.then(function(responseSuccess) {
-                    //se muestra la vista original
-                    scope.$broadcast('apLoad:finish',apLoadName);
-                    
-                    //se usa el nombre definido en el resource para establecer el nombre de la propiedad
-                    scope[name] = responseSuccess.data;
-                    
-                    //si hay un callback en caso de exito, se lo llama y se pasa como parametro la respuesta
-                    if(typeof(callbackSuccess) === 'function') {
-                        callbackSuccess(responseSuccess);
-                    }
-                }, function(responseError) {
-                    
-                    //se muestra el error, 
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.loadError,
-                        type: 'error'
-                    });
-                    
-                    //si hay un callback en caso de error, se lo llama y se pasa como parametro la respuesta
-                    if (typeof (callbackError) === 'function') {
-                        callbackError(responseError);
-                    }
-                });
-                
-                return this;
-            };
-            
-            
-            /**
-             * @description Inicializa el controlador
-             * 
-             * @returns {BasicReadController}
-             */
-            this.init = function() {
-                this.get();
-                return this;
-            };
-            
-            //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                if(this.request) {
-                    this.request.$cancelRequest();
-                }
-            };
-        }
-        
-        return BasicReadController;
-    }
-]);;angular.module('adminPanel.crud').service('CrudService', [
-    '$timeout','CrudConfig',
-    function($timeout, CrudConfig) {
-        
-        this.get = function () {
-            
-        };
-        
-        
-    }
-]);
-;angular.module('adminPanel.crud').service('CrudService', [
+});;angular.module('adminPanel.crud').service('CrudService', [
     '$timeout','CrudConfig',
     function($timeout, CrudConfig) {
         /**
@@ -2276,20 +1853,28 @@ angular.module('adminPanel').directive('formFieldError', [
 ]);
 
 ;angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope',
-    function ($timeout, $rootScope) {
+    '$timeout', '$rootScope', '$q',
+    function ($timeout, $rootScope, $q) {
         return {
             restrict: 'AE',
             require: 'ngModel',
             scope: {
                 reosource: '=',
                 search: '=?',
+                method: '=?',
                 names: '='
             },
             link: function (scope, elem, attr, ngModel) {
                 //habilitamos el boton para agregar entidades
                 scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
                 
+                //obtenemos el nombre del select dado el atributo name
+                var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
+                console.log('apSelect name',name);
+                
+                //elemento seleccionado 
+                var itemSelected = null;
+
                 //inicializamos los componentes
                 scope.input = {
                     model: null,
@@ -2300,64 +1885,125 @@ angular.module('adminPanel').directive('formFieldError', [
                     desplegado: false
                 };
                 var timeoutPromise = null;
+                var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
+                var request = null;
                 
+                /**
+                 * Se realiza el request. En caso de haber uno en proceso se lo cancela
+                 * Emite un evento en donde se manda la promise.
+                 */
                 function doRequest() {
-                    var request = scope.reosource.get();
                     if(request) {
                         request.$cancelRequest();
                     }
-                    var promise = request.then(function(rSuccess) {
+                    request = scope.reosource[defaultMethod]();
+                    
+                    var promise = request.$promise.then(function(rSuccess) {
+                        scope.lista.items = rSuccess.data;
+                        if(!scope.lista.desplegado) {
+                            scope.lista.desplegado = true;
+                        }
                         
+                        return rSuccess.data;
                     }, function(rError) {
-                        
+                        $q.reject(rError);
                     });
-                    scope.$emit('ap-select:request', promise);
+                    scope.$emit('ap-select:request', name, promise);
+                }
+                
+                function closeList() {
+                    //cerramos la lista
+                    scope.lista.desplegado = false;
+                    
+                    //si hay un request en proceso se lo cancela
+                    if(request) {
+                        request.$cancelRequest();
+                    }
+
+                    //seteamos el estado actual del modelo 
+                    scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
+                    scope.input.vacio = (itemSelected === null);
+
+                    //vaciamos la promesa
+                    timeoutPromise = null;
                 }
                 
                 //eventos relacionados con el input
                 
                 /**
-                 * 
+                 * Si la lista no esta desplegada se la despliega. En todos los casos se hace el request
                  */
                 scope.onChangeInput = function() {
-                    
-                };
-                
-                scope.onFocusInput = function() {
-                    if(scope.input.vacio && !scope.lista.desplegado) {
+                    if(!scope.lista.desplegado) {
                         scope.lista.desplegado = true;
-                        console.log('desplegado');
-//                        doRequest(); 
-                    } else if(scope.input.vacio && scope.lista.desplegado) {
-                        //nada
                     }
                     
+                    //chequeamos si el input esta vacio 
+                    scope.input.vacio = (angular.isUndefined(scope.input.model) && scope.input.model.length !== 0);
+                    doRequest();
                 };
                 
+                /**
+                 * Se despliega la lista si no esta desplegada.
+                 * Solo se hace el request si la lista interna esta vacia
+                 */
+                scope.onFocusInput = function () {
+                    if (!scope.lista.desplegado) {
+                        scope.lista.desplegado = true;
+                        //si la lista interna esta vacia se hace el request
+                        if(scope.lista.items.length === 0) {
+                            doRequest();
+                        }
+                    } 
+                };
+                
+                /**
+                 * Se usa el $timeout que retorna una promesa. Si el click proximo viene dado por un evento dentro
+                 * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
+                 */
                 scope.onBlurInput = function() {
-                    timeoutPromise = $timeout(function(e) {
-                        console.log('timeoutPromise');
-                        scope.lista.desplegado = false;
-                    }, 100);
+                    timeoutPromise = $timeout(closeList(), 100);
                 };
                 
                 //eventos relacionados con el boton
+                /**
+                 * Hace un toggle de la lista, es decir si esta desplegada, la cierra y sino la abre
+                 * En caso de que la lista este desplegada la cierra, cancelando el timeout que se genera al perder
+                 * el foco del input, en caso de que el input haya tenido el foco.
+                 * Al cerrar la lista se setea en el input el valor del modelo actual.
+                 * Si no está desplegada, la despliega, viendo de hacer o no el request, segun la lista interna tenga
+                 * tenga o no elementos.
+                 */
                 scope.onClickButton = function() {
-                    if(scope.input.vacio && !scope.lista.desplegado) {
-                        scope.onFocusInput();
+                    if(!scope.lista.desplegado) {
+                        //le damos el foco al input
+                        elem.find('.input-group-field').focus();
                     } else if(scope.lista.desplegado) {
                         if(timeoutPromise !== null) {
                             $timeout.cancel(timeoutPromise);
                         }
-                        console.log('clickbtn');
-                        scope.lista.desplegado = false;
-                    }
-                    
+                        closeList();
+                    } 
                 };
                 
                 //eventos relacionados con la lista
-                scope.onClickItemList = function() {
+                
+                /**
+                 * Al seleccionar un item de la lista se guarda en el modelo y la lista pasa a estado no desplegado
+                 */
+                scope.onClickItemList = function(item) {
+                    //seteamos el item actual
+                    itemSelected = item;
                     
+                    //asignamos el id de la entidad al modelo
+//                    ngModel.$setViewValue(item.id);
+                    if(timeoutPromise !== null) {
+                        $timeout.cancel(timeoutPromise);
+                    }
+                    closeList();
+                    
+                    //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
+                    scope.$emit('ap-select:item-selected', name, item);
                 };
                 
             },
@@ -2385,17 +2031,6 @@ angular.module('adminPanel').directive('formFieldError', [
                 scope.dropdownContainer = elem.find('.dropdown-ap');
                 scope.inputElem = elem.find('input');
                 elem.addClass('select-ap');
-                
-                //inicializamos los nombres que pueden ser un array o una cadena
-                var names = [];
-                var auxNames = (angular.isArray(scope.names)) ? scope.names : scope.names.split(',');
-                for(var i = 0; i < auxNames.length; i++) {
-                    //separamos los posibles puntos para denotar las entidades que pueden ser listadas
-                    // si es de la forma object.propery se traduce en un array [][] para que pueda ser accedido
-                    //sino se copia la cadena
-                    var points = auxNames[i].split('.');
-                    names.push((points.length === 1) ? points[0] : points);
-                }
 
                 //Se ejecuta cuando el usuario da click al boton nuevo.
                 //Lanza el evento para mostrar el box correspondiente
@@ -2409,8 +2044,8 @@ angular.module('adminPanel').directive('formFieldError', [
                 scope.onInputChange = function (all) {
                     var search = scope.search || {};
                     if (!all) {
-                        for (var j = 0; j < names.length; j++) {
-                            search[names[j]] = scope.input;
+                        for (var j = 0; j < scope.names.length; j++) {
+                            search[scope.names[j]] = scope.input;
                         }
                     }
                     scope.loading = true;
@@ -2424,20 +2059,17 @@ angular.module('adminPanel').directive('formFieldError', [
                         var options = r.data;
                         scope.options = [];
                         for (var i = 0; i < options.length; i++) {
-                            var optionName = '';
-
-                            for (var j = 0; j < names.length; j++) {
-                                var name = names[j];
-                                
-                                optionName += (angular.isArray(name) ? options[i][name[0]][name[1]] : options[i][name]) + ', ';
+                            var name = '';
+                            for (var j = 0; j < scope.names.length; j++) {
+                                name += options[i][scope.names[j]] + ', ';
                             }
-                            optionName = optionName.replace(/,\s*$/, "");
+                            name = name.replace(/,\s*$/, "");
 
                             var obj = options[i];
-                            obj.name = optionName;
+                            obj.name = name;
                             scope.options.push(obj);
                         }
-                    });	
+                    });
                 };
 
                 scope.optionSelected = function (option) {
@@ -2484,9 +2116,8 @@ angular.module('adminPanel').directive('formFieldError', [
                     }
                     var input = '';
                     if (val) {
-                        for (var j = 0; j < names.length; j++) {
-                            var name = names[j];
-                            input += (angular.isArray(name) ? val[name[0]][name[1]] : val[name]) + ', ';
+                        for (var j = 0; j < scope.names.length; j++) {
+                            input += val[scope.names[j]] + ', ';
                         }
                         input = input.replace(/,\s*$/, "");
                     }
