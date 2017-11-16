@@ -4,16 +4,16 @@
            ng-focus="onFocusInput()"
            ng-blur="onBlurInput()" />
     <div class="input-group-button">
-        <button type="button" class="button secondary" ng-click="onClickButton()">
+        <a class="button secondary" ng-click="onClickButton()" ng-focus="onFocusButton()">
             <span class="caret"></span>
-        </button>
+        </a>
     </div>
 </div>
 <div class="dropdown-ap " ng-class="{'is-open':lista.desplegado}">
     <ul ng-if="loading" class="list-group">
         <li style="font-weight: bold;">Cargando...</li>
     </ul>
-    <ul ng-if="lista.items.length > 0" class="list-group">
+    <ul ng-if="!loading && lista.items.length > 0" class="list-group">
         <li ng-repeat="option in lista.items" 
             ng-bind-html="option.name | highlight:input"
             ng-click="onClickItemList($event, option)"></li>

@@ -38,12 +38,15 @@ angular.module('adminPanel').directive('apSelect', [
                 };
                 //Indica el estado del request.
                 scope.loading = false;
-                var timeoutPromise = null;
+                var timeoutBlurPromise = null;
+                var timeoutFocusPromise = null;
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var request = null;
                 
-                //Se ejecuta cuando el usuario da click al boton nuevo.
-                //Lanza el evento para mostrar el box correspondiente
+                /**
+                 * Se ejecuta cuando el usuario da click al boton nuevo.
+                 * Lanza el evento para mostrar el box correspondiente
+                 */
                 scope.newObject = function () {
                     $rootScope.$broadcast('apBox:show', attr.new);
                 };
@@ -114,7 +117,7 @@ angular.module('adminPanel').directive('apSelect', [
                     scope.input.vacio = (itemSelected === null);
 
                     //vaciamos la promesa
-                    timeoutPromise = null;
+                    timeoutBlurPromise = null;
                 }
                 
                 //eventos relacionados con el input
@@ -138,14 +141,26 @@ angular.module('adminPanel').directive('apSelect', [
                  * Solo se hace el request si la lista interna esta vacia
                  */
                 scope.onFocusInput = function () {
-                    console.log('onFocusInput');
-                    if (!scope.lista.desplegado) {
-                        scope.lista.desplegado = true;
-                        //si la lista interna esta vacia se hace el request
-                        if(scope.lista.items.length === 0) {
-                            doRequest();
-                        }
-                    } 
+                    //en caso de haber una promesa para cerrar la lista en el foco no se hace nada
+                    //cuando se resuelve la promesa se limpia la variable
+                    if(timeoutBlurPromise !== null) {
+                        timeoutBlurPromise.finally(function() {
+                            timeoutBlurPromise = null;
+                        });
+                        return;
+                    }
+                    
+                    timeoutFocusPromise = $timeout(function() {
+                        console.log('onFocusInput');
+                        if (!scope.lista.desplegado) {
+                            scope.lista.desplegado = true;
+                            //si la lista interna esta vacia se hace el request
+                            if(scope.lista.items.length === 0) {
+                                doRequest();
+                            }
+                        } 
+                        timeoutFocusPromise = null;
+                    });
                 };
                 
                 /**
@@ -153,8 +168,12 @@ angular.module('adminPanel').directive('apSelect', [
                  * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
                  */
                 scope.onBlurInput = function() {
+                    if(timeoutFocusPromise !== null) {
+                        $timeout.cancel(timeoutFocusPromise);
+                        timeoutFocusPromise = null;
+                    }
                     console.log('blur');
-                    timeoutPromise = $timeout(closeList, 100);
+                    timeoutBlurPromise = $timeout(closeList, 100);
                 };
                 
                 //eventos relacionados con el boton
@@ -172,11 +191,15 @@ angular.module('adminPanel').directive('apSelect', [
                         //le damos el foco al input
                         elem.find('input').focus();
                     } else if(scope.lista.desplegado) {
-                        if(timeoutPromise !== null) {
-                            $timeout.cancel(timeoutPromise);
+                        if(timeoutBlurPromise !== null) {
+                            $timeout.cancel(timeoutBlurPromise);
                         }
                         closeList();
                     } 
+                };
+                
+                scope.onFocusButton = function() {
+                    console.log('onFocusButton  ');
                 };
                 
                 //eventos relacionados con la lista
@@ -193,24 +216,29 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     //asignamos el id de la entidad al modelo
 //                    ngModel.$setViewValue(item.id);
-                    if(timeoutPromise !== null) {
+                    
+                    //cancelamos la funcion del blur
+                    if(timeoutBlurPromise !== null) {
                         console.log('canceltimeout');
-                        $timeout.cancel(timeoutPromise);
+                        $timeout.cancel(timeoutBlurPromise);
                     }
-                    timeoutPromise = $timeout(closeList, 100);
+                    if(scope.lista.desplegado) {
+                        timeoutBlurPromise = $timeout(closeList, 100);
+                    }
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
                 };
                 
                 /**
-                 * 
+                 * Al hacer click en la lista se cancela el evento para no cerrar la lista
                  */
                 scope.onListClick = function() {
                     console.log('onListClick');
                     
-                    if(timeoutPromise !== null) {
-                        $timeout.cancel(timeoutPromise);
+                    if(timeoutBlurPromise !== null) {
+                        timeoutBlurPromise = $timeout.cancel(timeoutBlurPromise);
+                        timeoutBlurPromise = null;
                     }
                 };
                 
