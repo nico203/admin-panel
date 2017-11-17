@@ -185,11 +185,13 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onClickButton = function() {
                     console.log('onClickButton');
+                    console.log('desplegado', scope.lista.desplegado);
                     if(!scope.lista.desplegado) {
                         console.log('onClickButton give focus input'); 
                         //le damos el foco al input
                         elem.find('input').focus();
                     } else if(scope.lista.desplegado) {
+                        console.log('cerrado');
                         if(timeoutBlurPromise !== null) {
                             console.log('onClickButton timeoutBlurPromise canceled'); 
                             $timeout.cancel(timeoutBlurPromise);
@@ -200,6 +202,7 @@ angular.module('adminPanel').directive('apSelect', [
                 };
                 
                 scope.onFocusButton = function() {
+
                 };
                 
                 //eventos relacionados con la lista
@@ -210,6 +213,7 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickItemList = function(e, item) {
                     console.log('onClickItemList');
                     e.stopPropagation();
+
                     
                     //seteamos el item actual
                     itemSelected = item;

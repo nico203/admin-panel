@@ -1991,11 +1991,25 @@ angular.module('adminPanel').directive('formFieldError', [
                     //en caso de haber una promesa para cerrar la lista en el foco no se hace nada
                     //cuando se resuelve la promesa se limpia la variable
                     if(timeoutBlurPromise !== null) {
+<<<<<<< HEAD
+=======
+                        console.log('onFocusInput timeoutBlurPromise');
+                        timeoutBlurPromise.finally(function() {
+                            
+                            timeoutBlurPromise = null;
+                            console.log('blur Promise NULLLLL');
+                        });
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                         return;
                     }
                     
                     console.log('onFocusInput timeoutFocusPromise created');
                     timeoutFocusPromise = $timeout(function() {
+<<<<<<< HEAD
+=======
+                        console.log('onFocusInput');
+                        console.log('desplegado', scope.lista.desplegado);
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                         if (!scope.lista.desplegado) {
                             scope.lista.desplegado = true;
                             //si la lista interna esta vacia se hace el request
@@ -2016,6 +2030,7 @@ angular.module('adminPanel').directive('formFieldError', [
                 scope.onBlurInput = function() {
                     console.log('onBlurInput');
                     if(timeoutFocusPromise !== null) {
+<<<<<<< HEAD
                         console.log('onBlurInput timeoutFocusPromise cancelled');
                         $timeout.cancel(timeoutFocusPromise);
                         timeoutFocusPromise = null;
@@ -2026,6 +2041,15 @@ angular.module('adminPanel').directive('formFieldError', [
                         console.log('onBlurInput timeoutBlurPromise resolved');
                         timeoutBlurPromise = null;
                     });
+=======
+                        console.log('timeoutFocusPromise',timeoutFocusPromise);
+                        $timeout.cancel(timeoutFocusPromise);
+                        timeoutFocusPromise = null;
+                    }
+                    console.log('blur');
+                    console.log('desplegado', scope.lista.desplegado);
+                    timeoutBlurPromise = $timeout(closeList, 100);
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                 };
                 
                 //eventos relacionados con el boton
@@ -2039,11 +2063,17 @@ angular.module('adminPanel').directive('formFieldError', [
                  */
                 scope.onClickButton = function() {
                     console.log('onClickButton');
+                    console.log('desplegado', scope.lista.desplegado);
                     if(!scope.lista.desplegado) {
+<<<<<<< HEAD
                         console.log('onClickButton give focus input'); 
+=======
+                        console.log('input');
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                         //le damos el foco al input
                         elem.find('input').focus();
                     } else if(scope.lista.desplegado) {
+                        console.log('cerrado');
                         if(timeoutBlurPromise !== null) {
                             console.log('onClickButton timeoutBlurPromise canceled'); 
                             $timeout.cancel(timeoutBlurPromise);
@@ -2054,6 +2084,11 @@ angular.module('adminPanel').directive('formFieldError', [
                 };
                 
                 scope.onFocusButton = function() {
+<<<<<<< HEAD
+=======
+                    console.log('onFocusButton  ');
+                    console.log('desplegado', scope.lista.desplegado);
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                 };
                 
                 //eventos relacionados con la lista
@@ -2064,6 +2099,11 @@ angular.module('adminPanel').directive('formFieldError', [
                 scope.onClickItemList = function(e, item) {
                     console.log('onClickItemList');
                     e.stopPropagation();
+<<<<<<< HEAD
+=======
+                    console.log('onClickItemList', item);
+                    console.log('desplegado', scope.lista.desplegado);
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                     
                     //seteamos el item actual
                     itemSelected = item;
@@ -2078,11 +2118,16 @@ angular.module('adminPanel').directive('formFieldError', [
                         timeoutBlurPromise = null;
                     }
                     if(scope.lista.desplegado) {
+<<<<<<< HEAD
                         console.log('onClickItemList timeoutBlurPromise created');
                         timeoutBlurPromise = $timeout(closeList, 100).finally(function() {
                             console.log('onClickItemList timeoutBlurPromise resolved');
                             timeoutBlurPromise = null;
                         });
+=======
+                        console.log('timeoutBlurPromise');
+                        timeoutBlurPromise = $timeout(closeList, 100);
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                     }
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
@@ -2093,6 +2138,12 @@ angular.module('adminPanel').directive('formFieldError', [
                  * Al hacer click en la lista se cancela el evento para no cerrar la lista
                  */
                 scope.onListClick = function() {
+<<<<<<< HEAD
+=======
+                    console.log('onListClick');
+                    console.log('desplegado', scope.lista.desplegado);
+                    
+>>>>>>> cbf88afa375414f1f670301d476f7ae40cf4cb81
                     if(timeoutBlurPromise !== null) {
                         timeoutBlurPromise = $timeout.cancel(timeoutBlurPromise);
                         timeoutBlurPromise = null;
