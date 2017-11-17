@@ -144,14 +144,18 @@ angular.module('adminPanel').directive('apSelect', [
                     //en caso de haber una promesa para cerrar la lista en el foco no se hace nada
                     //cuando se resuelve la promesa se limpia la variable
                     if(timeoutBlurPromise !== null) {
+                        console.log('onFocusInput timeoutBlurPromise');
                         timeoutBlurPromise.finally(function() {
+                            
                             timeoutBlurPromise = null;
+                            console.log('blur Promise NULLLLL');
                         });
                         return;
                     }
                     
                     timeoutFocusPromise = $timeout(function() {
                         console.log('onFocusInput');
+                        console.log('desplegado', scope.lista.desplegado);
                         if (!scope.lista.desplegado) {
                             scope.lista.desplegado = true;
                             //si la lista interna esta vacia se hace el request
@@ -169,10 +173,12 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onBlurInput = function() {
                     if(timeoutFocusPromise !== null) {
+                        console.log('timeoutFocusPromise',timeoutFocusPromise);
                         $timeout.cancel(timeoutFocusPromise);
                         timeoutFocusPromise = null;
                     }
                     console.log('blur');
+                    console.log('desplegado', scope.lista.desplegado);
                     timeoutBlurPromise = $timeout(closeList, 100);
                 };
                 
@@ -187,10 +193,13 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onClickButton = function() {
                     console.log('onClickButton');
+                    console.log('desplegado', scope.lista.desplegado);
                     if(!scope.lista.desplegado) {
+                        console.log('input');
                         //le damos el foco al input
                         elem.find('input').focus();
                     } else if(scope.lista.desplegado) {
+                        console.log('cerrado');
                         if(timeoutBlurPromise !== null) {
                             $timeout.cancel(timeoutBlurPromise);
                         }
@@ -200,6 +209,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 scope.onFocusButton = function() {
                     console.log('onFocusButton  ');
+                    console.log('desplegado', scope.lista.desplegado);
                 };
                 
                 //eventos relacionados con la lista
@@ -210,6 +220,7 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickItemList = function(e, item) {
                     e.stopPropagation();
                     console.log('onClickItemList', item);
+                    console.log('desplegado', scope.lista.desplegado);
                     
                     //seteamos el item actual
                     itemSelected = item;
@@ -223,6 +234,7 @@ angular.module('adminPanel').directive('apSelect', [
                         $timeout.cancel(timeoutBlurPromise);
                     }
                     if(scope.lista.desplegado) {
+                        console.log('timeoutBlurPromise');
                         timeoutBlurPromise = $timeout(closeList, 100);
                     }
                     
@@ -235,6 +247,7 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onListClick = function() {
                     console.log('onListClick');
+                    console.log('desplegado', scope.lista.desplegado);
                     
                     if(timeoutBlurPromise !== null) {
                         timeoutBlurPromise = $timeout.cancel(timeoutBlurPromise);
