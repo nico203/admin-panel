@@ -1,3 +1,12 @@
+/**
+ * KNOWN ISSUES
+ *  - Si la lista esta abierta, al presionar el boton por mucho tiempo (1 segundo), la lista se cierra al perder el 
+ *  foco del input cuando se hace el click, y cuando se lo suelta se vuelve a darle el foco al input, provocando que
+ *  se abra de nuevo la lista. El comportamiento esperado es que la lista permanezca cerrada.
+ *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la 
+ *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
+ *  y la lista deberia permanecer cerrada.
+ */
 angular.module('adminPanel').directive('apSelect', [
     '$timeout', '$rootScope', '$q',
     function ($timeout, $rootScope, $q) {
@@ -36,18 +45,11 @@ angular.module('adminPanel').directive('apSelect', [
                 };
                 //Indica el estado del request.
                 scope.loading = false;
-                var timeoutBlurPromise = null;
-                var timeoutFocusPromise = null;
+                var timeoutCloseListPromise = null;
+                var timeoutOpenListPromise = null;
+                
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var request = null;
-                
-                /**
-                 * Se ejecuta cuando el usuario da click al boton nuevo.
-                 * Lanza el evento para mostrar el box correspondiente
-                 */
-                scope.newObject = function () {
-                    $rootScope.$broadcast('apBox:show', attr.new);
-                };
                 
                 /**
                  * Se realiza el request. En caso de haber uno en proceso se lo cancela
@@ -99,7 +101,18 @@ angular.module('adminPanel').directive('apSelect', [
                     scope.$emit('ap-select:request', name, promise);
                 }
                 
+                
+                /**
+                 * Por ahora la lista solo se cierra en el evento blur del input
+                 */
                 function closeList() {
+                    //dado el caso de que el comportamiento de $timeout.cancel() no esta rechazando las promesas
+                    // (posible bug de angular) se verifica que el timeoutCloseListPromise sea distinto de null
+                    // es decir, la promesa no haya sido cancelada
+                    if(timeoutCloseListPromise === null) return;
+                    
+                    console.log('cerrar lista');
+                    
                     //cerramos la lista
                     scope.lista.desplegado = false;
                     
@@ -111,6 +124,24 @@ angular.module('adminPanel').directive('apSelect', [
                     //seteamos el estado actual del modelo 
                     scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
                     scope.input.vacio = (itemSelected === null);
+                }
+                
+                /**
+                 * Por ahora la lista se abre solo en el foco al input
+                 */
+                function openList() {
+                    //en caso de haber una promesa activa para cerrar la lista no se la vuelve a abrir
+                    if(timeoutCloseListPromise !== null) {
+                        return;
+                    }
+                    
+                    console.log('abrir lista');
+                    //se abre la lista
+                    scope.lista.desplegado = true;
+                    //si la lista interna esta vacia se hace el request
+                    if (scope.lista.items.length === 0) {
+                        doRequest();
+                    }
                 }
                 
                 //eventos relacionados con el input
@@ -134,25 +165,14 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onFocusInput = function () {
                     console.log('onFocusInput');
-                    //en caso de haber una promesa para cerrar la lista en el foco no se hace nada
-                    //cuando se resuelve la promesa se limpia la variable
-                    if(timeoutBlurPromise !== null) {
-                        return;
-                    }
                     
-                    console.log('onFocusInput timeoutFocusPromise created');
-                    timeoutFocusPromise = $timeout(function() {
-                        if (!scope.lista.desplegado) {
-                            scope.lista.desplegado = true;
-                            //si la lista interna esta vacia se hace el request
-                            if(scope.lista.items.length === 0) {
-                                doRequest();
-                            }
-                        } 
-                    }).finally(function() {
-                        console.log('onFocusInput timeoutFocusPromise resolved');
-                        timeoutFocusPromise = null;
-                    });
+                    if(!scope.lista.desplegado) {
+                        console.log('onFocusInput timeoutOpenListPromise created');
+                        timeoutOpenListPromise = $timeout(openList).finally(function() {
+                            console.log('onFocusInput timeoutOpenListPromise resolved');
+                            timeoutOpenListPromise = null;
+                        });
+                    }
                 };
                 
                 /**
@@ -161,43 +181,40 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 scope.onBlurInput = function() {
                     console.log('onBlurInput');
-                    if(timeoutFocusPromise !== null) {
-                        console.log('onBlurInput timeoutFocusPromise cancelled');
-                        $timeout.cancel(timeoutFocusPromise);
-                        timeoutFocusPromise = null;
+                    if(timeoutOpenListPromise !== null) {
+                        $timeout.cancel(timeoutOpenListPromise);
+                        timeoutOpenListPromise = null;
+                        console.log('onBlurInput timeoutOpenListPromise cancelled', timeoutOpenListPromise);
                     }
                     
-                    console.log('onBlurInput timeoutBlurPromise created');
-                    timeoutBlurPromise = $timeout(closeList, 100).finally(function() {
-                        console.log('onBlurInput timeoutBlurPromise resolved');
-                        timeoutBlurPromise = null;
+                    
+                    timeoutCloseListPromise = $timeout(closeList, 100).finally(function() {
+                        console.log('onBlurInput timeoutCloseListPromise resolved finally');
+                        timeoutCloseListPromise = null;
                     });
+                    console.log('onBlurInput timeoutCloseListPromise created');
                 };
                 
                 //eventos relacionados con el boton
                 /**
                  * Hace un toggle de la lista, es decir si esta desplegada, la cierra y sino la abre
-                 * En caso de que la lista este desplegada la cierra, cancelando el timeout que se genera al perder
-                 * el foco del input, en caso de que el input haya tenido el foco.
-                 * Al cerrar la lista se setea en el input el valor del modelo actual.
+                 * En caso de que la lista este desplegada no se hace nada, ya que el evento blur del input cierra la lista
                  * Si no está desplegada, la despliega, viendo de hacer o no el request, segun la lista interna tenga
                  * tenga o no elementos.
                  */
                 scope.onClickButton = function() {
                     console.log('onClickButton');
-                    console.log('desplegado', scope.lista.desplegado);
+                    
                     if(!scope.lista.desplegado) {
+                        if(timeoutCloseListPromise !== null) {
+                            $timeout.cancel(timeoutCloseListPromise);
+                            timeoutCloseListPromise = null;
+                            console.log('onClickButton timeoutCloseListPromise canceled', timeoutCloseListPromise); 
+                        }
+
                         console.log('onClickButton give focus input'); 
                         //le damos el foco al input
                         elem.find('input').focus();
-                    } else if(scope.lista.desplegado) {
-                        console.log('cerrado');
-                        if(timeoutBlurPromise !== null) {
-                            console.log('onClickButton timeoutBlurPromise canceled'); 
-                            $timeout.cancel(timeoutBlurPromise);
-                            timeoutBlurPromise = null;
-                        }
-                        closeList();
                     } 
                 };
                 
@@ -209,6 +226,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 /**
                  * Al seleccionar un item de la lista se guarda en el modelo y la lista pasa a estado no desplegado
+                 * El menu se cierra dado el timeout del evento blur, que se dispara al hacer click sobre un item de la lista
                  */
                 scope.onClickItemList = function(e, item) {
                     console.log('onClickItemList');
@@ -221,20 +239,6 @@ angular.module('adminPanel').directive('apSelect', [
                     //asignamos el id de la entidad al modelo
 //                    ngModel.$setViewValue(item.id);
                     
-                    //cancelamos la funcion del blur
-                    if(timeoutBlurPromise !== null) {
-                        console.log('onClickItemList timeoutBlurPromise canceled');
-                        $timeout.cancel(timeoutBlurPromise);
-                        timeoutBlurPromise = null;
-                    }
-                    if(scope.lista.desplegado) {
-                        console.log('onClickItemList timeoutBlurPromise created');
-                        timeoutBlurPromise = $timeout(closeList, 100).finally(function() {
-                            console.log('onClickItemList timeoutBlurPromise resolved');
-                            timeoutBlurPromise = null;
-                        });
-                    }
-                    
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
                 };
@@ -242,15 +246,32 @@ angular.module('adminPanel').directive('apSelect', [
                 /**
                  * Al hacer click en la lista se cancela el evento para no cerrar la lista
                  */
-                scope.onListClick = function() {
-                    if(timeoutBlurPromise !== null) {
-                        timeoutBlurPromise = $timeout.cancel(timeoutBlurPromise);
-                        timeoutBlurPromise = null;
+                function onListClick() {
+                    if(timeoutCloseListPromise !== null) {
+                        $timeout.cancel(timeoutCloseListPromise);
+                        timeoutCloseListPromise = null;
+                        console.log('onListClick timeoutCloseListPromise canceled', timeoutCloseListPromise);
                     }
+                }
+                
+                /**
+                 * Se ejecuta cuando el usuario da click al boton nuevo.
+                 * Lanza el evento para mostrar el box correspondiente
+                 */
+                scope.newObject = function () {
+                    $rootScope.$broadcast('apBox:show', attr.new);
                 };
                 
-                elem.find('.dropdown-ap').on('click', scope.onListClick);
+                //registramos los eventos
+                elem.on('click', '.dropdown-ap', onListClick);
                 
+                /**
+                 * Liberamos los eventos que hayan sido agregados a los 
+                 */
+                var destroyEventOnDestroy = scope.$on('$destroy', function() {
+                    elem.off('click', '.dropdown-ap', onListClick);
+                    destroyEventOnDestroy();
+                });
             },
             templateUrl: 'directives/select/select.template.html'
         };
