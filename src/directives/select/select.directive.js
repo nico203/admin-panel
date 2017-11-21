@@ -52,6 +52,28 @@ angular.module('adminPanel').directive('apSelect', [
                 var request = null;
                 
                 /**
+                 * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
+                 * en la propiedad names de la directiva
+                 * 
+                 * @param {Object} object
+                 * @returns {Object} 
+                 */
+                function convertObjectToItemList(object) {
+                    var name = '';
+                    //Seteamos solamente los campos seleccionados a mostrar
+                    for(var j = 0; j < objectProperties.length; j++) {
+                        name += object[objectProperties[j]] + ', ';
+                    }
+                    //borramos la ultima coma
+                    name = name.replace(/,\s*$/, "");
+                    
+                    return {
+                        name: name,
+                        id: object.id
+                    };
+                }
+                
+                /**
                  * Se realiza el request. En caso de haber uno en proceso se lo cancela
                  * Emite un evento en donde se manda la promise.
                  * 
@@ -70,18 +92,8 @@ angular.module('adminPanel').directive('apSelect', [
                         //{name:'name',id:'id'}
                         var list = [];
                         for(var i = 0; i < rSuccess.data.length; i++) {
-                            var itemList = rSuccess.data[i];
-                            var name = '';
-                            //Seteamos solamente los campos seleccionados a mostrar
-                            for(j = 0; j < objectProperties.length; j++) {
-                                name += itemList[objectProperties[j]] + ', ';
-                            }
-                            //borramos la ultima coma
-                            name = name.replace(/,\s*$/, "");
-                            list.push({
-                                name: name,
-                                id: itemList.id
-                            });
+                            var object = rSuccess.data[i];
+                            list.push(convertObjectToItemList(object));
                         }
                         scope.lista.items = list;
                         
@@ -231,13 +243,12 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickItemList = function(e, item) {
                     console.log('onClickItemList');
                     e.stopPropagation();
-
                     
                     //seteamos el item actual
                     itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
-//                    ngModel.$setViewValue(item.id);
+                    ngModel.$setViewValue(item);
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
@@ -264,6 +275,21 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 //registramos los eventos
                 elem.on('click', '.dropdown-ap', onListClick);
+                
+                scope.$watch(function () {
+                    return ngModel.$modelValue;
+                }, function (val) {
+                    if (val) {
+                        console.log('val',val);
+                        
+                        //seteamos el item actual
+                        itemSelected = convertObjectToItemList(val);
+                        
+                        //seteamos el estado actual del modelo 
+                        scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
+                        scope.input.vacio = (itemSelected === null);
+                    }
+                });
                 
                 /**
                  * Liberamos los eventos que hayan sido agregados a los 
