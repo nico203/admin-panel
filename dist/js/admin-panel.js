@@ -1945,7 +1945,9 @@ angular.module('adminPanel').directive('formFieldError', [
                     var search = scope.search || {};
                     if (!all) {
                         for (var j = 0; j < names.length; j++) {
-                            search[names[j]] = scope.input;
+                            var atributo;
+                            atributo = angular.isArray(names[j]) ? names[j][names[j].length - 1] : names[j];
+                            search[atributo] = scope.input;
                         }
                     }
                     scope.loading = true;
