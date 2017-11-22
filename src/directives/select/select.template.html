@@ -15,14 +15,15 @@
     </ul>
     <ul ng-if="!loading && lista.items.length > 0" class="list-group">
         <li ng-repeat="option in lista.items" 
-            ng-bind-html="option.name | highlight:input"
-            ng-click="onClickItemList($event, option)"></li>
+            ng-bind-html="option.name | highlight:input.model"
+            ng-click="onClickItemList($event, option)"
+            ng-class="{'active':option.$$object.id === itemSelected.$$object.id}"></li>
     </ul>
     <ul ng-if="!loading && lista.items.length === 0" class="list-group">
         <li style="font-weight: bold;">No hay resultados</li>
     </ul>
     <ul ng-if="enableNewButton" class="list-group new">
-        <li ng-click="newObject()">
+        <li ng-click="newObject($event)">
             <span class="fa fa-plus"></span>
             <span>Nuevo</span>
         </li>

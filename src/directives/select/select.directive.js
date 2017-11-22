@@ -6,6 +6,14 @@
  *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la 
  *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
  *  y la lista deberia permanecer cerrada.
+ *  - Si se selecciona un item de la lista, y se mantiene el click apretado, se cierra la lista dado que se pierde el foco
+ *  pero al soltar el click no se selecciona el item
+ *  
+ *  sugerencias
+ *  - El resource deberia ser un string '@' binding. Mediante el servicio $injector se deberia incluir el servicio
+ *  tirando un error si no existe. Usar dicho servicio para realizar los request
+ *  - La cantidad maxima de items a mostrar debe estar definida en el archivo de configuracion de la app. Para eso
+ *  se deberia definir una propiedad dentro del servicio CrudConfig
  */
 angular.module('adminPanel').directive('apSelect', [
     '$timeout', '$rootScope', '$q',
@@ -32,7 +40,7 @@ angular.module('adminPanel').directive('apSelect', [
                 var objectProperties = angular.isArray(scope.names) ? scope.names : scope.names.split(',');
                 
                 //elemento seleccionado 
-                var itemSelected = null;
+                scope.itemSelected = null;
 
                 //inicializamos los componentes
                 scope.input = {
@@ -69,7 +77,7 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     return {
                         name: name,
-                        id: object.id
+                        $$object: angular.copy(object)
                     };
                 }
                 
@@ -85,13 +93,15 @@ angular.module('adminPanel').directive('apSelect', [
                     request = scope.reosource[defaultMethod]();
                     
                     //seteamos en la vista que el request esta en proceso
+                    console.log('doRequest');
                     scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        
+                        console.log('rSuccess',rSuccess);
+                        var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
                         //creamos la lista. Cada item es de la forma 
                         //{name:'name',id:'id'}
                         var list = [];
-                        for(var i = 0; i < rSuccess.data.length; i++) {
+                        for(var i = 0; i < max; i++) {
                             var object = rSuccess.data[i];
                             list.push(convertObjectToItemList(object));
                         }
@@ -108,7 +118,9 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     //steamos en la vista que el request se termino de procesar
                     promise.finally(function() {
-                        scope.loading = false;
+                        if(request.$resolved) {
+                            scope.loading = false;
+                        }
                     });
                     scope.$emit('ap-select:request', name, promise);
                 }
@@ -132,10 +144,10 @@ angular.module('adminPanel').directive('apSelect', [
                     if(request) {
                         request.$cancelRequest();
                     }
-
-                    //seteamos el estado actual del modelo 
-                    scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
-                    scope.input.vacio = (itemSelected === null);
+                    
+                    //seteamos el modelo si no hubo cambios
+                    scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                    scope.input.vacio = (scope.itemSelected === null);
                 }
                 
                 /**
@@ -245,7 +257,7 @@ angular.module('adminPanel').directive('apSelect', [
                     e.stopPropagation();
                     
                     //seteamos el item actual
-                    itemSelected = item;
+                    scope.itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
                     ngModel.$setViewValue(item);
@@ -269,7 +281,9 @@ angular.module('adminPanel').directive('apSelect', [
                  * Se ejecuta cuando el usuario da click al boton nuevo.
                  * Lanza el evento para mostrar el box correspondiente
                  */
-                scope.newObject = function () {
+                scope.newObject = function (e) {
+                    e.stopPropagation();
+                    
                     $rootScope.$broadcast('apBox:show', attr.new);
                 };
                 
@@ -283,11 +297,13 @@ angular.module('adminPanel').directive('apSelect', [
                         console.log('val',val);
                         
                         //seteamos el item actual
-                        itemSelected = convertObjectToItemList(val);
+                        scope.itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
+                        console.log('itemSelected',scope.itemSelected);
                         
                         //seteamos el estado actual del modelo 
-                        scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
-                        scope.input.vacio = (itemSelected === null);
+                        scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                        scope.input.vacio = (scope.itemSelected === null);
+                        console.log('scope.input',scope.input);
                     }
                 });
                 
