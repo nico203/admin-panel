@@ -16,19 +16,28 @@
  *  se deberia definir una propiedad dentro del servicio CrudConfig
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q',
-    function ($timeout, $rootScope, $q) {
+    '$timeout', '$rootScope', '$q', '$injector',
+    function ($timeout, $rootScope, $q, $injector) {
         return {
             restrict: 'AE',
             require: 'ngModel',
             scope: {
-                reosource: '=',
+                resource: '@',
                 search: '=?',
                 method: '=?',
                 names: '='
             },
             link: function (scope, elem, attr, ngModel) {
+                console.log($injector);
                 elem.addClass('select-ap');
+                
+                var resource = null;
+                //obtenemos el servicio para hacer las consultas con el servidor}
+                if($injector.has(scope.resource)) {
+                    var crudResource = $injector.get(scope.resource, 'apSelect');
+                    resource = crudResource.$resource;
+                }
+                
                 
                 //habilitamos el boton para agregar entidades
                 scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
@@ -58,6 +67,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var request = null;
+                var preventClickButton = false;
                 
                 /**
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
@@ -90,7 +100,7 @@ angular.module('adminPanel').directive('apSelect', [
                     if(request) {
                         request.$cancelRequest();
                     }
-                    request = scope.reosource[defaultMethod]();
+                    request = resource[defaultMethod]();
                     
                     //seteamos en la vista que el request esta en proceso
                     console.log('doRequest');
@@ -229,7 +239,8 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickButton = function() {
                     console.log('onClickButton');
                     
-                    if(!scope.lista.desplegado) {
+                    //si no se previene el evento, se despliega la lista
+                    if(!preventClickButton) {
                         if(timeoutCloseListPromise !== null) {
                             $timeout.cancel(timeoutCloseListPromise);
                             timeoutCloseListPromise = null;
@@ -242,8 +253,20 @@ angular.module('adminPanel').directive('apSelect', [
                     } 
                 };
                 
-                scope.onFocusButton = function() {
-
+                /**
+                 * Toma el evento antes del click, dado que el click se computa cuando el usuario suelta el raton
+                 * Si la lista no esta desplegada, el curso es el de no prevenir el evento click, para que la lista
+                 * se despliegue.
+                 * Si la lista esta desplegada, el curso es el de prevenir el evento click, para que cuando el input
+                 * pierda el foco, la lista se cierre, pero cuando el usuario suelte el raton no se dispare el evento
+                 * click, lo que volvería a abrir la lista, lo cual NO es deseado.
+                 */
+                scope.onMousedownButton = function(e) {
+                    console.log('onMousedownButton');
+                    preventClickButton = scope.lista.desplegado;
+                    
+                    console.log('desplegado', preventClickButton);
+                    
                 };
                 
                 //eventos relacionados con la lista

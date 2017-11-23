@@ -1870,19 +1870,28 @@ angular.module('adminPanel').directive('formFieldError', [
  *  se deberia definir una propiedad dentro del servicio CrudConfig
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q',
-    function ($timeout, $rootScope, $q) {
+    '$timeout', '$rootScope', '$q', '$injector',
+    function ($timeout, $rootScope, $q, $injector) {
         return {
             restrict: 'AE',
             require: 'ngModel',
             scope: {
-                reosource: '=',
+                resource: '@',
                 search: '=?',
                 method: '=?',
                 names: '='
             },
             link: function (scope, elem, attr, ngModel) {
+                console.log($injector);
                 elem.addClass('select-ap');
+                
+                var resource = null;
+                //obtenemos el servicio para hacer las consultas con el servidor}
+                if($injector.has(scope.resource)) {
+                    var crudResource = $injector.get(scope.resource, 'apSelect');
+                    resource = crudResource.$resource;
+                }
+                
                 
                 //habilitamos el boton para agregar entidades
                 scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
@@ -1912,6 +1921,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var request = null;
+                var preventClickButton = false;
                 
                 /**
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
@@ -1944,7 +1954,7 @@ angular.module('adminPanel').directive('apSelect', [
                     if(request) {
                         request.$cancelRequest();
                     }
-                    request = scope.reosource[defaultMethod]();
+                    request = resource[defaultMethod]();
                     
                     //seteamos en la vista que el request esta en proceso
                     console.log('doRequest');
@@ -2083,7 +2093,8 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickButton = function() {
                     console.log('onClickButton');
                     
-                    if(!scope.lista.desplegado) {
+                    //si no se previene el evento, se despliega la lista
+                    if(!preventClickButton) {
                         if(timeoutCloseListPromise !== null) {
                             $timeout.cancel(timeoutCloseListPromise);
                             timeoutCloseListPromise = null;
@@ -2096,8 +2107,20 @@ angular.module('adminPanel').directive('apSelect', [
                     } 
                 };
                 
-                scope.onFocusButton = function() {
-
+                /**
+                 * Toma el evento antes del click, dado que el click se computa cuando el usuario suelta el raton
+                 * Si la lista no esta desplegada, el curso es el de no prevenir el evento click, para que la lista
+                 * se despliegue.
+                 * Si la lista esta desplegada, el curso es el de prevenir el evento click, para que cuando el input
+                 * pierda el foco, la lista se cierre, pero cuando el usuario suelte el raton no se dispare el evento
+                 * click, lo que volvería a abrir la lista, lo cual NO es deseado.
+                 */
+                scope.onMousedownButton = function(e) {
+                    console.log('onMousedownButton');
+                    preventClickButton = scope.lista.desplegado;
+                    
+                    console.log('desplegado', preventClickButton);
+                    
                 };
                 
                 //eventos relacionados con la lista
@@ -2475,7 +2498,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/pagination/pagination.template.html",
     "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-focus=onFocusButton()><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-click=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);
