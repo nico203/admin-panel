@@ -25,7 +25,7 @@
         <li style="font-weight: bold;">No hay resultados</li>
     </ul>
     <ul ng-if="enableNewButton" class="list-group new">
-        <li ng-click="newObject($event)">
+        <li ng-mousedown="newObject($event)">
             <span class="fa fa-plus"></span>
             <span>Nuevo</span>
         </li>

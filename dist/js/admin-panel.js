@@ -1002,7 +1002,7 @@ angular.module('adminPanel.crud').service('NormalizeService', [
 
 //                var name = camelize(key);
                 var name = key;
-                
+
                 if('object' === typeof(object[key]) && object[key] !== null) {
                     if('undefined' !== typeof(object[key].id)) {
                         object[name] = object[key].id;
@@ -1854,20 +1854,25 @@ angular.module('adminPanel').directive('formFieldError', [
 
 ;/**
  * KNOWN ISSUES
- *  - Si la lista esta abierta, al presionar el boton por mucho tiempo (1 segundo), la lista se cierra al perder el 
- *  foco del input cuando se hace el click, y cuando se lo suelta se vuelve a darle el foco al input, provocando que
- *  se abra de nuevo la lista. El comportamiento esperado es que la lista permanezca cerrada.
  *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la 
  *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
  *  y la lista deberia permanecer cerrada.
- *  - Si se selecciona un item de la lista, y se mantiene el click apretado, se cierra la lista dado que se pierde el foco
- *  pero al soltar el click no se selecciona el item
  *  
  *  sugerencias
- *  - El resource deberia ser un string '@' binding. Mediante el servicio $injector se deberia incluir el servicio
- *  tirando un error si no existe. Usar dicho servicio para realizar los request
  *  - La cantidad maxima de items a mostrar debe estar definida en el archivo de configuracion de la app. Para eso
  *  se deberia definir una propiedad dentro del servicio CrudConfig
+ *  
+ *  Consideraciones generales
+ *  
+ *  En un evento, para cancelarlo en un hijo, el evento debe ser el mismo. En este caso se usa mousedown para todo.
+ *  
+ *  //doc
+ *  
+ *  resource: nombre del CrudResource especificado
+ *  queryParams: propiedades que se usan como parametros de la consulta para filtrar resultados, si no están definidos se usan las
+ *               propiedades definidas en el objeto properties
+ *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
+ *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
  */
 angular.module('adminPanel').directive('apSelect', [
     '$timeout', '$rootScope', '$q', '$injector',
@@ -1877,9 +1882,9 @@ angular.module('adminPanel').directive('apSelect', [
             require: 'ngModel',
             scope: {
                 resource: '@',
-                search: '=?',
+                queryParams: '=?',
                 method: '=?',
-                names: '='
+                properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
                 console.log($injector);
@@ -1890,6 +1895,10 @@ angular.module('adminPanel').directive('apSelect', [
                 if($injector.has(scope.resource)) {
                     var crudResource = $injector.get(scope.resource, 'apSelect');
                     resource = crudResource.$resource;
+                    console.log('resource',resource);
+                }
+                if(!resource) {
+                    console.error('El recurso no esta definido');
                 }
                 
                 
@@ -1900,8 +1909,8 @@ angular.module('adminPanel').directive('apSelect', [
                 var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
                 
                 //se definen las propiedades del objeto a mostrar.
-                var objectProperties = angular.isArray(scope.names) ? scope.names : scope.names.split(',');
-                
+                var objectProperties = angular.isString(scope.properies) ? scope.properties.split(',') : scope.properties;
+
                 //elemento seleccionado 
                 scope.itemSelected = null;
 
@@ -1920,12 +1929,14 @@ angular.module('adminPanel').directive('apSelect', [
                 var timeoutOpenListPromise = null;
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
+                var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+
                 var request = null;
                 var preventClickButton = false;
                 
                 /**
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
-                 * en la propiedad names de la directiva
+                 * en la propiedad properties de la directiva
                  * 
                  * @param {Object} object
                  * @returns {Object} 
@@ -1941,6 +1952,7 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     return {
                         name: name,
+                        id: object.id,
                         $$object: angular.copy(object)
                     };
                 }
@@ -1949,12 +1961,24 @@ angular.module('adminPanel').directive('apSelect', [
                  * Se realiza el request. En caso de haber uno en proceso se lo cancela
                  * Emite un evento en donde se manda la promise.
                  * 
+                 * El parametro all establece que se haga una consulta sin parametros.
+                 * Esta se hace cuando se inicializa el componente y todavia no se hizo ningun request
                  */
-                function doRequest() {
+                function doRequest(all) {
                     if(request) {
                         request.$cancelRequest();
                     }
-                    request = resource[defaultMethod]();
+                    
+                    var search = {};
+                    
+                    if(!all) {
+                        for (var j = 0; j < queryParams.length; j++) {
+                            search[queryParams[j]] = scope.input.model;
+                        }
+                    }
+                    
+                    
+                    request = resource[defaultMethod](search);
                     
                     //seteamos en la vista que el request esta en proceso
                     console.log('doRequest');
@@ -2026,9 +2050,9 @@ angular.module('adminPanel').directive('apSelect', [
                     console.log('abrir lista');
                     //se abre la lista
                     scope.lista.desplegado = true;
-                    //si la lista interna esta vacia se hace el request
+                    //si la lista interna esta vacia se hace el request sin parametros en la consulta
                     if (scope.lista.items.length === 0) {
-                        doRequest();
+                        doRequest(true);
                     }
                 }
                 
@@ -2165,7 +2189,7 @@ angular.module('adminPanel').directive('apSelect', [
                 };
                 
                 //registramos los eventos
-                elem.on('click', '.dropdown-ap', onListClick);
+                elem.on('mousedown', '.dropdown-ap', onListClick);
                 
                 scope.$watch(function () {
                     return ngModel.$modelValue;
@@ -2185,128 +2209,11 @@ angular.module('adminPanel').directive('apSelect', [
                 });
                 
                 /**
-                 * Liberamos los eventos que hayan sido agregados a los 
+                 * Liberamos los eventos que hayan sido agregados a los elementos
                  */
                 var destroyEventOnDestroy = scope.$on('$destroy', function() {
-                    elem.off('click', '.dropdown-ap', onListClick);
+                    elem.off('mousedown', '.dropdown-ap', onListClick);
                     destroyEventOnDestroy();
-                });
-            },
-            templateUrl: 'directives/select/select.template.html'
-        };
-    }
-]);
-;angular.module('adminPanel').directive('apSelect1', [
-    '$timeout', '$rootScope',
-    function ($timeout, $rootScope) {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            scope: {
-                reosource: '=',
-                search: '=?',
-                names: '=',
-                onChange: '&?'
-            },
-            link: function (scope, elem, attr, ngModel) {
-                //habilitamos el boton para agregar entidades
-                scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
-                scope.menuOpen = false;
-                scope.loading = true;
-                scope.dropdownContainer = elem.find('.dropdown-ap');
-                scope.inputElem = elem.find('input');
-                elem.addClass('select-ap');
-
-                //Se ejecuta cuando el usuario da click al boton nuevo.
-                //Lanza el evento para mostrar el box correspondiente
-                scope.newObject = function () {
-                    $rootScope.$broadcast('apBox:show', attr.new);
-                };
-
-                scope.request = null;
-                scope.input = '';
-
-                scope.onInputChange = function (all) {
-                    var search = scope.search || {};
-                    if (!all) {
-                        for (var j = 0; j < scope.names.length; j++) {
-                            search[scope.names[j]] = scope.input;
-                        }
-                    }
-                    scope.loading = true;
-
-                    if (scope.request) {
-                        scope.request.$cancelRequest();
-                    }
-
-                    scope.request = scope.reosource.get(search, function (r) {
-                        scope.loading = false;
-                        var options = r.data;
-                        scope.options = [];
-                        for (var i = 0; i < options.length; i++) {
-                            var name = '';
-                            for (var j = 0; j < scope.names.length; j++) {
-                                name += options[i][scope.names[j]] + ', ';
-                            }
-                            name = name.replace(/,\s*$/, "");
-
-                            var obj = options[i];
-                            obj.name = name;
-                            scope.options.push(obj);
-                        }
-                    });
-                };
-
-                scope.optionSelected = function (option) {
-                    var obj = angular.copy(option);
-                    delete obj.name;
-                    ngModel.$setViewValue(obj);
-                    $timeout(function () {
-                        scope.input = option.name;
-                    }, 50);
-                };
-
-                scope.buttonClick = function () {
-                    scope.menuOpen = !scope.menuOpen;
-                    if (scope.menuOpen) {
-                        scope.onInputChange(true);
-                    }
-                };
-                scope.onFocus = function () {
-                    scope.menuOpen = true;
-                };
-                scope.onBlur = function () {
-                    $timeout(function () {
-                        scope.menuOpen = false;
-                    }, 100);
-                };
-
-                scope.$watch(function () {
-                    return scope.menuOpen;
-                }, function (val) {
-                    if (val) {
-                        scope.inputElem.focus();
-                        scope.dropdownContainer.addClass('is-open');
-                    } else {
-                        scope.dropdownContainer.removeClass('is-open');
-                    }
-                });
-                scope.$watch(function () {
-                    return ngModel.$modelValue;
-                }, function (val) {
-                    if (typeof (scope.onChange) !== 'undefined') {
-                        scope.onChange({
-                            option: val
-                        });
-                    }
-                    var input = '';
-                    if (val) {
-                        for (var j = 0; j < scope.names.length; j++) {
-                            input += val[scope.names[j]] + ', ';
-                        }
-                        input = input.replace(/,\s*$/, "");
-                    }
-                    scope.input = input;
                 });
             },
             templateUrl: 'directives/select/select.template.html'
@@ -2498,7 +2405,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/pagination/pagination.template.html",
     "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);
