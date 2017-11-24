@@ -1316,6 +1316,54 @@ angular.module('adminPanel').directive('apBox', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apDatePicker', ['$timeout', function($timeout) {
+    return {
+        restrict: 'AE',
+        require: 'ngModel',
+        scope: {
+            format: '@?' /* NO TENIDO EN CUENTA */
+        },
+        link: function(scope, elem, attr, ngModel) {
+            elem.addClass('row collapse date ap-datepicker');
+            scope.date = null;
+            var options = {
+                format: 'dd/mm/yyyy'
+            };
+            
+            scope.$watch(function() {
+                return ngModel.$modelValue;
+            }, function(val) {
+                if(val) {
+                    var date = new Date(val);
+                    scope.date = date;
+                    $(elem.find('.ap-date')).fdatepicker('update', date);
+                }
+            });
+            
+            //Funcion que realiza el cambio de la hora en el modelo
+            function changeDate(date) {
+                
+                //cambio hecho al terminar el ciclo $digest actual
+                $timeout(function() {
+                    scope.$apply(function(){
+                        ngModel.$setViewValue(date);
+                    });
+                });
+            }
+            
+            //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
+            //detectar cuando se cambia la hora
+            $(elem.find('.ap-date')).fdatepicker(options)
+                    .on('changeDate', function(ev){
+                scope.date = ev.date;
+                scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
+                changeDate(scope.date);
+            });
+            
+        },
+        templateUrl: 'directives/datePicker/datePicker.template.html'
+    };
+}]);
 ;angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function($timeout) {
     return {
         restrict: 'AE',
@@ -2388,6 +2436,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
     "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div><div class=pager></div></div></div>");
+  $templateCache.put("directives/datePicker/datePicker.template.html",
+    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
   $templateCache.put("directives/filter/filter.template.html",
