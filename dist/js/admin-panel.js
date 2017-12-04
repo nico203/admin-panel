@@ -662,8 +662,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
         };
     };
 });;angular.module('adminPanel.crud').service('CrudService', [
-    '$timeout','CrudConfig',
-    function($timeout, CrudConfig) {
+    '$timeout','CrudConfig','$window',
+    function($timeout, CrudConfig, $window) {
         /**
          * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
          * de formulario. Debe haber un solo de estos elementos por formulario.
@@ -723,6 +723,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 request.$promise.then(function(responseSuccess) {
                     //Si no hay archivos se sigue el curso actual
                     if(file === null) {
+                        $window.scrollTo(0, 0);
                         scope.$emit('apLoad:finish', apLoadName, {
                             message: CrudConfig.messages.saveSusccess,
                             type: 'success'
@@ -752,6 +753,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                         });
                     }
                 }, function(responseError) {
+                    $window.scrollTo(0, 0);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.saveError,
                         type: 'error'
@@ -2000,6 +2002,7 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     return {
                         name: name,
+                        id: object.id,
                         $$object: angular.copy(object)
                     };
                 }
@@ -2208,7 +2211,7 @@ angular.module('adminPanel').directive('apSelect', [
                     scope.itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
-                    ngModel.$setViewValue(item.$$object);
+                    ngModel.$setViewValue(item);
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
@@ -2245,7 +2248,7 @@ angular.module('adminPanel').directive('apSelect', [
                         console.log('val',val);
                         
                         //seteamos el item actual
-                        scope.itemSelected = convertObjectToItemList(val);
+                        scope.itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
                         console.log('itemSelected',scope.itemSelected);
                         
                         //seteamos el estado actual del modelo 
