@@ -2002,7 +2002,6 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     return {
                         name: name,
-                        id: object.id,
                         $$object: angular.copy(object)
                     };
                 }
@@ -2211,7 +2210,7 @@ angular.module('adminPanel').directive('apSelect', [
                     scope.itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
-                    ngModel.$setViewValue(item);
+                    ngModel.$setViewValue(item.$$object);
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
                     scope.$emit('ap-select:item-selected', name, item);
@@ -2248,7 +2247,7 @@ angular.module('adminPanel').directive('apSelect', [
                         console.log('val',val);
                         
                         //seteamos el item actual
-                        scope.itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
+                        scope.itemSelected = convertObjectToItemList(val);
                         console.log('itemSelected',scope.itemSelected);
                         
                         //seteamos el estado actual del modelo 
