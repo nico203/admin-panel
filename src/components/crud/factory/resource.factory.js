@@ -147,6 +147,22 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 ],
                 cancellable: true
             };
+            
+            /**
+             * Accion por defecto que se utiliza para enviar datos al servidor, al persistir o modificar una entidad
+             * Se envia el objeto de la forma
+             * 
+             * {
+             *   id: id
+             *   name: object
+             * }
+             * 
+             * En donde el id es el identificador del objeto asociado y object es el objecto a persistir/modificar.
+             * El valor de name depende de si la entidad esta asociada a otra, es decir, depende de esta. Si este
+             * es el caso, entonces se envía al servidor el objeto encapsulado dentro de la cadena que se haya recibido
+             * como parametro dentro del objeto 'name' en la definicion del objeto. Caso contrario, se envía el objeto 
+             * encapsulado dentro del atributo con nombre igual a la entidad
+             */
             actions.save = {
                 method: 'POST',
                 transformRequest: [

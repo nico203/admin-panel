@@ -1,6 +1,12 @@
+/**
+ * POSIBLE ERROR
+ * 
+ * Al cancelar una promesa en una cadena provoca el fallo de la siguiente, por lo que el flujo dentro de la cadena
+ * de promesas podria no ser el indicado.
+ */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig',
-    function(CrudConfig) {
+    'CrudConfig', '$q',
+    function(CrudConfig, $q) {
         /**
          * VER POSIBILIDAD DE devolver el callback en el finnally de la promise
          * 
@@ -12,7 +18,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
         function CrudFactory($scope, resource, apLoadName) {
             this.request = null;
 
-            this.doRequest = function (methodName, paramRequest, successMsg, errorMsg) {
+            this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start',apLoadName);
                 
@@ -20,7 +26,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                 this.cancelRequest();
                 
                 //se procesa el request
-                this.request = resource.$resource[methodName](paramRequest);
+                this.request = resource.$resource[action](paramRequest);
                 //retorna la promesa
                 return this.request.$promise.then(function(responseSuccess) {
                     console.log('responseSuccess', responseSuccess);
@@ -48,7 +54,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     //se muestra el error, 
                     $scope.$emit('apLoad:finish', apLoadName, message);
                     
-                    return responseError;
+                    $q.reject(responseError);
                 });
             };
 

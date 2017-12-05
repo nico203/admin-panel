@@ -4,8 +4,8 @@
  * FALTA implementar los resultados en base a un hijo
  */
 angular.module('adminPanel.crud').factory('BasicReadController', [
-    'CrudService',
-    function(CrudService) {
+    'CrudFactory', '$q',
+    function(CrudFactory, $q) {
         
         /**
          * @description 
@@ -15,18 +15,18 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
         function BasicReadController(scope, resource, apLoadName) {
-            this.crudService = CrudService(scope, resource, apLoadName);
+            this.crudFactory = CrudFactory(scope, resource, apLoadName);
             
-            this.get = function(params, actionDefault, callbackSuccess, callbackError) {
+            this.get = function(params, actionDefault) {
                 var paramRequest = (params) ? params : {};
                 
-                this.crudService.doRequest('get', paramRequest, function(responseSuccess) {
-                    
-                }, function(responseError) {
-                    
-                });
+                var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this;
+                return this.crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                    return responseSuccess;
+                }, function(responseError) {
+                    $q.reject(responseError);
+                });
             };
             
             
@@ -42,7 +42,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             
             //cancelamos los request al destruir el controller
             this.destroy = function() {
-                this.crudService.cancelRequest();
+                this.crudFactory.cancelRequest();
             };
         }
         

@@ -49,14 +49,16 @@ angular.module('adminPanel').directive('apSelect', [
                 var timeoutOpenListPromise = null;
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
+                console.log('defaultMethod',defaultMethod);
                 var request = null;
                 
                 /**
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
                  * en la propiedad names de la directiva
                  * 
-                 * @param {Object} object
-                 * @returns {Object} 
+                 * @param {Object} object | entidad serializada que se esta listando
+                 * @returns {Object} | tiene dos propiedades, name: que es por la que se lista despues en la vista
+                 * y object, que es el objeto el cual se está listando
                  */
                 function convertObjectToItemList(object) {
                     var name = '';
@@ -69,7 +71,7 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     return {
                         name: name,
-                        id: object.id
+                        $$object: angular.copy(object)
                     };
                 }
                 
@@ -132,10 +134,10 @@ angular.module('adminPanel').directive('apSelect', [
                     if(request) {
                         request.$cancelRequest();
                     }
-
-                    //seteamos el estado actual del modelo 
-                    scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
-                    scope.input.vacio = (itemSelected === null);
+//
+//                    //seteamos el estado actual del modelo 
+//                    scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
+//                    scope.input.vacio = (itemSelected === null);
                 }
                 
                 /**
@@ -248,10 +250,10 @@ angular.module('adminPanel').directive('apSelect', [
                     itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
-                    ngModel.$setViewValue(item);
+                    ngModel.$setViewValue(item.$$object);
                     
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
-                    scope.$emit('ap-select:item-selected', name, item);
+                    scope.$emit('ap-select:item-selected', name, item.$$object);
                 };
                 
                 /**
@@ -276,14 +278,20 @@ angular.module('adminPanel').directive('apSelect', [
                 //registramos los eventos
                 elem.on('click', '.dropdown-ap', onListClick);
                 
+                /**
+                 * Watcher que chequea cualquier cambio en el modelo de la entidad, tanto externo como interno
+                 * Cuando es externo, se se construye el objeto actual con base en la entidad a la que se esta listando
+                 * en cambio, cuando se elige un item de la lista, se usa la propiedad object del item de la lista seleccionado
+                 * para construir el objeto
+                 */
                 scope.$watch(function () {
                     return ngModel.$modelValue;
                 }, function (val) {
                     if (val) {
-                        console.log('val',val);
+                        //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
+                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
                         
-                        //seteamos el item actual
-                        itemSelected = convertObjectToItemList(val);
+                        console.log('val',val);
                         
                         //seteamos el estado actual del modelo 
                         scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
