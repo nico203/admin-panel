@@ -1,6 +1,6 @@
 angular.module('adminPanel.crud').service('CrudService', [
-    '$timeout','CrudConfig',
-    function($timeout, CrudConfig) {
+    '$timeout','CrudConfig','$window',
+    function($timeout, CrudConfig, $window) {
         /**
          * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
          * de formulario. Debe haber un solo de estos elementos por formulario.
@@ -60,6 +60,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                 request.$promise.then(function(responseSuccess) {
                     //Si no hay archivos se sigue el curso actual
                     if(file === null) {
+                        $window.scrollTo(0, 0);
                         scope.$emit('apLoad:finish', apLoadName, {
                             message: CrudConfig.messages.saveSusccess,
                             type: 'success'
@@ -89,6 +90,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                         });
                     }
                 }, function(responseError) {
+                    $window.scrollTo(0, 0);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.saveError,
                         type: 'error'

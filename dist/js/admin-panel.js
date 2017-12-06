@@ -662,8 +662,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
         };
     };
 });;angular.module('adminPanel.crud').service('CrudService', [
-    '$timeout','CrudConfig',
-    function($timeout, CrudConfig) {
+    '$timeout','CrudConfig','$window',
+    function($timeout, CrudConfig, $window) {
         /**
          * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
          * de formulario. Debe haber un solo de estos elementos por formulario.
@@ -723,6 +723,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 request.$promise.then(function(responseSuccess) {
                     //Si no hay archivos se sigue el curso actual
                     if(file === null) {
+                        $window.scrollTo(0, 0);
                         scope.$emit('apLoad:finish', apLoadName, {
                             message: CrudConfig.messages.saveSusccess,
                             type: 'success'
@@ -752,6 +753,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                         });
                     }
                 }, function(responseError) {
+                    $window.scrollTo(0, 0);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.saveError,
                         type: 'error'
@@ -1062,9 +1064,9 @@ angular.module('adminPanel.topBar', [
 ]).component('topBar', {
     templateUrl: 'components/top-bar/top-bar.template.html',
     controller: ['$scope', 'AuthenticationService', '$location', topBarController]
-});;angular.module('adminPanel').directive('apAccordion',[
+});;angular.module('adminPanel').directive('apAccordion', [
     '$timeout',
-    function($timeout){
+    function ($timeout) {
         return {
             require: 'ngModel',
             restrict: 'AE',
@@ -1073,57 +1075,59 @@ angular.module('adminPanel.topBar', [
                 allowAllClosed: '=',
                 multiExpand: '=',
                 addButtonText: '@?',
-                name: '@?'
+                name: '@?',
+                deniedDeleteFirst: '='
             },
-            link: function(scope, elem, attr, ngModel) {
+            link: function (scope, elem, attr, ngModel) {
                 elem.addClass('ap-accordion');
 
                 scope.accordion = new Foundation.Accordion(elem.find('.accordion'), {
-                    'data-multi-expand':scope.multiExpand,
-                    'data-allow-all-closed':scope.allowAllClosed
+                    'data-multi-expand': scope.multiExpand,
+                    'data-allow-all-closed': scope.allowAllClosed
                 });
 
-                scope.addElement = function() {
+                scope.addElement = function () {
                     var obj = {};
                     var name = (scope.name) ? scope.name : 'default';
                     scope.$emit('ap.accordion.add', obj, name);
-                    if(!angular.isUndefined(ngModel.$modelValue)) {
+                    if (!angular.isUndefined(ngModel.$modelValue)) {
                         ngModel.$modelValue.push(obj);
                     }
                 };
 
-                scope.removeElement = function(object) {
+                scope.removeElement = function (object) {
                     scope.$emit('ap.accordion.remove', object);
                     var array = ngModel.$modelValue;
                     var index = array.indexOf(object);
-                    if (index > -1) {
+                    var indexControl = scope.deniedDeleteFirst ? 0 : -1;
+                    if (index > indexControl) {
                         array.splice(index, 1);
                     }
                 };
-                
+
                 //Init al finalizar el ciclo digest actual
-                $timeout(function() {
-                    if(angular.isUndefined(ngModel.$modelValue)) {
-                        scope.$apply(function(){
+                $timeout(function () {
+                    if (angular.isUndefined(ngModel.$modelValue)) {
+                        scope.$apply(function () {
                             ngModel.$setViewValue([]);
                         });
                     }
                 });
             },
-            controller: ['$scope', function($scope) {
-                this.toggleTab = function(tab) {
-                    $scope.accordion.$element.foundation('toggle', tab);
-                };
+            controller: ['$scope', function ($scope) {
+                    this.toggleTab = function (tab) {
+                        $scope.accordion.$element.foundation('toggle', tab);
+                    };
 
-                this.removeElement = function(object) {
-                    $scope.removeElement(object);
-                };
+                    this.removeElement = function (object) {
+                        $scope.removeElement(object);
+                    };
 
-                this.reInitComponent = function() {
-                    $scope.accordion.$element.foundation('up', $scope.accordion.$tabs.find('.accordion-content'));
-                    Foundation.reInit($scope.accordion.$element);
-                };
-            }],
+                    this.reInitComponent = function () {
+                        $scope.accordion.$element.foundation('up', $scope.accordion.$tabs.find('.accordion-content'));
+                        Foundation.reInit($scope.accordion.$element);
+                    };
+                }],
             templateUrl: 'directives/accordion/accordion.template.html'
         };
     }
