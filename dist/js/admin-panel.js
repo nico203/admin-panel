@@ -1931,7 +1931,8 @@ angular.module('adminPanel').directive('apSelect', [
             scope: {
                 resource: '@',
                 queryParams: '=?',
-                method: '=?',
+                method: '@?',
+                requestParam: '=?',
                 properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
@@ -2010,6 +2011,8 @@ angular.module('adminPanel').directive('apSelect', [
                  * 
                  * El parametro all establece que se haga una consulta sin parametros.
                  * Esta se hace cuando se inicializa el componente y todavia no se hizo ningun request
+                 * 
+                 * @param {boolean} all Establece si se usan los filtros para filtrar las entidades 
                  */
                 function doRequest(all) {
                     if(request) {
@@ -2017,6 +2020,10 @@ angular.module('adminPanel').directive('apSelect', [
                     }
                     
                     var search = {};
+                    
+                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
+                        search.id = scope.requestParam;
+                    }
                     
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
