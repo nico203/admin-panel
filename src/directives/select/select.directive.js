@@ -29,7 +29,7 @@ angular.module('adminPanel').directive('apSelect', [
             scope: {
                 resource: '@',
                 queryParams: '=?',
-                method: '=?',
+                method: '@?',
                 requestParam: '=?',
                 properties: '='
             },
@@ -120,7 +120,7 @@ angular.module('adminPanel').directive('apSelect', [
                     var search = {};
                     
                     if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
-                        search['id'] = scope.requestParam;
+                        search.id = scope.requestParam;
                     }
                     
                     if(!all) {
