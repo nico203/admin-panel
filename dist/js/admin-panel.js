@@ -671,10 +671,12 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * @param {Scope} scope Scope al cual apunta los eventos
          * @param {CrudResource} Resource | Resource que se utiliza para hacer las peticiones al servidor
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
+         * @param {Object} extraParams | Parámetros extras que se añadirán al método GET y POST del Resource que recibe el formulario
          * @returns {CrudService.serviceL#3.Form}
          */
-        var Form = function(scope, Resource, apLoadName, file) {
+        var Form = function(scope, Resource, apLoadName, file, extraParams) {
             var self = this;
+            extraParams = extraParams ? extraParams : {};
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
              * 
@@ -685,7 +687,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
              */
             self.init = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
-                var request = Resource.get(object);
+                var request = Resource.get(Object.assign(object, extraParams));
                 request.$promise.then(function(responseSuccess) {
                     scope.$emit('apLoad:finish', apLoadName);
                     if(callbackSuccess) {
@@ -717,7 +719,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
                 console.log('object', object);
-                var request = Resource.save(object);
+                var request = Resource.save(extraParams, object);
                 
                 //Se hace el request para guardar el objeto
                 request.$promise.then(function(responseSuccess) {
@@ -844,11 +846,13 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * @param {Funciton} callbackInit funcion que puede ser ejecutada luego del init
          * @param {Funciton} function que puede ser ejecutada luego del submit
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
+         * @param {Object} extraParams | Parámetros extras que se van a agregar en las requests. Ej: blog/:blogId/message/:messageId -> extraParams = {blogId: 23}
          * @returns {undefined}
          */
-        function BasicFormController(controller, resource, scope, callbackInit, callbackSubmit, apLoadName) {
+        function BasicFormController(controller, resource, scope, callbackInit, callbackSubmit, apLoadName, extraParams) {
             var name = resource.name;
-            var form = new Form(scope, resource.$resource, apLoadName, resource.file);
+            extraParams = extraParams ? extraParams : {};
+            var form = new Form(scope, resource.$resource, apLoadName, resource.file, extraParams);
             scope[name] = {};
             
             scope.submit = function() {
