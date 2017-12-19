@@ -667,7 +667,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
         /**
          * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
          * de formulario. Debe haber un solo de estos elementos por formulario.
-         * 
+         *
          * @param {Scope} scope Scope al cual apunta los eventos
          * @param {CrudResource} Resource | Resource que se utiliza para hacer las peticiones al servidor
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
@@ -679,8 +679,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             extraParams = extraParams ? extraParams : {};
             /**
              * @description metodo que inicializa el formulario con datos del servicor.
-             * 
-             * @param {Object} object Objeto a enviar al servidor para hacer la consulta 
+             *
+             * @param {Object} object Objeto a enviar al servidor para hacer la consulta
              * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
@@ -703,15 +703,15 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                         callbackError(responseError);
                     }
                 });
-                
+
                 //aregamos el request al scope para poderlo cancelar
                 self.initRequest = request;
             };
 
             /**
              * @description Metodo que envia los datos del formulario al servidor para hacer la actualizacion
-             * 
-             * @param {Object} object Objeto a enviar al servidor para persistir los datos. 
+             *
+             * @param {Object} object Objeto a enviar al servidor para persistir los datos.
              * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
              * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
              * @returns {undefined}
@@ -720,7 +720,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 scope.$emit('apLoad:start',apLoadName);
                 console.log('object', object);
                 var request = Resource.save(extraParams, object);
-                
+
                 //Se hace el request para guardar el objeto
                 request.$promise.then(function(responseSuccess) {
                     //Si no hay archivos se sigue el curso actual
@@ -763,12 +763,12 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                     }
                     throw 'Form Error: ' + responseError;
                 });
-                
+
                 //aregamos el request al scope para poderlo cancelar
                 self.submitRequest = request;
             };
-            
-            
+
+
             //cancelamos los request
             self.destroy = function() {
                 if(self.initRequest) {
@@ -779,10 +779,10 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 }
             };
         };
-        
+
         /**
          * @description Lista los objetos en la vista que son obtenidos del servidor
-         * 
+         *
          * @param {Scope} scope Scope al cual apunta los eventos
          * @param {CrudResource} Resource | Resource que se utiliza para hacer las peticiones al servidor
          * @param {String} apLoadName Nombre de la directiva load a usar. Si no se especifica, se usa la directiva por default.
@@ -792,16 +792,16 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             var request = null;
             /**
              * @description Realiza el pedido de objetos al servidor para listar
-             * 
+             *
              * @param {Object} object Objeto a buscar en el servidor
-             * 
+             *
              * @param {function} callbackSuccess Funcion que se llama si la peticion es exitosa
-             * 
+             *
              * @param {function} callbackError Funcion que se llama si hubo un error en la peticion.
-             * 
+             *
              * @param {String} actionDefault Metodo a ejecutar del CrudResource
              * @default 'get'
-             * 
+             *
              * @returns {undefined}
              */
             this.get = function (object, callbackSuccess, callbackError, actionDefault) {
@@ -830,16 +830,16 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                             callbackError(responseError);
                         }
                     });
-                    
+
                     //aregamos el request al scope para poderlo cancelar
                     scope.request = request;
                 });
             };
         };
-        
+
         /**
          * @description Inicializa el controlador del componente para tener el formulario del servidor
-         * 
+         *
          * @param {Controller} controller Controller del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
          * @param {Scope} scope Scope del componente
@@ -854,7 +854,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             extraParams = extraParams ? extraParams : {};
             var form = new Form(scope, resource.$resource, apLoadName, resource.file, extraParams);
             scope[name] = {};
-            
+
             scope.submit = function() {
                 if(!scope.form) {
                     form.submit(scope[name], function(r) {
@@ -880,9 +880,9 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
 
             controller.$onInit = function() {
                 var property = resource.property;
-                
 
-                //esta definida la propiedad, es decir tiene un sub recurso 
+
+                //esta definida la propiedad, es decir tiene un sub recurso
                 // pero este proviene de otro lugar y no hay que obtenerlo del servidor
                 if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
                     scope[name] = this[name];
@@ -895,9 +895,9 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                         callbackInit();
                     }
                     return;
-                } 
-                
-                //los datos se obtienen del servidor 
+                }
+
+                //los datos se obtienen del servidor
                 if(this[name] && this[name] !== 'nuevo') {
                     var obj = {};
                     obj[name] = this[name];
@@ -916,32 +916,34 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                     });
                 }
             };
-            
+
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
                 form.destroy();
             };
         }
-        
+
         /**
          * @description Inicializa el controlador del componente para listar entidades del servidor
-         * 
+         *
          * @param {Controller} controller Controller del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
          * @param {Scope} scope Scope del componente
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
+         * @param {Object} defaultParams | Parámetros que se van a agregar en todas las requests. Ej: blog/:blogId/message/:messageId -> defaultParams = {blogId: 23}
          * @returns {undefined}
          */
-        function BasicListController(controller, resource, scope, apLoadName) {
+        function BasicListController(controller, resource, scope, apLoadName, defaultParams) {
             scope.list = [];
+            defaultParams = defaultParams ? defaultParams : {};
             var List = new ListFn(scope, resource.$resource, apLoadName);
-            
+
             controller.$onInit = function () {
                 controller.list();
             };
-            
+
             controller.list = function(params, actionDefault, callback) {
-                var listParams = (params) ? params : {};
+                var listParams = Object.assign(defaultParams, params);
                 List.get(listParams, function(r) {
                     scope.list = r.data;
                     scope.$broadcast('pagination:paginate', {
@@ -951,14 +953,14 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                     if(callback) callback();
                 }, function(){}, actionDefault);
             };
-            
+
             //cancelamos los request al destruir el controller
             controller.$onDestroy = function() {
                 if(scope.request) {
                     scope.request.$cancelRequest();
                 }
             };
-            
+
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
                 controller.list({
@@ -966,8 +968,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 });
             });
         }
-        
-        
+
+
         return {
             form: Form,
             list: ListFn,
