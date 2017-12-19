@@ -24,7 +24,7 @@ angular.module('adminPanel.crud').service('CrudService', [
              */
             self.init = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
-                var request = Resource.get(Object.assign(object, extraParams));
+                var request = Resource.get(Object.assign({}, object, extraParams));
                 request.$promise.then(function(responseSuccess) {
                     scope.$emit('apLoad:finish', apLoadName);
                     if(callbackSuccess) {
@@ -280,7 +280,7 @@ angular.module('adminPanel.crud').service('CrudService', [
             };
 
             controller.list = function(params, actionDefault, callback) {
-                var listParams = Object.assign(defaultParams, params);
+                var listParams = Object.assign({}, params, defaultParams);
                 List.get(listParams, function(r) {
                     scope.list = r.data;
                     scope.$broadcast('pagination:paginate', {
