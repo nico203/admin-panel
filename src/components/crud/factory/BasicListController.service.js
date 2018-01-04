@@ -17,6 +17,11 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          * }
          * implementa paginacion sobre los elementos devueltos.
          * 
+         * 
+         * Se incorpora un metodo para eliminar objetos basado en el id del elemento ya que se espera que al borrar un elemento se devuelva la lista
+         * de elementos resultante luego de la eliminacion.
+         * Está basada en un evento del scope que es capturado cuando se lanza desde la directiva apDeleteContainer
+         * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
@@ -56,7 +61,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams, '$broadcast').then(function(responseSuccess) {
+                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -77,11 +82,38 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 });
             };
             
+            self.delete = function (elem, actionDefault) {
+                var action = (actionDefault) ? actionDefault : 'delete';
+                var obj = {};
+                obj[resource.name] = elem.id;
+                return self.$$crudFactory.doRequest(action, obj).then(function (responseSuccess) {
+                    scope.list = responseSuccess.data;
+
+                    //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
+                    //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
+                    $timeout(function () {
+                        scope.$broadcast('pagination:paginate', {
+                            totalPageCount: responseSuccess.totalPageCount,
+                            currentPageNumber: responseSuccess.currentPageNumber
+                        });
+                    });
+
+                    return responseSuccess;
+                }, function (responseError) {
+                    return $q.reject(responseError);
+                });
+            };
+            
             //cancelamos los request al destruir el controller
             self.destroy = function() {
                 if(self.request) {
                     self.$$crudFactory.cancelRequest();
                 }
+            };
+            
+            //Configuracion del objeto para borrar un elemento
+            scope.deleteConfig = {
+                resource: resource
             };
             
             //Evento capturado cuando se listan las entidades
@@ -90,6 +122,11 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 self.list({
                     page: page
                 });
+            });
+            
+            scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
+                e.stopPropagation();
+                self.delete(elem);
             });
         }
         

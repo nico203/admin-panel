@@ -14,7 +14,82 @@ angular.module('adminPanel', [
 ]);;angular.module('adminPanel.crud', [
     'adminPanel',
     'ngResource'
-]);;angular.module('adminPanel').directive('apList',[
+]);;angular.module('adminPanel.crud').directive('apDelete',[
+    function() {
+        return {
+            restrict: 'A',
+            require: '^^apDeleteContainer',
+            link: function(scope, elem, attr, ctrl) {
+                var data = null;
+                
+                //creamos el watcher para ver cuando varia el elemento que se pasa como parametro
+                scope.$watch(attr.apDelete, function(val) {
+                    data = val;
+                });
+                
+                function clickElem() {
+                    //si hay un objeto se envia al container
+                    if(data !== null && !angular.isUndefined(data)) {
+                        ctrl.deleteElem(data);
+                    }
+                }
+                
+                elem.on('click', clickElem);
+                
+                scope.$on('$destroy', function() {
+                    elem.off('click', clickElem);
+                });
+            }
+        };
+    }
+]);;/**
+ * Recibe un objeto configuracion por el nombre
+ * Object {
+ *    resource: obligatorio, es el resource para hacer el delete,
+ *    text: texto que se muestra al eliminar un objeto de este tipo
+ *    title: titulo del modal. 
+ * }
+ * 
+ */
+angular.module('adminPanel.crud').directive('apDeleteContainer',[
+    'CrudConfig',
+    function(CrudConfig) {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attr) {
+                //creamos el watcher para ver cuando varia el elemento que se pasa como parametro
+                scope.$watch(attr.apDeleteContainer, function(cfg) {
+                    scope.text = angular.isUndefined(cfg.text) ? CrudConfig.messages.deleteMsg : cfg.text;
+                    scope.title = angular.isUndefined(cfg.title) ? CrudConfig.messages.deleteTitle : cfg.title;
+                });
+                
+                /**
+                 * @param {type} elem Objeto que se va a eliminar
+                 * @returns {Function} funcion a ser ejecutada por el confirm Modal
+                 */
+                function deleteFuncntion(elem) {
+                    
+                    return function() {
+                        scope.$emit('ap-delete-elem:list-ctrl', elem);
+                    };
+                }
+                scope.fn = deleteFuncntion;
+            },
+            controller: [
+                '$rootScope','$scope',
+                function($rootScope,$scope) {
+                    this.deleteElem = function(elem) {
+                        $rootScope.$broadcast('ap-confirm-modal:show', {
+                            title: $scope.title,
+                            text: $scope.text,
+                            fn: $scope.fn(elem)
+                        });
+                    };
+                }
+            ]
+        };
+    }
+]);;angular.module('adminPanel.crud').directive('apList',[
     function(){
         return {
             restrict: 'AE',
@@ -29,7 +104,7 @@ angular.module('adminPanel', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('apListContainer',[
+;angular.module('adminPanel.crud').directive('apListContainer',[
     function(){
         return {
             restrict: 'AE',
@@ -68,7 +143,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this.$$crudFactory.doRequest(action, paramRequest, '$emit').then(function(responseSuccess) {
+                return this.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
                     console.log('responseSuccess', responseSuccess);
                     return responseSuccess;
                 }, function(responseError) {
@@ -347,6 +422,11 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          * }
          * implementa paginacion sobre los elementos devueltos.
          * 
+         * 
+         * Se incorpora un metodo para eliminar objetos basado en el id del elemento ya que se espera que al borrar un elemento se devuelva la lista
+         * de elementos resultante luego de la eliminacion.
+         * Está basada en un evento del scope que es capturado cuando se lanza desde la directiva apDeleteContainer
+         * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
@@ -386,7 +466,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams, '$broadcast').then(function(responseSuccess) {
+                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -407,11 +487,38 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 });
             };
             
+            self.delete = function (elem, actionDefault) {
+                var action = (actionDefault) ? actionDefault : 'delete';
+                var obj = {};
+                obj[resource.name] = elem.id;
+                return self.$$crudFactory.doRequest(action, obj).then(function (responseSuccess) {
+                    scope.list = responseSuccess.data;
+
+                    //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
+                    //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
+                    $timeout(function () {
+                        scope.$broadcast('pagination:paginate', {
+                            totalPageCount: responseSuccess.totalPageCount,
+                            currentPageNumber: responseSuccess.currentPageNumber
+                        });
+                    });
+
+                    return responseSuccess;
+                }, function (responseError) {
+                    return $q.reject(responseError);
+                });
+            };
+            
             //cancelamos los request al destruir el controller
             self.destroy = function() {
                 if(self.request) {
                     self.$$crudFactory.cancelRequest();
                 }
+            };
+            
+            //Configuracion del objeto para borrar un elemento
+            scope.deleteConfig = {
+                resource: resource
             };
             
             //Evento capturado cuando se listan las entidades
@@ -420,6 +527,11 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 self.list({
                     page: page
                 });
+            });
+            
+            scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
+                e.stopPropagation();
+                self.delete(elem);
             });
         }
         
@@ -769,7 +881,11 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
     var messages = {
         saveError: 'Hubo un error al guardar los datos en el servidor. Recarga la página e inténtalo de nuevo',
         saveSusccess: 'Datos guardados exitosamente',
-        loadError: 'Hubo un error al obtener los datos del servidor. Pruebe con recargar la página'
+        loadError: 'Hubo un error al obtener los datos del servidor. Pruebe con recargar la página',
+        
+        //textos al eliminar un objeto
+        deleteMsg: '¿Está seguro de eliminar el objeto seleccionado?',
+        deleteTitle: 'Eliminar Objeto'
     };
     
     this.setBasePath = function(path) {
@@ -781,6 +897,8 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
         messages.saveError = (msg.saveError) ? msg.saveError : messages.saveError;
         messages.saveSusccess = (msg.saveSusccess) ? msg.saveSusccess : messages.saveSusccess;
         messages.loadError = (msg.loadError) ? msg.loadError : messages.loadError;
+        messages.deleteMsg = (msg.deleteMsg) ? msg.deleteMsg : messages.deleteMsg;
+        messages.deleteTitle = (msg.deleteTitle) ? msg.deleteTitle : messages.deleteTitle;
         
         return this;
     };
@@ -1790,6 +1908,58 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
+;/**
+ * Al evento 'ap-confirm-modal:show' se deben pasar 3 valores:
+ * {
+ *   title: titulo del modal,
+ *   text: texto a mostrar,
+ *   fn: function a realizar en caso de ser verdadera
+ * }
+ */
+
+angular.module('adminPanel').directive('apConfirmModal', [ 
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'AE',
+            priority: 60,
+            link: function(scope, elem) {
+                var htmlElem = null;
+                var fnToRealize = null;
+                
+                //init
+                $timeout(function() {
+                    htmlElem = elem.find('.reveal');
+                    console.log('htmlElem',htmlElem);
+                    htmlElem.foundation();
+                });
+                
+                scope.yes = function() {
+                    if(fnToRealize !== null) {
+                        fnToRealize();
+                    }
+                    htmlElem.foundation('close');
+                };
+                
+                scope.no = function() {
+                    htmlElem.foundation('close');
+                };
+                
+                scope.$on('ap-confirm-modal:show', function(e, data) {
+                    scope.title = data.title;
+                    scope.text = data.text;
+                    
+                    fnToRealize = angular.isFunction(data.fn) ? data.fn : null;
+                    
+                    $timeout(function() {
+                        htmlElem.foundation('open');
+                    });
+                });
+            },
+            templateUrl: 'directives/modals/confirm/confirmModal.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('msfCoordenadas', [
     '$timeout',
     function($timeout) {
@@ -2563,11 +2733,11 @@ angular.module('adminPanel').directive('apSelect', [
     ];
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
-    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content><div class=transition ng-view></div></div></div></div>");
+    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
     "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
-    "<ap-box title={{title}} paginate><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><ap-filters><div ng-transclude=form></div></ap-filters><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
+    "<ap-box title={{title}}><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><ap-filters><div ng-transclude=form></div></ap-filters><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
     "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\"><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/top-bar.template.html",
@@ -2590,6 +2760,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
     "<img ng-src={{path}}>");
+  $templateCache.put("directives/modals/confirm/confirmModal.template.html",
+    "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=button ng-click=yes()>Si</a><a class=button ng-click=no()>No</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
   $templateCache.put("directives/pagination/pagination.template.html",

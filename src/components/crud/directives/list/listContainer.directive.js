@@ -1,4 +1,4 @@
-angular.module('adminPanel').directive('apListContainer',[
+angular.module('adminPanel.crud').directive('apListContainer',[
     function(){
         return {
             restrict: 'AE',

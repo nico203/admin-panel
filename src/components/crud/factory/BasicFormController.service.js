@@ -21,7 +21,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this.$$crudFactory.doRequest(action, paramRequest, '$emit').then(function(responseSuccess) {
+                return this.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
                     console.log('responseSuccess', responseSuccess);
                     return responseSuccess;
                 }, function(responseError) {
