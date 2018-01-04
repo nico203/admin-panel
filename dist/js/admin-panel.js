@@ -1387,7 +1387,7 @@ angular.module('adminPanel').directive('apBox', [
 //                pickTime: true,
 //                initialDate: scope.date
             };
-            
+
             scope.$watch(function() {
                 return ngModel.$modelValue;
             }, function(val) {
@@ -1399,17 +1399,17 @@ angular.module('adminPanel').directive('apBox', [
                     scope.minutes = date.getMinutes();
                 }
             });
-            
+
             //Funcion que realiza el cambio de la hora en el modelo
             function changeDateTime(date, hours, minutes) {
-                var h = (angular.isUndefined(hours) || hours === null) ? 
+                var h = (angular.isUndefined(hours) || hours === null) ?
                         ((scope.hours !== null) ? scope.hours : 0) : hours;
-                var m = (angular.isUndefined(minutes) || minutes === null) ?  
+                var m = (angular.isUndefined(minutes) || minutes === null) ?
                         ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
                 date.setSeconds(0);
                 date.setHours(h);
                 date.setMinutes(m);
-                
+
                 //cambio hecho al terminar el ciclo $digest actual
                 $timeout(function() {
                     scope.$apply(function(){
@@ -1417,7 +1417,7 @@ angular.module('adminPanel').directive('apBox', [
                     });
                 });
             }
-            
+
             //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
             //detectar cuando se cambia la hora
             $(elem.find('.ap-date')).fdatepicker(options)
@@ -1426,9 +1426,12 @@ angular.module('adminPanel').directive('apBox', [
                 scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
                 changeDateTime(scope.date);
             });
-            
+
             //Funcion que se ejecuta al cambiar de hora en la vista
             scope.changeHour = function() {
+                if (typeof scope.hours === 'undefined') {
+                    return;
+                }
                 if(scope.hours < 0) {
                     scope.hours = 0;
                 }
@@ -1437,9 +1440,12 @@ angular.module('adminPanel').directive('apBox', [
                 }
                 changeDateTime(scope.date, scope.hours, scope.minutes);
             };
-            
+
             //Funcion que se ejecuta al cambiar de minuto en la vista
             scope.changeMinute = function() {
+                if (typeof scope.minutes === 'undefined') {
+                    return;
+                }
                 if(scope.minutes < 0) {
                     scope.minutes = 0;
                 }
