@@ -4,28 +4,28 @@
  * la instancia de CrudResource que se provea.
  * 
  * Si la propiedad 'name' es compuesta, es decir, es una entidad que depende de otra, se usa el campo name 
- *
- * 
  */
 angular.module('adminPanel.crud').factory('BasicFormController', [
     'CrudFactory', '$q',
     function(CrudFactory, $q) {
         function BasicFormController(scope, resource, apLoadName, formName) {
-            this.$$crudFactory = CrudFactory(scope, resource, apLoadName);
+            this.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
             var name = null;
             //Nombre con el cual se expone al formulario dentro del scope. 
             //Ver https://docs.angularjs.org/guide/forms
-            var formName = angular.isUndefined(formName) ? 'form' : formName;
+            formName = angular.isUndefined(formName) ? 'form' : formName;
             
             this.get = function(params, actionDefault) {
                 var paramRequest = (params) ? params : {};
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                return this.$$crudFactory.doRequest(action, paramRequest, '$emit').then(function(responseSuccess) {
+                    console.log('responseSuccess', responseSuccess);
                     return responseSuccess;
                 }, function(responseError) {
+                    console.log('responseError', responseError);
                     $q.reject(responseError);
                 });
             };
@@ -38,7 +38,8 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
                 //if(!scope.form) {} ????
                 if(scope[formName] && scope[formName].$valid) {
-                    return this.$$crudFactory.doRequest('save', object).then(function(responseSuccess) {
+                    console.log('object',object);
+                    return this.$$crudFactory.doRequest('save', object, '$emit').then(function(responseSuccess) {
                         if(responseSuccess.data) {
                             scope[name] = responseSuccess.data;
                         }

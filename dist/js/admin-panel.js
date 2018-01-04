@@ -14,7 +14,112 @@ angular.module('adminPanel', [
 ]);;angular.module('adminPanel.crud', [
     'adminPanel',
     'ngResource'
-]);;angular.module('adminPanel.crud').factory('BasicFormController', [
+]);;angular.module('adminPanel').directive('apList',[
+    function(){
+        return {
+            restrict: 'AE',
+            transclude: true,
+            scope: {
+                list: '='
+            },
+            link: function(scope) {
+                scope.noResultText = 'No hay resultados';
+            },
+            templateUrl: 'components/crud/directives/list/list.template.html'
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apListContainer',[
+    function(){
+        return {
+            restrict: 'AE',
+            scope: {
+                title: '@',
+                newRoute: '@?'
+            },
+            transclude: {
+                list: 'list',
+                form: '?searchForm'
+            },
+            templateUrl: 'components/crud/directives/list/listContainer.template.html'
+        };
+    }
+]);
+;/**
+ * Obtiene los datos del servidor para ser editados. 
+ * Los expone a través de un atributo definido en el $scope del componente según la propiedad 'name' de 
+ * la instancia de CrudResource que se provea.
+ * 
+ * Si la propiedad 'name' es compuesta, es decir, es una entidad que depende de otra, se usa el campo name 
+ */
+angular.module('adminPanel.crud').factory('BasicFormController', [
+    'CrudFactory', '$q',
+    function(CrudFactory, $q) {
+        function BasicFormController(scope, resource, apLoadName, formName) {
+            this.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            
+            var name = null;
+            //Nombre con el cual se expone al formulario dentro del scope. 
+            //Ver https://docs.angularjs.org/guide/forms
+            formName = angular.isUndefined(formName) ? 'form' : formName;
+            
+            this.get = function(params, actionDefault) {
+                var paramRequest = (params) ? params : {};
+                
+                var action = (actionDefault) ? actionDefault : 'get';
+                
+                return this.$$crudFactory.doRequest(action, paramRequest, '$emit').then(function(responseSuccess) {
+                    console.log('responseSuccess', responseSuccess);
+                    return responseSuccess;
+                }, function(responseError) {
+                    console.log('responseError', responseError);
+                    $q.reject(responseError);
+                });
+            };
+            
+            
+            
+            this.submit = function() {
+                var object = scope[name];
+                
+                //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
+                //if(!scope.form) {} ????
+                if(scope[formName] && scope[formName].$valid) {
+                    console.log('object',object);
+                    return this.$$crudFactory.doRequest('save', object, '$emit').then(function(responseSuccess) {
+                        if(responseSuccess.data) {
+                            scope[name] = responseSuccess.data;
+                        }
+                        return responseSuccess;
+                    }, function(responseError) {
+                        $q.reject(responseError);
+                    });
+                }
+            };
+            
+            /**
+             * @description Inicializa el controlador
+             * 
+             * @returns {BasicReadController}
+             */
+            this.init = function() {
+                name = (resource.property !== null) ? resource.property : resource.name;
+                //inicializamos variables
+                scope[name] = {};
+                
+                this.get();
+                return this;
+            };
+            
+            //cancelamos los request al destruir el controller
+            this.destroy = function() {
+                this.$$crudFactory.cancelRequest();
+            };
+        }
+        
+        return BasicFormController;
+    }
+]);;angular.module('adminPanel.crud').factory('BasicFormController1', [
     'CrudConfig',
     function(CrudConfig) {
         /**
@@ -231,8 +336,8 @@ angular.module('adminPanel', [
  * FALTA implementar busqueda
  */
 angular.module('adminPanel.crud').factory('BasicListController', [
-    'CrudFactory','$timeout',
-    function(CrudFactory,$timeout) {
+    'CrudFactory','$timeout','$q',
+    function(CrudFactory,$timeout,$q) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -278,29 +383,28 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 var listParams = (params) ? params : {};
                 var promise = null;
                 
-                $timeout(function () {
+                return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
-                        console.log('list responseSuccess', responseSuccess);
-                        
+                    promise = self.$$crudFactory.doRequest(action, listParams, '$broadcast').then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
-                        scope.$broadcast('pagination:paginate', {
-                            totalPageCount: responseSuccess.totalPageCount,
-                            currentPageNumber: responseSuccess.currentPageNumber
+                        //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
+                        $timeout(function() {
+                            scope.$broadcast('pagination:paginate', {
+                                totalPageCount: responseSuccess.totalPageCount,
+                                currentPageNumber: responseSuccess.currentPageNumber
+                            });
                         });
                         
                         return responseSuccess;
                     }, function (responseError) {
-                        console.log('list responseError', responseError);
-                        
-                        return responseError;
+                        return $q.reject(responseError);
                     });
+                    
+                    return promise;
                 });
-                
-                return promise;
             };
             
             //cancelamos los request al destruir el controller
@@ -329,8 +433,8 @@ angular.module('adminPanel.crud').factory('BasicListController', [
  * FALTA implementar los resultados en base a un hijo
  */
 angular.module('adminPanel.crud').factory('BasicReadController', [
-    'CrudService',
-    function(CrudService) {
+    'CrudFactory', '$q',
+    function(CrudFactory, $q) {
         
         /**
          * @description 
@@ -340,18 +444,18 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
         function BasicReadController(scope, resource, apLoadName) {
-            this.crudService = CrudService(scope, resource, apLoadName);
+            this.crudFactory = CrudFactory(scope, resource, apLoadName);
             
-            this.get = function(params, actionDefault, callbackSuccess, callbackError) {
+            this.get = function(params, actionDefault) {
                 var paramRequest = (params) ? params : {};
                 
-                this.crudService.doRequest('get', paramRequest, function(responseSuccess) {
-                    
-                }, function(responseError) {
-                    
-                });
+                var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this;
+                return this.crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                    return responseSuccess;
+                }, function(responseError) {
+                    $q.reject(responseError);
+                });
             };
             
             
@@ -367,27 +471,38 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             
             //cancelamos los request al destruir el controller
             this.destroy = function() {
-                this.crudService.cancelRequest();
+                this.crudFactory.cancelRequest();
             };
         }
         
         return BasicReadController;
     }
-]);;angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig',
-    function(CrudConfig) {
+]);;/**
+ * POSIBLE ERROR
+ * 
+ * Al cancelar una promesa en una cadena provoca el fallo de la siguiente, por lo que el flujo dentro de la cadena
+ * de promesas podria no ser el indicado.
+ * 
+ * REFACTORIZACION
+ * 
+ * Al listar una entidad se debe crear una directiva para poner un posible formulario de busqueda y los datos a mostrar de las entidades listadas
+ * Para esto se debe usar solamente $emit para lanzar eventos hacia arriba y que el scope que envia el evento pertenezca al conjunto de elementos listados 
+ * para que la parte de la vista que se recarga contenga solamente a la lista
+ */
+angular.module('adminPanel.crud').factory('CrudFactory', [
+    'CrudConfig', '$q',
+    function(CrudConfig, $q) {
         /**
-         * VER POSIBILIDAD DE devolver el callback en el finnally de la promise
-         * 
          * @param {type} $scope
          * @param {type} resource
+         * @param {type} direction Direccion en la cual enviar el evento, si es hacia arriba $emit o hacia abajo $broadcast ELIMINAR
          * @param {type} apLoadName
          * @returns {CrudFactory.serviceL#3.CrudFactory}
          */
         function CrudFactory($scope, resource, apLoadName) {
             this.request = null;
 
-            this.doRequest = function (methodName, paramRequest, successMsg, errorMsg) {
+            this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start',apLoadName);
                 
@@ -395,7 +510,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 this.cancelRequest();
                 
                 //se procesa el request
-                this.request = resource.$resource[methodName](paramRequest);
+                this.request = resource.$resource[action](paramRequest);
                 //retorna la promesa
                 return this.request.$promise.then(function(responseSuccess) {
                     console.log('responseSuccess', responseSuccess);
@@ -409,21 +524,20 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                     }
                     
                     //se muestra la vista original
-                    $scope.$broadcast('apLoad:finish',apLoadName, message);
+                    $scope.$emit('apLoad:finish',apLoadName, message);
                     
                     return responseSuccess;
                 }, function(responseError) {
-                    console.log('responseError', responseError);
-                    
+
                     var message = {
                         message: (typeof(errorMsg) === 'string') ? errorMsg : CrudConfig.messages.loadError,
-                        type: 'success'
+                        type: 'error'
                     };
                     
                     //se muestra el error, 
                     $scope.$emit('apLoad:finish', apLoadName, message);
                     
-                    return responseError;
+                    return $q.reject(responseError);
                 });
             };
 
@@ -592,6 +706,22 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                 ],
                 cancellable: true
             };
+            
+            /**
+             * Accion por defecto que se utiliza para enviar datos al servidor, al persistir o modificar una entidad
+             * Se envia el objeto de la forma
+             * 
+             * {
+             *   id: id
+             *   name: object
+             * }
+             * 
+             * En donde el id es el identificador del objeto asociado y object es el objecto a persistir/modificar.
+             * El valor de name depende de si la entidad esta asociada a otra, es decir, depende de esta. Si este
+             * es el caso, entonces se envía al servidor el objeto encapsulado dentro de la cadena que se haya recibido
+             * como parametro dentro del objeto 'name' en la definicion del objeto. Caso contrario, se envía el objeto 
+             * encapsulado dentro del atributo con nombre igual a la entidad
+             */
             actions.save = {
                 method: 'POST',
                 transformRequest: [
@@ -1211,12 +1341,6 @@ angular.module('adminPanel').directive('apBox', [
             },
             compile: function (elem, attr) {
                 elem.addClass('ap-box');
-                var pagination = (typeof (attr.paginate) !== 'undefined');
-
-                if (pagination) {
-                    var paginationDirective = angular.element('<ap-pagination>');
-                    elem.find('.pager').append(paginationDirective);
-                }
 
                 //Link function
                 return function (scope, elem, attr) {
@@ -2440,6 +2564,10 @@ angular.module('adminPanel').directive('apSelect', [
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content><div class=transition ng-view></div></div></div></div>");
+  $templateCache.put("components/crud/directives/list/list.template.html",
+    "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
+  $templateCache.put("components/crud/directives/list/listContainer.template.html",
+    "<ap-box title={{title}} paginate><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><ap-filters><div ng-transclude=form></div></ap-filters><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
     "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\"><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/top-bar.template.html",
@@ -2449,7 +2577,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/accordion/accordionItem.template.html",
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
-    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div><div class=pager></div></div></div>");
+    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div></div></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
   $templateCache.put("directives/filter/filter.template.html",
@@ -2465,7 +2593,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
   $templateCache.put("directives/pagination/pagination.template.html",
-    "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
+    "<ul class=\"pagination text-center\" role=navigation ng-if=\"pagination.pages.length !== 0\"><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
     "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-focus=onFocusButton()><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input\" ng-click=\"onClickItemList($event, option)\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-click=newObject()><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",

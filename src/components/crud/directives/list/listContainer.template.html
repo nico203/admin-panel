@@ -1,4 +1,11 @@
-<div ng-if="addButtonText" class="row column">
-    <button type="button" class="button secondary" ng-click="addElement()" ng-bind="addButtonText"></button>
-</div>
-<div class="accordion" ng-transclude></div>
+<ap-box title="{{title}}" paginate>
+    <div ng-if="newRoute" class="row">
+        <a ng-href="{{newRoute}}" class="button">Nuevo</a>
+    </div>
+    <ap-filters>
+        <div ng-transclude="form"></div>
+    </ap-filters>
+    <div ap-load>
+        <div class="small-12" ng-transclude="list"></div>
+    </div>
+</ap-box>

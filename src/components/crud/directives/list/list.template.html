@@ -1,4 +1,5 @@
-<div ng-if="addButtonText" class="row column">
-    <button type="button" class="button secondary" ng-click="addElement()" ng-bind="addButtonText"></button>
+<div ng-if="list.length !== 0">
+    <div ng-transclude></div>
+    <ap-pagination></ap-pagination>
 </div>
-<div class="accordion" ng-transclude></div>
+<div ng-if="list.length === 0" class="small-12 callout warning text-center">{{noResultText}}</div>

@@ -6,8 +6,8 @@
  * FALTA implementar busqueda
  */
 angular.module('adminPanel.crud').factory('BasicListController', [
-    'CrudFactory','$timeout',
-    function(CrudFactory,$timeout) {
+    'CrudFactory','$timeout','$q',
+    function(CrudFactory,$timeout,$q) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -53,29 +53,28 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 var listParams = (params) ? params : {};
                 var promise = null;
                 
-                $timeout(function () {
+                return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
-                        console.log('list responseSuccess', responseSuccess);
-                        
+                    promise = self.$$crudFactory.doRequest(action, listParams, '$broadcast').then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
-                        scope.$broadcast('pagination:paginate', {
-                            totalPageCount: responseSuccess.totalPageCount,
-                            currentPageNumber: responseSuccess.currentPageNumber
+                        //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
+                        $timeout(function() {
+                            scope.$broadcast('pagination:paginate', {
+                                totalPageCount: responseSuccess.totalPageCount,
+                                currentPageNumber: responseSuccess.currentPageNumber
+                            });
                         });
                         
                         return responseSuccess;
                     }, function (responseError) {
-                        console.log('list responseError', responseError);
-                        
-                        return responseError;
+                        return $q.reject(responseError);
                     });
+                    
+                    return promise;
                 });
-                
-                return promise;
             };
             
             //cancelamos los request al destruir el controller

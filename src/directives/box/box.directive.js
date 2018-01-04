@@ -16,12 +16,6 @@ angular.module('adminPanel').directive('apBox', [
             },
             compile: function (elem, attr) {
                 elem.addClass('ap-box');
-                var pagination = (typeof (attr.paginate) !== 'undefined');
-
-                if (pagination) {
-                    var paginationDirective = angular.element('<ap-pagination>');
-                    elem.find('.pager').append(paginationDirective);
-                }
 
                 //Link function
                 return function (scope, elem, attr) {

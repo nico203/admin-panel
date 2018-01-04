@@ -1,4 +1,4 @@
-angular.module('adminPanel.crud').factory('BasicFormController', [
+angular.module('adminPanel.crud').factory('BasicFormController1', [
     'CrudConfig',
     function(CrudConfig) {
         /**
