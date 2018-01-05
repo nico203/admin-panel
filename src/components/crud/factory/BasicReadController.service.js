@@ -15,34 +15,39 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
         function BasicReadController(scope, resource, apLoadName) {
-            this.crudFactory = CrudFactory(scope, resource, apLoadName);
+            var self = this;
+            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
-            this.get = function(params, actionDefault) {
+            self.get = function(params, actionDefault) {
                 var paramRequest = (params) ? params : {};
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this.crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                return self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                    scope[resource.name] = responseSuccess.data;
+                    
                     return responseSuccess;
                 }, function(responseError) {
-                    $q.reject(responseError);
+                    return $q.reject(responseError);
                 });
             };
             
             
             /**
-             * @description Inicializa el controlador
+             * @description Inicializa el controlador dado un identificador del objeto a obtener
              * 
              * @returns {BasicReadController}
              */
-            this.init = function() {
-                this.get();
-                return this;
+            self.init = function(id) {
+                var obj = {};
+                obj[resource.name] = id;
+                self.get(obj);
+                return self;
             };
             
             //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                this.crudFactory.cancelRequest();
+            self.destroy = function() {
+                self.$$crudFactory.cancelRequest();
             };
         }
         
