@@ -9,37 +9,42 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
     'CrudFactory', '$q',
     function(CrudFactory, $q) {
         function BasicFormController(scope, resource, apLoadName, formName) {
-            this.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            var self = this;
+            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
-            var name = null;
+            var name = (resource.property !== null) ? resource.property : resource.name;
+            
             //Nombre con el cual se expone al formulario dentro del scope. 
             //Ver https://docs.angularjs.org/guide/forms
-            formName = angular.isUndefined(formName) ? 'form' : formName;
+            self.$$form = angular.isUndefined(formName) ? 'form' : formName;
             
-            this.get = function(params, actionDefault) {
+            
+            self.get = function(params, actionDefault) {
                 var paramRequest = (params) ? params : {};
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return this.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
-                    console.log('responseSuccess', responseSuccess);
+                return self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                    scope[name] = responseSuccess.data;
+                    
                     return responseSuccess;
                 }, function(responseError) {
-                    console.log('responseError', responseError);
-                    $q.reject(responseError);
+                    return $q.reject(responseError);
                 });
             };
             
             
             
-            this.submit = function() {
+            self.submit = function() {
                 var object = scope[name];
                 
+                console.log('self.$$form',self.$$form);
+              
                 //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
                 //if(!scope.form) {} ????
-                if(scope[formName] && scope[formName].$valid) {
+                if(scope[self.$$form] && scope[self.$$form].$valid) {
                     console.log('object',object);
-                    return this.$$crudFactory.doRequest('save', object, '$emit').then(function(responseSuccess) {
+                    return self.$$crudFactory.doRequest('save', object, '$emit').then(function(responseSuccess) {
                         if(responseSuccess.data) {
                             scope[name] = responseSuccess.data;
                         }
@@ -55,17 +60,17 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
              * 
              * @returns {BasicReadController}
              */
-            this.init = function() {
-                name = (resource.property !== null) ? resource.property : resource.name;
-                //inicializamos variables
-                scope[name] = {};
+            self.init = function(id) {
                 
-                this.get();
+                //inicializamos variables
+                var obj = {};
+                obj[name] = id;
+                self.get(obj);
                 return this;
             };
             
             //cancelamos los request al destruir el controller
-            this.destroy = function() {
+            self.destroy = function() {
                 this.$$crudFactory.cancelRequest();
             };
         }
