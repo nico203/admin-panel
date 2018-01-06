@@ -1085,8 +1085,8 @@ angular.module('adminPanel.topBar', [
                 elem.addClass('ap-accordion');
 
                 scope.accordion = new Foundation.Accordion(elem.find('.accordion'), {
-                    'data-multi-expand':scope.multiExpand,
-                    'data-allow-all-closed':scope.allowAllClosed
+                    multiExpand: scope.multiExpand,
+                    allowAllClosed: scope.allowAllClosed
                 });
 
                 scope.addElement = function() {
