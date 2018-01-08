@@ -157,16 +157,17 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             
             
             
-            self.submit = function() {
+            self.submit = function(actionDefault) {
                 var object = scope[name];
                 
                 console.log('self.$$form',self.$$form);
+                var action = (actionDefault) ? actionDefault : 'save';
               
                 //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
                 //if(!scope.form) {} ????
                 if(scope[self.$$form] && scope[self.$$form].$valid) {
                     console.log('object',object);
-                    return self.$$crudFactory.doRequest('save', object, '$emit').then(function(responseSuccess) {
+                    return self.$$crudFactory.doRequest(action, object, '$emit').then(function(responseSuccess) {
                         if(responseSuccess.data) {
                             scope[name] = responseSuccess.data;
                         }
@@ -182,13 +183,13 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
              * 
              * @returns {BasicReadController}
              */
-            self.init = function(id) {
+            self.init = function(id, action) {
                 
                 //inicializamos variables
                 var obj = {};
                 obj[name] = id;
-                self.get(obj);
-                return this;
+                console.log('obj', obj);
+                return self.get(obj, action);
             };
             
             //cancelamos los request al destruir el controller
@@ -447,8 +448,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.init = function () {
-                self.list();
-                return self;
+                return self.list();
             };
             
             /**
@@ -587,8 +587,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.init = function(id) {
                 var obj = {};
                 obj[resource.name] = id;
-                self.get(obj);
-                return self;
+                return self.get(obj);
             };
             
             //cancelamos los request al destruir el controller

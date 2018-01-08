@@ -41,8 +41,7 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.init = function(id) {
                 var obj = {};
                 obj[resource.name] = id;
-                self.get(obj);
-                return self;
+                return self.get(obj);
             };
             
             //cancelamos los request al destruir el controller

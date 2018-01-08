@@ -37,8 +37,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.init = function () {
-                self.list();
-                return self;
+                return self.list();
             };
             
             /**
