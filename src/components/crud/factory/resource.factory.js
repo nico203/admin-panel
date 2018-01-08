@@ -1,6 +1,7 @@
 angular.module('adminPanel.crud').factory('CrudResource', [
     'CrudConfig', '$http', '$resource', 'NormalizeService',
     function(CrudConfig, $http, $resource, NormalizeService) {
+        
         /**
          * Parametros
          * -url sin la base
@@ -11,6 +12,8 @@ angular.module('adminPanel.crud').factory('CrudResource', [
          * @type {type}
         */
         function CrudResourceFactory(name, url, transform, file, extras) {
+            
+            
             //name
             var nameDefault = null;
             var property = null;
@@ -89,6 +92,18 @@ angular.module('adminPanel.crud').factory('CrudResource', [
             
             //Procesamos los extras
             var actions = {};
+            var normalizeFn = function(data) {
+                var ret = {};
+                ret.id = data.id;
+                if(property) {
+                    ret[property] = NormalizeService.normalize(data[property]);
+                    delete ret[property].id;
+                } else {
+                    ret[name] = NormalizeService.normalize(data);
+                    delete ret[name].id;
+                }
+                return ret;
+            };
             for(var key in extras) {
                 var extra = extras[key];
                 //Le agregamos el basePath de la api a cada url del extra
@@ -101,6 +116,22 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 if(extra.transformResponse) {
                     extra.transformResponse.unshift($http.defaults.transformResponse[0]);
                 }
+                if(extra.transformRequest) {
+                    extra.transformRequest.push($http.defaults.transformRequest[0]);
+                }
+                //para todos los request post se hace la normalizacion
+                if(extra.method === 'POST') {
+                    if(extra.transformRequest) {
+                        extra.transformRequest.unshift(normalizeFn);
+                    } else {
+                        extra.transformRequest = [
+                            normalizeFn,
+                            $http.defaults.transformRequest[0]
+                        ];
+                    }
+                }
+                
+                console.log(key, extra);
                 
                 actions[key] = extra;
             }
@@ -166,24 +197,7 @@ angular.module('adminPanel.crud').factory('CrudResource', [
             actions.save = {
                 method: 'POST',
                 transformRequest: [
-                    function(data) {
-                        var ret = {};
-                        ret.id = data.id;
-                        if(property) {
-                            ret[property] = NormalizeService.normalize(transforms.request(data[property]));
-                            delete ret[property].id;
-                        } else {
-                            ret[nameDefault] = NormalizeService.normalize(transforms.request(data));
-                            delete ret[nameDefault].id;
-                        }
-                        
-                        //Si hay archivo en el objeto se elimina la propiedad, dado que se guarda en otro request
-                        if(fileObj !== null) {
-                            delete ret[fileObj.prop];
-                        }
-                        
-                        return ret;
-                    },
+                    normalizeFn,
                     $http.defaults.transformRequest[0]
                 ],
                 cancellable: true
