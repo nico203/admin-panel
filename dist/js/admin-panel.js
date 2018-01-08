@@ -2145,6 +2145,17 @@ angular.module('adminPanel').directive('apSelect', [
                 };
 
                 /**
+                 * Si el valor referenciado por ng-model cambia programáticamente y $modelValue y $viewValue
+                 * son diferentes, el valor del modelo vuelve a ser null.
+                 */
+                ngModel.$render = function() {
+                    scope.input = {
+                        model: null,
+                        vacio: true
+                    };
+                };
+
+                /**
                  * Se despliega la lista si no esta desplegada.
                  * Solo se hace el request si la lista interna esta vacia
                  */
