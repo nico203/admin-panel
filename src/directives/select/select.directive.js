@@ -1,26 +1,53 @@
 /**
  * KNOWN ISSUES
- *  - Si la lista esta abierta, al presionar el boton por mucho tiempo (1 segundo), la lista se cierra al perder el 
- *  foco del input cuando se hace el click, y cuando se lo suelta se vuelve a darle el foco al input, provocando que
- *  se abra de nuevo la lista. El comportamiento esperado es que la lista permanezca cerrada.
  *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la 
  *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
  *  y la lista deberia permanecer cerrada.
+ *  
+ *  sugerencias
+ *  - La cantidad maxima de items a mostrar debe estar definida en el archivo de configuracion de la app. Para eso
+ *  se deberia definir una propiedad dentro del servicio CrudConfig
+ *  
+ *  Consideraciones generales
+ *  
+ *  En un evento, para cancelarlo en un hijo, el evento debe ser el mismo. En este caso se usa mousedown para todo.
+ *  
+ *  //doc
+ *  
+ *  resource: nombre del CrudResource especificado
+ *  queryParams: propiedades que se usan como parametros de la consulta para filtrar resultados, si no están definidos se usan las
+ *               propiedades definidas en el objeto properties
+ *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
+ *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q',
-    function ($timeout, $rootScope, $q) {
+    '$timeout', '$rootScope', '$q', '$injector',
+    function ($timeout, $rootScope, $q, $injector) {
         return {
             restrict: 'AE',
             require: 'ngModel',
             scope: {
-                reosource: '=',
-                search: '=?',
-                method: '=?',
-                names: '='
+                resource: '@',
+                queryParams: '=?',
+                method: '@?',
+                requestParam: '=?',
+                properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
+                console.log($injector);
                 elem.addClass('select-ap');
+                
+                var resource = null;
+                //obtenemos el servicio para hacer las consultas con el servidor}
+                if($injector.has(scope.resource)) {
+                    var crudResource = $injector.get(scope.resource, 'apSelect');
+                    resource = crudResource.$resource;
+                    console.log('resource',resource);
+                }
+                if(!resource) {
+                    console.error('El recurso no esta definido');
+                }
+                
                 
                 //habilitamos el boton para agregar entidades
                 scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
@@ -29,10 +56,10 @@ angular.module('adminPanel').directive('apSelect', [
                 var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
                 
                 //se definen las propiedades del objeto a mostrar.
-                var objectProperties = angular.isArray(scope.names) ? scope.names : scope.names.split(',');
-                
+                var objectProperties = angular.isString(scope.properies) ? scope.properties.split(',') : scope.properties;
+
                 //elemento seleccionado 
-                var itemSelected = null;
+                scope.itemSelected = null;
 
                 //inicializamos los componentes
                 scope.input = {
@@ -49,12 +76,14 @@ angular.module('adminPanel').directive('apSelect', [
                 var timeoutOpenListPromise = null;
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
-                console.log('defaultMethod',defaultMethod);
+                var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+
                 var request = null;
+                var preventClickButton = false;
                 
                 /**
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
-                 * en la propiedad names de la directiva
+                 * en la propiedad properties de la directiva
                  * 
                  * @param {Object} object | entidad serializada que se esta listando
                  * @returns {Object} | tiene dos propiedades, name: que es por la que se lista despues en la vista
@@ -79,21 +108,41 @@ angular.module('adminPanel').directive('apSelect', [
                  * Se realiza el request. En caso de haber uno en proceso se lo cancela
                  * Emite un evento en donde se manda la promise.
                  * 
+                 * El parametro all establece que se haga una consulta sin parametros.
+                 * Esta se hace cuando se inicializa el componente y todavia no se hizo ningun request
+                 * 
+                 * @param {boolean} all Establece si se usan los filtros para filtrar las entidades 
                  */
-                function doRequest() {
+                function doRequest(all) {
                     if(request) {
                         request.$cancelRequest();
                     }
-                    request = scope.reosource[defaultMethod]();
+                    
+                    var search = {};
+                    
+                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
+                        search.id = scope.requestParam;
+                    }
+                    
+                    if(!all) {
+                        for (var j = 0; j < queryParams.length; j++) {
+                            search[queryParams[j]] = scope.input.model;
+                        }
+                    }
+                    
+                    
+                    request = resource[defaultMethod](search);
                     
                     //seteamos en la vista que el request esta en proceso
+                    console.log('doRequest');
                     scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        
+                        console.log('rSuccess',rSuccess);
+                        var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
                         //creamos la lista. Cada item es de la forma 
                         //{name:'name',id:'id'}
                         var list = [];
-                        for(var i = 0; i < rSuccess.data.length; i++) {
+                        for(var i = 0; i < max; i++) {
                             var object = rSuccess.data[i];
                             list.push(convertObjectToItemList(object));
                         }
@@ -110,7 +159,9 @@ angular.module('adminPanel').directive('apSelect', [
                     
                     //steamos en la vista que el request se termino de procesar
                     promise.finally(function() {
-                        scope.loading = false;
+                        if(request.$resolved) {
+                            scope.loading = false;
+                        }
                     });
                     scope.$emit('ap-select:request', name, promise);
                 }
@@ -134,10 +185,10 @@ angular.module('adminPanel').directive('apSelect', [
                     if(request) {
                         request.$cancelRequest();
                     }
-//
-//                    //seteamos el estado actual del modelo 
-//                    scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
-//                    scope.input.vacio = (itemSelected === null);
+                    
+                    //seteamos el modelo si no hubo cambios
+                    scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                    scope.input.vacio = (scope.itemSelected === null);
                 }
                 
                 /**
@@ -152,9 +203,9 @@ angular.module('adminPanel').directive('apSelect', [
                     console.log('abrir lista');
                     //se abre la lista
                     scope.lista.desplegado = true;
-                    //si la lista interna esta vacia se hace el request
+                    //si la lista interna esta vacia se hace el request sin parametros en la consulta
                     if (scope.lista.items.length === 0) {
-                        doRequest();
+                        doRequest(true);
                     }
                 }
                 
@@ -219,7 +270,8 @@ angular.module('adminPanel').directive('apSelect', [
                 scope.onClickButton = function() {
                     console.log('onClickButton');
                     
-                    if(!scope.lista.desplegado) {
+                    //si no se previene el evento, se despliega la lista
+                    if(!preventClickButton) {
                         if(timeoutCloseListPromise !== null) {
                             $timeout.cancel(timeoutCloseListPromise);
                             timeoutCloseListPromise = null;
@@ -232,8 +284,20 @@ angular.module('adminPanel').directive('apSelect', [
                     } 
                 };
                 
-                scope.onFocusButton = function() {
-
+                /**
+                 * Toma el evento antes del click, dado que el click se computa cuando el usuario suelta el raton
+                 * Si la lista no esta desplegada, el curso es el de no prevenir el evento click, para que la lista
+                 * se despliegue.
+                 * Si la lista esta desplegada, el curso es el de prevenir el evento click, para que cuando el input
+                 * pierda el foco, la lista se cierre, pero cuando el usuario suelte el raton no se dispare el evento
+                 * click, lo que volvería a abrir la lista, lo cual NO es deseado.
+                 */
+                scope.onMousedownButton = function(e) {
+                    console.log('onMousedownButton');
+                    preventClickButton = scope.lista.desplegado;
+                    
+                    console.log('desplegado', preventClickButton);
+                    
                 };
                 
                 //eventos relacionados con la lista
@@ -247,7 +311,7 @@ angular.module('adminPanel').directive('apSelect', [
                     e.stopPropagation();
                     
                     //seteamos el item actual
-                    itemSelected = item;
+                    scope.itemSelected = item;
                     
                     //asignamos el id de la entidad al modelo
                     ngModel.$setViewValue(item.$$object);
@@ -271,12 +335,14 @@ angular.module('adminPanel').directive('apSelect', [
                  * Se ejecuta cuando el usuario da click al boton nuevo.
                  * Lanza el evento para mostrar el box correspondiente
                  */
-                scope.newObject = function () {
+                scope.newObject = function (e) {
+                    e.stopPropagation();
+                    
                     $rootScope.$broadcast('apBox:show', attr.new);
                 };
                 
                 //registramos los eventos
-                elem.on('click', '.dropdown-ap', onListClick);
+                elem.on('mousedown', '.dropdown-ap', onListClick);
                 
                 /**
                  * Watcher que chequea cualquier cambio en el modelo de la entidad, tanto externo como interno
@@ -291,19 +357,23 @@ angular.module('adminPanel').directive('apSelect', [
                         //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
                         itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
                         
-                        console.log('val',val);
+
+                        //seteamos el item actual
+                        scope.itemSelected = convertObjectToItemList(val);
+                        console.log('itemSelected',scope.itemSelected);
                         
                         //seteamos el estado actual del modelo 
-                        scope.input.model = (itemSelected === null) ? '' : itemSelected.name;
-                        scope.input.vacio = (itemSelected === null);
+                        scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                        scope.input.vacio = (scope.itemSelected === null);
+                        console.log('scope.input',scope.input);
                     }
                 });
                 
                 /**
-                 * Liberamos los eventos que hayan sido agregados a los 
+                 * Liberamos los eventos que hayan sido agregados a los elementos
                  */
                 var destroyEventOnDestroy = scope.$on('$destroy', function() {
-                    elem.off('click', '.dropdown-ap', onListClick);
+                    elem.off('mousedown', '.dropdown-ap', onListClick);
                     destroyEventOnDestroy();
                 });
             },

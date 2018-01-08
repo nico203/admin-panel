@@ -28,7 +28,7 @@ angular.module('adminPanel.crud').service('NormalizeService', [
 
 //                var name = camelize(key);
                 var name = key;
-                
+
                 if('object' === typeof(object[key]) && object[key] !== null) {
                     if('undefined' !== typeof(object[key].id)) {
                         object[name] = object[key].id;
