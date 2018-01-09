@@ -155,29 +155,35 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 };
             }
             
-            actions.query = {
-                method: 'GET',
-                transformResponse: [
-                    $http.defaults.transformResponse[0],
-                    function(data) {
-                        var ret = [];
-                        for(var i = 0; i < data.length; i++) {
-                            ret.push(transforms.response(data[i]));
+            if(angular.isUndefined(actions.query)) {
+                actions.query = {
+                    method: 'GET',
+                    transformResponse: [
+                        $http.defaults.transformResponse[0],
+                        function(data) {
+                            var ret = [];
+                            for(var i = 0; i < data.length; i++) {
+                                ret.push(transforms.response(data[i]));
+                            }
+                            return ret;
                         }
-                        return ret;
-                    }
-                ],
-                isArray: false,
-                cancellable: true
-            };
-            actions.get = {
-                method: 'GET',
-                transformResponse: [
-                    $http.defaults.transformResponse[0],
-                    transforms.response
-                ],
-                cancellable: true
-            };
+                    ],
+                    isArray: false,
+                    cancellable: true
+                };
+            }
+            
+            if(angular.isUndefined(actions.get)) {
+                actions.get = {
+                    method: 'GET',
+                    transformResponse: [
+                        $http.defaults.transformResponse[0],
+                        transforms.response
+                    ],
+                    cancellable: true
+                };
+            }
+            
             
             /**
              * Accion por defecto que se utiliza para enviar datos al servidor, al persistir o modificar una entidad
@@ -194,14 +200,16 @@ angular.module('adminPanel.crud').factory('CrudResource', [
              * como parametro dentro del objeto 'name' en la definicion del objeto. Caso contrario, se envía el objeto 
              * encapsulado dentro del atributo con nombre igual a la entidad
              */
-            actions.save = {
-                method: 'POST',
-                transformRequest: [
-                    normalizeFn,
-                    $http.defaults.transformRequest[0]
-                ],
-                cancellable: true
-            };
+            if(angular.isUndefined(actions.save)) {
+                actions.save = {
+                    method: 'POST',
+                    transformRequest: [
+                        normalizeFn,
+                        $http.defaults.transformRequest[0]
+                    ],
+                    cancellable: true
+                };
+            }
             
             console.log('actions',actions);
             
