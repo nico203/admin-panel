@@ -1912,7 +1912,8 @@ angular.module('adminPanel').directive('formFieldError', [
     }
 ]);
 
-;/**
+;
+/**
  * KNOWN ISSUES
  *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la
  *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
@@ -1937,8 +1938,8 @@ angular.module('adminPanel').directive('formFieldError', [
  *  inputValidator: valor usado por el componente angular-validation. Valor por defecto: 'default'. Asegurarse de que exista una regla con este nombre.
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q', '$injector',
-    function ($timeout, $rootScope, $q, $injector) {
+    '$timeout', '$rootScope', '$q', '$injector', '$document',
+    function ($timeout, $rootScope, $q, $injector, $document) {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -2272,8 +2273,19 @@ angular.module('adminPanel').directive('apSelect', [
                     $rootScope.$broadcast('apBox:show', attr.new);
                 };
 
+                //Eventos relacionados con entradas del teclado
+
+                function enterHandler(event) {
+                    var ENTER_KEY_CODE = 13;
+                    if (scope.lista.desplegado && event.keyCode === ENTER_KEY_CODE) {
+                        elem.find('input').blur();
+                        event.preventDefault();
+                    }
+                }
+
                 //registramos los eventos
                 elem.on('mousedown', '.dropdown-ap', onListClick);
+                $document.on('keydown', enterHandler);
 
                 scope.$watch(function () {
                     return ngModel.$modelValue;
@@ -2297,6 +2309,7 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 var destroyEventOnDestroy = scope.$on('$destroy', function() {
                     elem.off('mousedown', '.dropdown-ap', onListClick);
+                    $document.off('keydown', enterHandler);
                     destroyEventOnDestroy();
                 });
             },
@@ -2491,7 +2504,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/pagination/pagination.template.html",
     "<ul class=\"pagination text-center\" role=navigation><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=input-group><input id=select-{{::$id}} class=input-group-field type=text ng-model=input.model name={{name}} ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() message-id=message-{{::$id}} validator={{inputValidator}}><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><span id=message-{{::$id}}></span><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+    "<div class=input-group><input id=select-{{::$id}} class=input-group-field type=text ng-model=input.model name={{name}} autocomplete=off ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() message-id=message-{{::$id}} validator={{inputValidator}}><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><span id=message-{{::$id}}></span><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);

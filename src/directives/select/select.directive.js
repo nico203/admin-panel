@@ -1,3 +1,4 @@
+
 /**
  * KNOWN ISSUES
  *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la
@@ -23,8 +24,8 @@
  *  inputValidator: valor usado por el componente angular-validation. Valor por defecto: 'default'. Asegurarse de que exista una regla con este nombre.
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q', '$injector',
-    function ($timeout, $rootScope, $q, $injector) {
+    '$timeout', '$rootScope', '$q', '$injector', '$document',
+    function ($timeout, $rootScope, $q, $injector, $document) {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -358,8 +359,19 @@ angular.module('adminPanel').directive('apSelect', [
                     $rootScope.$broadcast('apBox:show', attr.new);
                 };
 
+                //Eventos relacionados con entradas del teclado
+
+                function enterHandler(event) {
+                    var ENTER_KEY_CODE = 13;
+                    if (scope.lista.desplegado && event.keyCode === ENTER_KEY_CODE) {
+                        elem.find('input').blur();
+                        event.preventDefault();
+                    }
+                }
+
                 //registramos los eventos
                 elem.on('mousedown', '.dropdown-ap', onListClick);
+                $document.on('keydown', enterHandler);
 
                 scope.$watch(function () {
                     return ngModel.$modelValue;
@@ -383,6 +395,7 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 var destroyEventOnDestroy = scope.$on('$destroy', function() {
                     elem.off('mousedown', '.dropdown-ap', onListClick);
+                    $document.off('keydown', enterHandler);
                     destroyEventOnDestroy();
                 });
             },
