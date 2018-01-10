@@ -28,6 +28,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          */
         function BasicListController(scope, resource, apLoadName) {
             var self = this;
+            var listParams = null;
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
@@ -54,7 +55,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.list = function(params, actionDefault) {
-                var listParams = (params) ? params : {};
+                listParams = (params) ? params : {};
                 var promise = null;
                 
                 return $timeout(function () {
@@ -118,9 +119,8 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             //Evento capturado cuando se listan las entidades
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
-                self.list({
-                    page: page
-                });
+                listParams.page = page;
+                self.list(listParams);
             });
             
             scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
