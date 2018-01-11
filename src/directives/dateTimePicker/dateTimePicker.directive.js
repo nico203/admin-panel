@@ -21,6 +21,7 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
             }, function(val) {
                 if(val) {
                     var date = new Date(val);
+                    if(isNaN(date)) return; //la fecha no es valida
                     scope.date = date;
                     $(elem.find('.ap-date')).fdatepicker('update', date);
                     scope.hours = date.getHours();

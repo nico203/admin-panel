@@ -1660,6 +1660,7 @@ angular.module('adminPanel').directive('apBox', [
             }, function(val) {
                 if(val) {
                     var date = new Date(val);
+                    if(isNaN(date)) return; //la fecha no es valida
                     scope.date = date;
                     $(elem.find('.ap-date')).fdatepicker('update', date);
                     scope.hours = date.getHours();
@@ -2608,6 +2609,42 @@ angular.module('adminPanel').directive('apSelect', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apSwitch', [
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            scope: {
+                id: '@',
+                title: '@'
+            },
+            link: function(scope, elem, attr, ngModel) {
+                elem.addClass('row column');
+
+                scope.$watch(function() {
+                    return ngModel.$modelValue;
+                }, function(val) {
+                    if(val) {
+                        var date = new Date(val);
+                        scope.date = date;
+                        $(elem.find('.ap-date')).fdatepicker('update', date);
+                    }
+                });
+                
+                scope.$watch('model', function(val) {
+                    ngModel.$setViewValue(val);
+                });
+                
+                //init
+                $timeout(function(){
+                    elem.foundation();
+                });
+            },
+            templateUrl: 'directives/switch/switch.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apTimePicker', ['$timeout', function($timeout) {
     return {
         restrict: 'AE',
@@ -2802,6 +2839,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<ul class=\"pagination text-center\" role=navigation ng-if=\"pagination.pages.length !== 0\"><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
     "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+  $templateCache.put("directives/switch/switch.template.html",
+    "<label ng-bind=title></label><div class=switch><input class=switch-input id={{id}} type=checkbox ng-model=model><label class=switch-paddle for={{id}}></label></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);
