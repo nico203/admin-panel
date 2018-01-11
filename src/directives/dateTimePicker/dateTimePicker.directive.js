@@ -11,7 +11,8 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
             scope.minutes = null;
             scope.date = null;
             var options = {
-                format: 'dd/mm/yyyy'
+                format: 'dd/mm/yyyy',
+                language: 'es'
 //                pickTime: true,
 //                initialDate: scope.date
             };
