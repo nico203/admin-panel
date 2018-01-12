@@ -1,12 +1,18 @@
+@include foundation-top-bar;
+
+$top-bar-shadow: 1px 1px 10px rgba(0, 0, 0, 0.55) !default;
 $top-bar-background: #37474f !default;
+$topbar-background: $top-bar-background;
 
 top-bar {
+    display: block;
     position: fixed;
     overflow: hidden;
     top: 0px;
     left: 0px;
     right: 0px;
-    height: 56px;
-    border-bottom: 1px solid lighten( $top-bar-background, 10% );
-    box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.55);
+    height: $top-height;
+    background: $top-bar-background;
+    border-bottom: 1px solid lighten($top-bar-background, 10% );
+    box-shadow: $top-bar-shadow;
 }

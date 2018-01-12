@@ -1,10 +1,15 @@
+@include foundation-accordion;
+@include foundation-accordion-menu;
+@include foundation-menu;
+@include foundation-menu-icon;
+
 $side-bar-background: #263238 !default;
 
 navigation {
     position: fixed;
     overflow: hidden;
     overflow-y: auto;
-    top: 56px;
+    top: $top-height;
     left: 0px;
     bottom: 0px;
     width: 250px;
