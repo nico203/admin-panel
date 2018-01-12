@@ -1,10 +1,8 @@
 <div class="input-group">
-    <input id="select-{{::$id}}" class="input-group-field" type="text" ng-model="input.model" name="{{name}}" autocomplete="off"
+    <input class="input-group-field" type="text" ng-model="input.model" autocomplete="off"
            ng-change="onChangeInput()"
            ng-focus="onFocusInput()"
-           ng-blur="onBlurInput()"
-           message-id="message-{{::$id}}"
-           validator="{{inputValidator}}"/>
+           ng-blur="onBlurInput()"/>
     <div class="input-group-button">
         <button type="button" class="button secondary"
                 ng-click="onClickButton()"
@@ -13,7 +11,6 @@
         </button>
     </div>
 </div>
-<span id="message-{{::$id}}"></span>
 <div class="dropdown-ap " ng-class="{'is-open':lista.desplegado}">
     <ul ng-if="loading" class="list-group">
         <li style="font-weight: bold;">Cargando...</li>

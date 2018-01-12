@@ -20,8 +20,6 @@
  *               propiedades definidas en el objeto properties
  *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
  *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
- *  name: atributo name que se asignará al input.
- *  inputValidator: valor usado por el componente angular-validation. Valor por defecto: 'default'. Asegurarse de que exista una regla con este nombre.
  */
 angular.module('adminPanel').directive('apSelect', [
     '$timeout', '$rootScope', '$q', '$injector', '$document',
@@ -34,9 +32,7 @@ angular.module('adminPanel').directive('apSelect', [
                 queryParams: '=?',
                 method: '@?',
                 requestParam: '=?',
-                properties: '=',
-                name: '@',
-                inputValidator: '@?'
+                properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
                 console.log($injector);
@@ -65,9 +61,6 @@ angular.module('adminPanel').directive('apSelect', [
 
                 //elemento seleccionado
                 scope.itemSelected = null;
-
-                //inicializamos el valor para la directiva validator
-                scope.inputValidator = scope.inputValidator || 'default';
 
                 //inicializamos los componentes
                 scope.input = {
