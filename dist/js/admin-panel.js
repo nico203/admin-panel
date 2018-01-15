@@ -1936,10 +1936,11 @@ angular.module('adminPanel').directive('formFieldError', [
  *               propiedades definidas en el objeto properties
  *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
  *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
+ *  filters: filtros aplicados a las propiedades. Ejemplo: filters="['date:dd/MM/yyyy', 'uppercase', '', 'lowercase']"
  */
 angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q', '$injector', '$document',
-    function ($timeout, $rootScope, $q, $injector, $document) {
+    '$timeout', '$rootScope', '$q', '$injector', '$document', '$filter',
+    function ($timeout, $rootScope, $q, $injector, $document, $filter) {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -1948,7 +1949,8 @@ angular.module('adminPanel').directive('apSelect', [
                 queryParams: '=?',
                 method: '@?',
                 requestParam: '=?',
-                properties: '='
+                properties: '=',
+                filters: '=?'
             },
             link: function (scope, elem, attr, ngModel) {
                 console.log($injector);
@@ -1974,6 +1976,17 @@ angular.module('adminPanel').directive('apSelect', [
 
                 //se definen las propiedades del objeto a mostrar.
                 var objectProperties = angular.isString(scope.properies) ? scope.properties.split(',') : scope.properties;
+
+                //se generan los datos necesarios para aplicar los filtros
+                var filtersData = [];
+                var propertyFilters = angular.isString(scope.filters) ? scope.filters.split(',') : scope.filters;
+                objectProperties.forEach(function(filter, i) {
+                    if (angular.isDefined(propertyFilters) && propertyFilters[i]) {
+                        filtersData.push(propertyFilters[i].split(':'));
+                    } else {
+                        filtersData.push(['','']);
+                    }
+                });
 
                 //elemento seleccionado
                 scope.itemSelected = null;
@@ -2009,7 +2022,13 @@ angular.module('adminPanel').directive('apSelect', [
                     var name = '';
                     //Seteamos solamente los campos seleccionados a mostrar
                     for(var j = 0; j < objectProperties.length; j++) {
-                        name += object[objectProperties[j]] + ', ';
+                        if (filtersData[j][0] && filtersData[j][1]) {
+                            name += $filter(filtersData[j][0])(object[objectProperties[j]], filtersData[j][1]) + ', ';
+                        } else if (filtersData[j][0]) {
+                            name += $filter(filtersData[j][0])(object[objectProperties[j]]) + ', ';
+                        } else {
+                            name += object[objectProperties[j]] + ', ';
+                        }
                     }
                     //borramos la ultima coma
                     name = name.replace(/,\s*$/, "");
