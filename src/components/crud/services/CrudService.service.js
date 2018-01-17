@@ -1,6 +1,6 @@
 angular.module('adminPanel.crud').service('CrudService', [
-    '$timeout','CrudConfig',
-    function($timeout, CrudConfig) {
+    '$timeout','CrudConfig', '$location',
+    function($timeout, CrudConfig, $location) {
         /**
          * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
          * de formulario. Debe haber un solo de estos elementos por formulario.
@@ -280,13 +280,15 @@ angular.module('adminPanel.crud').service('CrudService', [
             };
 
             controller.list = function(params, actionDefault, callback) {
-                var listParams = Object.assign({}, params, defaultParams);
-                List.get(listParams, function(r) {
+                var listParams = Object.assign($location.search(), params);
+                var allParams = Object.assign({}, listParams, defaultParams);
+                List.get(allParams, function(r) {
                     scope.list = r.data;
                     scope.$broadcast('pagination:paginate', {
                         totalPageCount: r.totalPageCount,
                         currentPageNumber: r.currentPageNumber
                     });
+                    $location.search(listParams);
                     if(callback) callback();
                 }, function(){}, actionDefault);
             };
