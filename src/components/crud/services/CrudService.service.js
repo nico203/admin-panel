@@ -91,14 +91,49 @@ angular.module('adminPanel.crud').service('CrudService', [
                         });
                     }
                 }, function(responseError) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveError,
-                        type: 'error'
-                    });
+                    var errorData = {};
+                    transformErrorData(responseError, errorData);
+
+                    if (errorData.errors.length > 0) {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            title: CrudConfig.messageTitles.saveError,
+                            message: errorData.errors,
+                            type: 'error'
+                        });
+                    } else {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            message: CrudConfig.messages.saveError,
+                            type: 'error'
+                        });
+                    }
                     if(callbackError) {
                         callbackError(responseError);
                     }
                     throw 'Form Error: ' + responseError;
+
+                    //Función que crea un objeto con los mensajes de error
+                    //a partir responseError de symfony
+                    function transformErrorData(obj, data) {
+                        if(angular.isUndefined(data.errors)) {
+                            data.errors = [];
+                        }
+                        var errorsData = (obj.data && obj.data.errors) ? obj.data.errors : null;
+                        if (errorsData) {
+                            iterateErrorObject(errorsData, data);
+                        }
+
+                        function iterateErrorObject(obj, data) {
+                            for (var property in obj) {
+                                if (obj.hasOwnProperty(property)) {
+                                    if (angular.isArray(obj[property]) && property === 'errors') {
+                                        data.errors = data.errors.concat(obj[property]);
+                                    } else if (angular.isObject(obj[property])) {
+                                        iterateErrorObject(obj[property], data);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
 
                 //aregamos el request al scope para poderlo cancelar

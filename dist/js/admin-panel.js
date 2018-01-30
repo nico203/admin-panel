@@ -641,24 +641,34 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
         saveSusccess: 'Datos guardados exitosamente',
         loadError: 'Hubo un error al obtener los datos del servidor. Pruebe con recargar la página'
     };
-    
+    var messageTitles = {
+        saveError: 'Hubo un error al intentar guardar los datos:'
+    };
+
     this.setBasePath = function(path) {
         basePath = path;
         return this;
     };
-    
+
     this.setMessages = function(msg) {
         messages.saveError = (msg.saveError) ? msg.saveError : messages.saveError;
         messages.saveSusccess = (msg.saveSusccess) ? msg.saveSusccess : messages.saveSusccess;
         messages.loadError = (msg.loadError) ? msg.loadError : messages.loadError;
-        
+
         return this;
     };
-    
+
+    this.setMessageTitles = function(titles) {
+        messageTitles.saveError = (titles.saveError) ? titles.saveError : messageTitles.saveError;
+
+        return this;
+    };
+
     this.$get = function() {
         return {
             basePath: basePath,
-            messages: messages
+            messages: messages,
+            messageTitles: messageTitles
         };
     };
 });;angular.module('adminPanel.crud').service('CrudService', [
@@ -754,14 +764,49 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
                         });
                     }
                 }, function(responseError) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveError,
-                        type: 'error'
-                    });
+                    var errorData = {};
+                    transformErrorData(responseError, errorData);
+
+                    if (errorData.errors.length > 0) {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            title: CrudConfig.messageTitles.saveError,
+                            message: errorData.errors,
+                            type: 'error'
+                        });
+                    } else {
+                        scope.$emit('apLoad:finish', apLoadName, {
+                            message: CrudConfig.messages.saveError,
+                            type: 'error'
+                        });
+                    }
                     if(callbackError) {
                         callbackError(responseError);
                     }
                     throw 'Form Error: ' + responseError;
+
+                    //Función que crea un objeto con los mensajes de error
+                    //a partir responseError de symfony
+                    function transformErrorData(obj, data) {
+                        if(angular.isUndefined(data.errors)) {
+                            data.errors = [];
+                        }
+                        var errorsData = (obj.data && obj.data.errors) ? obj.data.errors : null;
+                        if (errorsData) {
+                            iterateErrorObject(errorsData, data);
+                        }
+
+                        function iterateErrorObject(obj, data) {
+                            for (var property in obj) {
+                                if (obj.hasOwnProperty(property)) {
+                                    if (angular.isArray(obj[property]) && property === 'errors') {
+                                        data.errors = data.errors.concat(obj[property]);
+                                    } else if (angular.isObject(obj[property])) {
+                                        iterateErrorObject(obj[property], data);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
 
                 //aregamos el request al scope para poderlo cancelar
@@ -1228,7 +1273,7 @@ angular.module('adminPanel').directive('apBox', [
 
                 //Link function
                 return function (scope, elem, attr) {
-                    //El boton de cierre del box se muestra solamente si tiene seteado 
+                    //El boton de cierre del box se muestra solamente si tiene seteado
                     //el atributo name, el cual debe ser el nombre del evento que lo muestra.
                     scope.closeButton = (typeof (attr.name) !== 'undefined');
                     scope.message = null;
@@ -1236,6 +1281,7 @@ angular.module('adminPanel').directive('apBox', [
                     scope.elem = elem;
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
+                    scope.isArray = angular.isArray;
                     //buscamos todas las directivas ap-load en los elementos hijos
                     var loadDirectives = elem.find("[ap-load]");
                     for (var i = 0; i < loadDirectives.length; i++) {
@@ -1280,7 +1326,7 @@ angular.module('adminPanel').directive('apBox', [
                         scope.elem.addClass('no-visible');
                     }
 
-                    //Funcion que se usa para mostrar el box al lanzar determinado 
+                    //Funcion que se usa para mostrar el box al lanzar determinado
                     //evento con el nombre determinado para el box
                     function showOnEvent(e, name) {
                         if (attr.name === name) {
@@ -2501,7 +2547,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/accordion/accordionItem.template.html",
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
-    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div><div class=pager></div></div></div>");
+    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=\"message-container callout\" ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\"><h5 ng-if=message.title><i ng-if=\"message.type === 'error'\" class=\"fa fa-exclamation-triangle\"></i><span ng-bind=\"' {{message.title}}'\"></span></h5><p ng-if=!isArray(message.message) ng-bind=message.message></p><ul ng-if=isArray(message.message)><li ng-repeat=\"item in message.message\" ng-bind=item></li></ul></div><div ng-transclude ap-load></div><div class=pager></div></div></div>");
   $templateCache.put("directives/datePicker/datePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",

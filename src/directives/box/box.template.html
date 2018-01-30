@@ -6,11 +6,19 @@
         <h5 ng-bind="title"></h5>
     </div>
     <div class="card-section">
-        <div ng-if="message" class="callout" ng-class="{
+        <div ng-if="message" class="message-container callout" ng-class="{
             'success':message.type === 'success',
             'warning':message.type === 'warning',
-            'alert':message.type === 'error'
-        }" ng-bind="message.message"></div>
+            'alert':message.type === 'error'}">
+            <h5 ng-if="message.title">
+                <i ng-if="message.type === 'error'" class="fa fa-exclamation-triangle"></i>
+                <span ng-bind="' {{message.title}}'"></span>
+            </h5>
+            <p ng-if="!isArray(message.message)" ng-bind="message.message"></p>
+            <ul ng-if="isArray(message.message)">
+                <li ng-repeat="item in message.message" ng-bind="item"></li>
+            </ul>
+        </div>
         <div ng-transclude ap-load></div>
         <div class="pager"></div>
     </div>

@@ -25,7 +25,7 @@ angular.module('adminPanel').directive('apBox', [
 
                 //Link function
                 return function (scope, elem, attr) {
-                    //El boton de cierre del box se muestra solamente si tiene seteado 
+                    //El boton de cierre del box se muestra solamente si tiene seteado
                     //el atributo name, el cual debe ser el nombre del evento que lo muestra.
                     scope.closeButton = (typeof (attr.name) !== 'undefined');
                     scope.message = null;
@@ -33,6 +33,7 @@ angular.module('adminPanel').directive('apBox', [
                     scope.elem = elem;
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
+                    scope.isArray = angular.isArray;
                     //buscamos todas las directivas ap-load en los elementos hijos
                     var loadDirectives = elem.find("[ap-load]");
                     for (var i = 0; i < loadDirectives.length; i++) {
@@ -77,7 +78,7 @@ angular.module('adminPanel').directive('apBox', [
                         scope.elem.addClass('no-visible');
                     }
 
-                    //Funcion que se usa para mostrar el box al lanzar determinado 
+                    //Funcion que se usa para mostrar el box al lanzar determinado
                     //evento con el nombre determinado para el box
                     function showOnEvent(e, name) {
                         if (attr.name === name) {
