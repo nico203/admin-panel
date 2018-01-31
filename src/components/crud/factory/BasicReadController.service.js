@@ -4,8 +4,8 @@
  * FALTA implementar los resultados en base a un hijo
  */
 angular.module('adminPanel.crud').factory('BasicReadController', [
-    'CrudFactory', '$q',
-    function(CrudFactory, $q) {
+    'CrudFactory', 'CrudConfig', '$q',
+    function(CrudFactory, CrudConfig, $q) {
         
         /**
          * @description 
@@ -19,7 +19,10 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
             
             self.get = function(params, actionDefault) {
-                var paramRequest = (params) ? params : {};
+                if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
+                    return false;
+                }
+                var paramRequest = params;
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 

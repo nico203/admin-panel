@@ -6,8 +6,8 @@
  * Si la propiedad 'name' es compuesta, es decir, es una entidad que depende de otra, se usa el campo name 
  */
 angular.module('adminPanel.crud').factory('BasicFormController', [
-    'CrudFactory', '$q',
-    function(CrudFactory, $q) {
+    'CrudFactory', 'CrudConfig',  '$q',
+    function(CrudFactory,CrudConfig, $q) {
         function BasicFormController(scope, resource, apLoadName, formName) {
             var self = this;
             self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
@@ -20,7 +20,11 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             
             
             self.get = function(params, actionDefault) {
-                var paramRequest = (params) ? params : {};
+                console.log('params', params);
+                if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
+                    return false;
+                }
+                var paramRequest = params;
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 

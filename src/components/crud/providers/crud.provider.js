@@ -9,6 +9,7 @@ angular.module('adminPanel.crud').provider('CrudConfig', function() {
         deleteMsg: '¿Está seguro de eliminar el objeto seleccionado?',
         deleteTitle: 'Eliminar Objeto'
     };
+    var newPath = 'nuevo';
     
     this.setBasePath = function(path) {
         basePath = path;
@@ -25,10 +26,15 @@ angular.module('adminPanel.crud').provider('CrudConfig', function() {
         return this;
     };
     
+    this.setNewPath = function(val) {
+        newPath = val;
+    };
+    
     this.$get = function() {
         return {
             basePath: basePath,
-            messages: messages
+            messages: messages,
+            newPath: newPath
         };
     };
 });
