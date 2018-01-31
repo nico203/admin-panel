@@ -1,4 +1,3 @@
-
 $padding: 1.25rem 1rem;
 $font-size: 0.75rem;
 $top-height: 56px !default;
@@ -15,6 +14,7 @@ $top-height: 56px !default;
 @import 'directives/timePicker/timePicker.style';
 @import 'directives/imageLoader/imageLoader.style';
 @import 'filters/highlight.style';
+
 
 @include foundation-global-styles;
 @include foundation-grid;
@@ -52,41 +52,7 @@ $top-height: 56px !default;
 @include foundation-visibility-classes;
 @include foundation-float-classes;
 
-
-// Global 
-// ------- 
-
-$global-font-size: 100%;
-$global-width: rem-calc(1200);
-$global-lineheight: 1.5;
-$foundation-palette: (
-    primary: #17ba60,
-    secondary: #b3b3b3,
-    success: #23d853,
-    warning: #f5da18,
-    alert: #d02e15,
-);
-$light-gray: #b3b3b3;
-$medium-gray: #cacaca;
-$dark-gray: #8a8a8a;
-$black: #0a0a0a;
-$white: #fefefe;
-$body-background: $white;
-$body-font-color: $black;
-$body-font-family: 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
-$body-antialiased: true;
-$global-margin: 1rem;
-$global-padding: 1rem;
-$global-weight-normal: normal;
-$global-weight-bold: bold;
-$global-radius: 0;
-$global-text-direction: ltr;
-$global-flexbox: false;
-$print-transparent-backgrounds: true;
-
-
 body {
-    background: $content-background;
     overflow: hidden;
     overflow-y: auto;
 }
@@ -108,7 +74,6 @@ body {
     padding: 20px;
     margin-top: $top-height;
     background: $content-background;
-    border-left: 1px solid $content-border-color;
 }
 
 

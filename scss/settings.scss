@@ -1,28 +1,21 @@
 // highlight
 // ---------
 
-$highlightColor: yellow;
-
-
-// Top Bar
-// ---------
-
-$top-bar-background: #37474f;
-
+$highlightColor: yellow !default;
 
 // Navigation (Side Bar)
 // ---------
 
-$side-bar-background: #263238;
+$side-bar-background: #263238 !default;
 
 
 // General  
 // ---------
 
-$content-background: #f5f5f5;
+$content-background: none !default;
 //$content-border-color: mix($content-background, #ffffff);
-$content-border-color: #ffffff;
-$admin-background: #272b27;
+$content-border-color: #ffffff !default;
+$admin-background: #272b27 !default;
 
 
 
@@ -33,18 +26,9 @@ $admin-background: #272b27;
 // Accordion Menu
 // -----------------
 
-$menu-item-padding: 0.9rem 1rem;
-$accordionmenu-arrows: true;
-$accordionmenu-arrow-color: $white;
-$accordionmenu-arrow-size: 6px;
+$menu-item-padding: 0.9rem 1rem !default;
+$accordionmenu-arrows: true !default;
+$accordionmenu-arrow-color: $white !default;
+$accordionmenu-arrow-size: 6px !default;
 
 
-// Top Bar
-// -----------
-
-$topbar-padding: 0.5rem;
-$topbar-background: $top-bar-background;
-$topbar-submenu-background: $topbar-background;
-$topbar-title-spacing: 0.5rem 1rem 0.5rem 0;
-$topbar-input-width: 200px;
-$topbar-unstack-breakpoint: medium;

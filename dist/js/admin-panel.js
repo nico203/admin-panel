@@ -1311,9 +1311,43 @@ angular.module('adminPanel.crud').service('NormalizeService', [
             return object;
         };
     }
-]);;function navigationController($scope, $timeout, AdminPanelConfig) {
+]);;function navigationController($scope, $timeout, AdminPanelConfig, $location) {
     $scope.items = AdminPanelConfig.navigationItems;
     $scope.elem = $('navigation');
+    $scope.currentRoute = null;
+    $scope.baseIndex = null;
+    
+    function changeRoute(route) {
+        $scope.currentRoute = route;
+        var index = 0;
+        for(var item in $scope.items) {
+            if($scope.items[item].link === '#') {
+                //el elemento tiene items anidados
+                for(var nestedItem in $scope.items[item].items) {
+                    var r = $scope.items[item].items[nestedItem];
+                    if(r.slice(r.indexOf('/')) === route) {
+                        $scope.baseIndex = index;
+                        break;
+                    }
+                }
+            } else {
+                //el elemento no tiene items anidados por lo tanto se checkea la ruta
+                var routeAux = $scope.items[item].link.slice($scope.items[item].link.indexOf('/'));
+                if(routeAux === route) {
+                    $scope.baseIndex = index;
+                    break;
+                }
+            }
+            index++;
+        }
+    }
+    
+    $scope.checkRoute = function(route) {
+        var routeAux = route.slice(route.indexOf('/'));
+        return {
+            'is-active': routeAux === $scope.currentRoute
+        };
+    };
     
     this.$onInit = function() {
         //En este caso $timeout es usado para ejecutar una funcion despues de que termine el ciclo $digest actual
@@ -1324,6 +1358,8 @@ angular.module('adminPanel.crud').service('NormalizeService', [
             $scope.accordion = new Foundation.AccordionMenu($scope.elem);
             $scope.elem.find('> .menu').addClass('visible');
         });
+        
+        changeRoute($location.path());
     };
 
     this.$onDestroy = function() {
@@ -1331,13 +1367,17 @@ angular.module('adminPanel.crud').service('NormalizeService', [
             $scope.accordion.$element.foundation('_destroy');
         }
     };
+    
+    $scope.$on('$routeChangeSuccess', function(e, route) {
+        changeRoute($location.path());
+    });
 }
 
 angular.module('adminPanel.navigation', [
     'adminPanel'
 ]).component('navigation', {
     templateUrl: 'components/navigation/navigation.template.html',
-    controller: ['$scope', '$timeout', 'AdminPanelConfig', navigationController]
+    controller: ['$scope', '$timeout', 'AdminPanelConfig', '$location', navigationController]
 });;function topBarController($scope, AuthenticationService, $location) {
     $scope.clickBtn = function() {
         AuthenticationService.logout();
@@ -2823,9 +2863,9 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
     "<ap-box title={{title}}><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><ap-filters><div ng-transclude=form></div></ap-filters><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
-    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\"><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
+    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\" ng-class=\"{'is-active': baseIndex === $index}\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\" ng-class=checkRoute(nestedItemLink)><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/top-bar.template.html",
-    "<div class=top-bar><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
+    "<div class=top-bar><div class=top-bar-left>Hola</div><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",

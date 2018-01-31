@@ -1,8 +1,17 @@
-@include foundation-top-bar;
-
-$top-bar-shadow: 1px 1px 10px rgba(0, 0, 0, 0.55) !default;
+// Custom
+// -----------
 $top-bar-background: #37474f !default;
-$topbar-background: $top-bar-background;
+$top-bar-shadow-color: rgba(0, 0, 0, 0.55) !default;
+$top-bar-shadow: 1px 1px 10px $top-bar-shadow-color !default;
+
+
+// Top Bar
+// -----------
+
+$topbar-background: $top-bar-background ;
+$topbar-submenu-background: $top-bar-background;
+
+@include foundation-top-bar;
 
 top-bar {
     display: block;
