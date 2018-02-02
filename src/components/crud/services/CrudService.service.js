@@ -92,7 +92,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                     }
                 }, function(responseError) {
                     var errorData = {};
-                    transformErrorData(responseError, errorData);
+                    transformErrorData(responseError.data, errorData);
 
                     if (errorData.errors.length > 0) {
                         scope.$emit('apLoad:finish', apLoadName, {
@@ -110,30 +110,6 @@ angular.module('adminPanel.crud').service('CrudService', [
                         callbackError(responseError);
                     }
                     throw 'Form Error: ' + responseError;
-
-                    //Función que crea un objeto con los mensajes de error
-                    //a partir responseError de symfony
-                    function transformErrorData(obj, data) {
-                        if(angular.isUndefined(data.errors)) {
-                            data.errors = [];
-                        }
-                        var errorsData = (obj.data && obj.data.errors) ? obj.data.errors : null;
-                        if (errorsData) {
-                            iterateErrorObject(errorsData, data);
-                        }
-
-                        function iterateErrorObject(obj, data) {
-                            for (var property in obj) {
-                                if (obj.hasOwnProperty(property)) {
-                                    if (angular.isArray(obj[property]) && property === 'errors') {
-                                        data.errors = data.errors.concat(obj[property]);
-                                    } else if (angular.isObject(obj[property])) {
-                                        iterateErrorObject(obj[property], data);
-                                    }
-                                }
-                            }
-                        }
-                    }
                 });
 
                 //aregamos el request al scope para poderlo cancelar
@@ -208,6 +184,38 @@ angular.module('adminPanel.crud').service('CrudService', [
                 });
             };
         };
+
+        /**
+         * @description Función que crea un objeto con los mensajes de error a partir de la respuesta de symfony
+         *
+         * @param {Object} dataObj Objeto data de la respuesta de symfony
+         * @param {type} newData Objeto donde se guarda el arreglo de errores
+         * @returns {undefined}
+         */
+        function transformErrorData(dataObj, newData) {
+            if(angular.isUndefined(newData.errors)) {
+                newData.errors = [];
+            }
+            if (dataObj && dataObj.code === 400 || dataObj.code === 404) {
+                if (dataObj.errors) {
+                    iterateErrorObject(dataObj.errors, newData);
+                } else {
+                    newData.errors.push(dataObj.message);
+                }
+            }
+
+            function iterateErrorObject(obj, data) {
+                for (var property in obj) {
+                    if (obj.hasOwnProperty(property)) {
+                        if (angular.isArray(obj[property]) && property === 'errors') {
+                            data.errors = data.errors.concat(obj[property]);
+                        } else if (angular.isObject(obj[property])) {
+                            iterateErrorObject(obj[property], data);
+                        }
+                    }
+                }
+            }
+        }
 
         /**
          * @description Inicializa el controlador del componente para tener el formulario del servidor
