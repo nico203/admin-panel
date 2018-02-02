@@ -84,13 +84,6 @@ angular.module('adminPanel').directive('apBox', [
                         scope.isHide = true;
                     };
 
-                    scope.$watch('isHide', function boxIsHideWatchAction(val) {
-                        if(val) {
-                            elem.hide();
-                        } else {
-                            elem.show();
-                        }
-                    });
                     elem.on('mouseenter', onMouseEnter);
                     var onMouseEnterInOtherBoxDestructor = scope.$on('box.directive.mouseenter', onMouseEnterInOtherBox);
                     var showOnEventDestructor = scope.$on('apBox:show', showOnEvent);

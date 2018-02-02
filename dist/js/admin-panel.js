@@ -1611,13 +1611,6 @@ angular.module('adminPanel').directive('apBox', [
                         scope.isHide = true;
                     };
 
-                    scope.$watch('isHide', function boxIsHideWatchAction(val) {
-                        if(val) {
-                            elem.hide();
-                        } else {
-                            elem.show();
-                        }
-                    });
                     elem.on('mouseenter', onMouseEnter);
                     var onMouseEnterInOtherBoxDestructor = scope.$on('box.directive.mouseenter', onMouseEnterInOtherBox);
                     var showOnEventDestructor = scope.$on('apBox:show', showOnEvent);
@@ -2871,7 +2864,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/accordion/accordionItem.template.html",
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
-    "<div class=card><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div></div></div>");
+    "<div class=card ng-if=!isHide><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div></div></div>");
   $templateCache.put("directives/datePicker/datePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
