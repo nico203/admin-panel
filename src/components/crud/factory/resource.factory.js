@@ -1,31 +1,20 @@
 angular.module('adminPanel.crud').factory('CrudResource', [
-    'CrudConfig', '$http', '$resource', 'NormalizeService',
-    function(CrudConfig, $http, $resource, NormalizeService) {
+    'CrudConfig', '$http', '$resource', 'NormalizeService', '$injector',
+    function(CrudConfig, $http, $resource, NormalizeService, $injector) {
         /**
          * Parametros
          * -url sin la base
          * -nombre del recurso
          * -funcion del transform request  del recurso al guardarlo
-         * -campo file
+         * -extend => servicio del cual extiende
          * -datos extras
          * @type {type}
         */
-        function CrudResourceFactory(name, url, transform, file, extras) {
+        function CrudResourceFactory(name, url, transform, parent, extras) {
             //name
-            var nameDefault = null;
-            var property = null;
-            if(typeof(name) === 'string') {
-                nameDefault = name;
-            } else if(typeof(name) === 'object') {
-                if(angular.isUndefined(name.name) || angular.isUndefined(name.property)) {
-                    console.error('CrudResourceFactory: si el parametro name es un objeto, name y property deben establecerse como propiedades');
-                    throw 'CrudResourceFactory: si el parametro name es un objeto, name y property deben establecerse como propiedades';
-                }
-                nameDefault = name.name;
-                property = name.property;
-            } else {
-                console.error('CrudResourceFactory: el parametro name debe ser string o object');
-                throw 'CrudResourceFactory: el parametro name debe ser string o object';
+            if(typeof(name) !== 'string') {
+                console.error('CrudResourceFactory: el parametro name debe ser string');
+                throw 'CrudResourceFactory: el parametro name debe ser string';
             }
             
             //url
@@ -58,36 +47,23 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 return data;
             };
             var paramDefaults = {};
-            paramDefaults[nameDefault] = '@id';
+            paramDefaults[name] = '@id';
             
             var options = {
                 cancellable: true
             };
             
-            //Procesamos el campo file
-            var fileObj = null;
-            if(!angular.isUndefined(file) && file !== null && file !== false) {
-                if(file === true) {
-                    fileObj = {
-                        url: '/files',
-                        prop: 'file'
-                    };
-                } else if (typeof(file) === 'string') {
-                    fileObj = {
-                        url: '/' + file + 's',
-                        prop: file
-                    };
-                } else if (typeof(file) === 'object') {
-                    if(angular.isUndefined(file.url) || angular.isUndefined(file.prop)) {
-                        console.error('CrudResourceFactory: si el parametro file es un objeto, url y prop deben establecerse como propiedades');
-                        throw 'CrudResourceFactory: si el parametro file es un objeto, url y prop deben establecerse como propiedades';
-                    }
-                    fileObj = file;
-                }
+            var parentResource = null;
+            if(parent) {
+                parentResource = $injector.get(parent);
+                
+                //agregamos el parametro requerido para el objeto padre
+                paramDefaults[parentResource.name] = '@' + parentResource.name;
             }
+            //concatenamos las url del padre con la del recurso actual
+            var resourceUrl = (parentResource) ? parentResource.url + url : url;
             
-            
-            //Procesamos los extras
+            //Procesamos las acciones del recurso
             var actions = {};
             for(var key in extras) {
                 var extra = extras[key];
@@ -103,25 +79,6 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 }
                 
                 actions[key] = extra;
-            }
-            if(fileObj !== null) {
-                //Se recibe como objeto en el request todo el objeto y se envia solamente la propiedad que contiene
-                //el archivo
-                actions[fileObj.prop] = {
-                    method: 'POST',
-                    url: CrudConfig.basePath + url + fileObj.url,
-                    transformRequest: [
-                        function(data) {
-                            var ret = {};
-                            ret.id = data.id;
-                            console.log('transformRequest, data',data);
-                            ret[file.prop] = data[file.prop];
-                            return ret;
-                        },
-                        $http.defaults.transformRequest[0]
-                    ],
-                    cancellable: true
-                };
             }
             
             actions.query = {
@@ -153,18 +110,9 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                     function(data) {
                         var ret = {};
                         ret.id = data.id;
-                        if(property) {
-                            ret[property] = NormalizeService.normalize(transforms.request(data[property]));
-                            delete ret[property].id;
-                        } else {
-                            ret[nameDefault] = NormalizeService.normalize(transforms.request(data));
-                            delete ret[nameDefault].id;
-                        }
                         
-                        //Si hay archivo en el objeto se elimina la propiedad, dado que se guarda en otro request
-                        if(fileObj !== null) {
-                            delete ret[fileObj.prop];
-                        }
+                        ret[name] = NormalizeService.normalize(transforms.request(data));
+                        delete ret[name].id;
                         
                         return ret;
                     },
@@ -176,10 +124,10 @@ angular.module('adminPanel.crud').factory('CrudResource', [
             console.log('actions',actions);
             
             return {
-                name: nameDefault,
-                property: property,
-                file: fileObj,
-                $resource: $resource(CrudConfig.basePath + url, paramDefaults, actions, options)
+                name: name,
+                url: resourceUrl,
+                parent: (parentResource) ? parentResource.name : null,
+                $resource: $resource(CrudConfig.basePath + resourceUrl, paramDefaults, actions, options)
             };
         }
         
