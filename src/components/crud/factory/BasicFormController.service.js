@@ -8,9 +8,9 @@
 angular.module('adminPanel.crud').factory('BasicFormController', [
     'CrudFactory', 'CrudConfig',  '$q',
     function(CrudFactory,CrudConfig, $q) {
-        function BasicFormController(scope, resource, apLoadName, formName) {
+        function BasicFormController(scope, resource, formName) {
             var self = this;
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             var name = (resource.property !== null) ? resource.property : resource.name;
             

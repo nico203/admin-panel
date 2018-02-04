@@ -24,13 +24,12 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
-        function BasicListController(scope, resource, apLoadName) {
+        function BasicListController(scope, resource) {
             var self = this;
             var listParams = null;
             scope.list = [];
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             /**
              * @description Inicializa el controlador

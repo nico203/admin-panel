@@ -130,9 +130,9 @@ angular.module('adminPanel.crud').directive('apDeleteContainer',[
 angular.module('adminPanel.crud').factory('BasicFormController', [
     'CrudFactory', 'CrudConfig',  '$q',
     function(CrudFactory,CrudConfig, $q) {
-        function BasicFormController(scope, resource, apLoadName, formName) {
+        function BasicFormController(scope, resource, formName) {
             var self = this;
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             var name = (resource.property !== null) ? resource.property : resource.name;
             
@@ -439,13 +439,12 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
-        function BasicListController(scope, resource, apLoadName) {
+        function BasicListController(scope, resource) {
             var self = this;
             var listParams = null;
             scope.list = [];
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             /**
              * @description Inicializa el controlador
@@ -562,11 +561,10 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
-        function BasicReadController(scope, resource, apLoadName) {
+        function BasicReadController(scope, resource) {
             var self = this;
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             self.get = function(params, actionDefault) {
                 if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
@@ -624,15 +622,14 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
          * @param {type} $scope
          * @param {type} resource
          * @param {type} direction Direccion en la cual enviar el evento, si es hacia arriba $emit o hacia abajo $broadcast ELIMINAR
-         * @param {type} apLoadName
          * @returns {CrudFactory.serviceL#3.CrudFactory}
          */
-        function CrudFactory($scope, resource, apLoadName) {
+        function CrudFactory($scope, resource) {
             this.request = null;
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
-                $scope.$emit('apLoad:start',apLoadName);
+                $scope.$emit('apLoad:start');
                 
                 //Si hay un request en proceso se lo cancela
                 this.cancelRequest();
@@ -652,7 +649,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     }
                     
                     //se muestra la vista original
-                    $scope.$emit('apLoad:finish',apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
                     return responseSuccess;
                 }, function(responseError) {
@@ -663,7 +660,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     };
                     
                     //se muestra el error, 
-                    $scope.$emit('apLoad:finish', apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
                     return $q.reject(responseError);
                 });
@@ -1458,39 +1455,9 @@ angular.module('adminPanel').directive('apBox', [
                     //el atributo name, el cual debe ser el nombre del evento que lo muestra.
                     scope.closeButton = (typeof (attr.name) !== 'undefined');
                     scope.message = null;
-                    scope.loads = {};
                     scope.elem = elem;
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
-                    //buscamos todas las directivas ap-load en los elementos hijos
-                    var loadDirectives = elem.find("[ap-load]");
-                    for (var i = 0; i < loadDirectives.length; i++) {
-                        var ctrl = angular.element(loadDirectives[i]).controller('apLoad');
-                        var name = ctrl.getName();
-                        if (name) {
-                            scope.loads[name] = ctrl;
-                        }
-                    }
-
-                    //Ejecutada al comenzar la peticion al servidor
-                    function startLoad(e, name) {
-//                        console.log($.extend({}, e));
-                        scope.message = null;
-                        var loadDirectiveName = (name) ? name : 'default';
-                        if (!scope.loads[loadDirectiveName]) {
-                            throw 'apLoad: ' + loadDirectiveName + ' not found';
-                        }
-                        scope.loads[loadDirectiveName].hide();
-                    }
-                    //Ejecutada al terminar la peticion al servidor
-                    function finishLoad(e, name, message) {
-                        scope.message = message;
-                        var loadDirectiveName = (name) ? name : 'default';
-                        if (!scope.loads[loadDirectiveName]) {
-                            throw 'apLoad: ' + loadDirectiveName + ' not found';
-                        }
-                        scope.loads[loadDirectiveName].show();
-                    }
 
                     //Ejecutada al ingresar el mouse al elemento. Aplica la clase para iluminar el box
                     function onMouseEnter() {
@@ -1522,15 +1489,11 @@ angular.module('adminPanel').directive('apBox', [
                     elem.on('mouseenter', onMouseEnter);
                     var onMouseEnterInOtherBoxDestructor = scope.$on('box.directive.mouseenter', onMouseEnterInOtherBox);
                     var showOnEventDestructor = scope.$on('apBox:show', showOnEvent);
-                    var startEventDestructor = scope.$on('apLoad:start', startLoad);
-                    var finishEventDestructor = scope.$on('apLoad:finish', finishLoad);
                     var destroyEventDestructor = scope.$on('$destroy', function () {
                         //Unbind events
                         elem.off('mouseenter', onMouseEnter);
                         onMouseEnterInOtherBoxDestructor();
                         showOnEventDestructor();
-                        startEventDestructor();
-                        finishEventDestructor();
                         destroyEventDestructor();
                     });
 
@@ -1892,30 +1855,45 @@ angular.module('adminPanel').directive('formFieldError', [
         restrict: 'A',
         priority: 50,
         link: function(scope, elem, attr) {
-            function init() {
-                //controla que no haya una directiva ap-load en sus elementos hijos
-                var name = attr.apLoad;
-                if(elem.find("[ap-load='"+name+"']").length !== 0) {return;}
-                
-                scope.name = (name) ? name : 'default';
-                elem.addClass('ap-load');
-                var img = angular.element('<ap-loading-img>');
-                elem.append(img);
-                $compile(img)(scope);
-                
-                scope.show = function() {
-                    $animate.removeClass(elem, 'loading');
-                };
-
-                scope.hide = function() {
-                    $animate.addClass(elem, 'loading');
-                };
+            //controla que no haya una directiva ap-load en sus elementos hijos
+            var name = attr.apLoad;
+            if (elem.find("[ap-load='" + name + "']").length !== 0) {
+                return;
             }
-            init();
+
+            scope.name = (name) ? name : 'default';
+            elem.addClass('ap-load');
+            var img = angular.element('<ap-loading-img>');
+            elem.append(img);
+            $compile(img)(scope);
+
+            scope.show = function () {
+                $animate.removeClass(elem, 'loading');
+            };
+
+            scope.hide = function () {
+                $animate.addClass(elem, 'loading');
+            };
+
+            var startEventDestructor = scope.$on('apLoad:start', function(e) {
+                e.stopPropagation();
+                scope.hide();
+            });
+            var finishEventDestructor = scope.$on('apLoad:finish', function(e) {
+                e.stopPropagation();
+                scope.show();
+            });
+            
+            var destroyEventDestructor = scope.$on('$destroy', function () {
+                startEventDestructor();
+                finishEventDestructor();
+                destroyEventDestructor();
+            });
         },
         controller: ['$scope',function($scope) {
             
             this.getName = function() {
+                console.log('getName',$scope.name);  
                 return $scope.name;
             };
             

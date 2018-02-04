@@ -12,11 +12,10 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
          * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
-        function BasicReadController(scope, resource, apLoadName) {
+        function BasicReadController(scope, resource) {
             var self = this;
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
             
             self.get = function(params, actionDefault) {
                 if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {

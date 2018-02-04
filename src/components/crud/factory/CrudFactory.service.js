@@ -17,15 +17,14 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
          * @param {type} $scope
          * @param {type} resource
          * @param {type} direction Direccion en la cual enviar el evento, si es hacia arriba $emit o hacia abajo $broadcast ELIMINAR
-         * @param {type} apLoadName
          * @returns {CrudFactory.serviceL#3.CrudFactory}
          */
-        function CrudFactory($scope, resource, apLoadName) {
+        function CrudFactory($scope, resource) {
             this.request = null;
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
-                $scope.$emit('apLoad:start',apLoadName);
+                $scope.$emit('apLoad:start');
                 
                 //Si hay un request en proceso se lo cancela
                 this.cancelRequest();
@@ -45,7 +44,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     }
                     
                     //se muestra la vista original
-                    $scope.$emit('apLoad:finish',apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
                     return responseSuccess;
                 }, function(responseError) {
@@ -56,7 +55,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     };
                     
                     //se muestra el error, 
-                    $scope.$emit('apLoad:finish', apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
                     return $q.reject(responseError);
                 });

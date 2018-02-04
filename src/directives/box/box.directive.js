@@ -23,39 +23,9 @@ angular.module('adminPanel').directive('apBox', [
                     //el atributo name, el cual debe ser el nombre del evento que lo muestra.
                     scope.closeButton = (typeof (attr.name) !== 'undefined');
                     scope.message = null;
-                    scope.loads = {};
                     scope.elem = elem;
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
-                    //buscamos todas las directivas ap-load en los elementos hijos
-                    var loadDirectives = elem.find("[ap-load]");
-                    for (var i = 0; i < loadDirectives.length; i++) {
-                        var ctrl = angular.element(loadDirectives[i]).controller('apLoad');
-                        var name = ctrl.getName();
-                        if (name) {
-                            scope.loads[name] = ctrl;
-                        }
-                    }
-
-                    //Ejecutada al comenzar la peticion al servidor
-                    function startLoad(e, name) {
-//                        console.log($.extend({}, e));
-                        scope.message = null;
-                        var loadDirectiveName = (name) ? name : 'default';
-                        if (!scope.loads[loadDirectiveName]) {
-                            throw 'apLoad: ' + loadDirectiveName + ' not found';
-                        }
-                        scope.loads[loadDirectiveName].hide();
-                    }
-                    //Ejecutada al terminar la peticion al servidor
-                    function finishLoad(e, name, message) {
-                        scope.message = message;
-                        var loadDirectiveName = (name) ? name : 'default';
-                        if (!scope.loads[loadDirectiveName]) {
-                            throw 'apLoad: ' + loadDirectiveName + ' not found';
-                        }
-                        scope.loads[loadDirectiveName].show();
-                    }
 
                     //Ejecutada al ingresar el mouse al elemento. Aplica la clase para iluminar el box
                     function onMouseEnter() {
@@ -87,15 +57,11 @@ angular.module('adminPanel').directive('apBox', [
                     elem.on('mouseenter', onMouseEnter);
                     var onMouseEnterInOtherBoxDestructor = scope.$on('box.directive.mouseenter', onMouseEnterInOtherBox);
                     var showOnEventDestructor = scope.$on('apBox:show', showOnEvent);
-                    var startEventDestructor = scope.$on('apLoad:start', startLoad);
-                    var finishEventDestructor = scope.$on('apLoad:finish', finishLoad);
                     var destroyEventDestructor = scope.$on('$destroy', function () {
                         //Unbind events
                         elem.off('mouseenter', onMouseEnter);
                         onMouseEnterInOtherBoxDestructor();
                         showOnEventDestructor();
-                        startEventDestructor();
-                        finishEventDestructor();
                         destroyEventDestructor();
                     });
 
