@@ -34,7 +34,6 @@ angular.module('adminPanel').directive('apSelect', [
                 properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
-                console.log($injector);
                 elem.addClass('select-ap');
                 
                 var resource = null;
@@ -42,7 +41,6 @@ angular.module('adminPanel').directive('apSelect', [
                 if($injector.has(scope.resource)) {
                     var crudResource = $injector.get(scope.resource, 'apSelect');
                     resource = crudResource.$resource;
-                    console.log('resource',resource);
                 }
                 if(!resource) {
                     console.error('El recurso no esta definido');
@@ -91,6 +89,7 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 function convertObjectToItemList(object) {
                     var name = '';
+                    
                     //Seteamos solamente los campos seleccionados a mostrar
                     for(var j = 0; j < objectProperties.length; j++) {
                         name += object[objectProperties[j]] + ', ';
@@ -118,11 +117,8 @@ angular.module('adminPanel').directive('apSelect', [
                         request.$cancelRequest();
                     }
                     
-                    var search = {};
-                    
-                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
-                        search.id = scope.requestParam;
-                    }
+                    var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
+                    console.log('search',search);
                     
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
@@ -134,10 +130,8 @@ angular.module('adminPanel').directive('apSelect', [
                     request = resource[defaultMethod](search);
                     
                     //seteamos en la vista que el request esta en proceso
-                    console.log('doRequest');
                     scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        console.log('rSuccess',rSuccess);
                         var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
                         //creamos la lista. Cada item es de la forma 
                         //{name:'name',id:'id'}
@@ -355,7 +349,7 @@ angular.module('adminPanel').directive('apSelect', [
                 }, function (val) {
                     if (val) {
                         //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
-                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
+//                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
                         
 
                         //seteamos el item actual

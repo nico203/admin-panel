@@ -12,35 +12,42 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             var self = this;
             self.$$crudFactory = new CrudFactory(scope, resource);
             
-            var name = (resource.property !== null) ? resource.property : resource.name;
-            
             //Nombre con el cual se expone al formulario dentro del scope. 
             //Ver https://docs.angularjs.org/guide/forms
             self.$$form = angular.isUndefined(formName) ? 'form' : formName;
             
             
             self.get = function(params, actionDefault) {
-                console.log('params', params);
+                var deferred = $q.defer();
+                var validRequest = true;
+
                 if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
-                    return false;
+                    deferred.reject(false);
+                    validRequest = false;
                 }
                 var paramRequest = params;
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
-                    scope[name] = responseSuccess.data;
-                    
-                    return responseSuccess;
-                }, function(responseError) {
-                    return $q.reject(responseError);
-                });
+                var promise = null;
+                if(validRequest) {
+                    promise = self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                        scope[resource.name] = responseSuccess.data;
+
+                        return responseSuccess;
+                    }, function(responseError) {
+                        return $q.reject(responseError);
+                    });
+                }
+                deferred.resolve(promise);
+                
+                return deferred.promise;
             };
             
             
             
             self.submit = function(actionDefault) {
-                var object = scope[name];
+                var object = scope[resource.name];
                 
                 console.log('self.$$form',self.$$form);
                 var action = (actionDefault) ? actionDefault : 'save';
@@ -51,7 +58,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                     console.log('object',object);
                     return self.$$crudFactory.doRequest(action, object, '$emit').then(function(responseSuccess) {
                         if(responseSuccess.data) {
-                            scope[name] = responseSuccess.data;
+                            scope[resource.name] = responseSuccess.data;
                         }
                         return responseSuccess;
                     }, function(responseError) {
@@ -69,8 +76,8 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 
                 //inicializamos variables
                 var obj = {};
-                obj[name] = id;
-                console.log('obj', obj);
+                obj[resource.name] = id;
+                
                 return self.get(obj, action);
             };
             

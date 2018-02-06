@@ -134,35 +134,42 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             var self = this;
             self.$$crudFactory = new CrudFactory(scope, resource);
             
-            var name = (resource.property !== null) ? resource.property : resource.name;
-            
             //Nombre con el cual se expone al formulario dentro del scope. 
             //Ver https://docs.angularjs.org/guide/forms
             self.$$form = angular.isUndefined(formName) ? 'form' : formName;
             
             
             self.get = function(params, actionDefault) {
-                console.log('params', params);
+                var deferred = $q.defer();
+                var validRequest = true;
+
                 if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
-                    return false;
+                    deferred.reject(false);
+                    validRequest = false;
                 }
                 var paramRequest = params;
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
-                    scope[name] = responseSuccess.data;
-                    
-                    return responseSuccess;
-                }, function(responseError) {
-                    return $q.reject(responseError);
-                });
+                var promise = null;
+                if(validRequest) {
+                    promise = self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                        scope[resource.name] = responseSuccess.data;
+
+                        return responseSuccess;
+                    }, function(responseError) {
+                        return $q.reject(responseError);
+                    });
+                }
+                deferred.resolve(promise);
+                
+                return deferred.promise;
             };
             
             
             
             self.submit = function(actionDefault) {
-                var object = scope[name];
+                var object = scope[resource.name];
                 
                 console.log('self.$$form',self.$$form);
                 var action = (actionDefault) ? actionDefault : 'save';
@@ -173,7 +180,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                     console.log('object',object);
                     return self.$$crudFactory.doRequest(action, object, '$emit').then(function(responseSuccess) {
                         if(responseSuccess.data) {
-                            scope[name] = responseSuccess.data;
+                            scope[resource.name] = responseSuccess.data;
                         }
                         return responseSuccess;
                     }, function(responseError) {
@@ -191,8 +198,8 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 
                 //inicializamos variables
                 var obj = {};
-                obj[name] = id;
-                console.log('obj', obj);
+                obj[resource.name] = id;
+                
                 return self.get(obj, action);
             };
             
@@ -567,20 +574,30 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.$$crudFactory = new CrudFactory(scope, resource);
             
             self.get = function(params, actionDefault) {
+                var deferred = $q.defer();
+                var validRequest = true;
+                
                 if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
-                    return false;
+                    deferred.reject(false);
+                    validRequest = false;
                 }
                 var paramRequest = params;
                 
                 var action = (actionDefault) ? actionDefault : 'get';
                 
-                return self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
-                    scope[resource.name] = responseSuccess.data;
-                    
-                    return responseSuccess;
-                }, function(responseError) {
-                    return $q.reject(responseError);
-                });
+                var promise = null;
+                if(validRequest) {
+                    promise = self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                        scope[resource.name] = responseSuccess.data;
+
+                        return responseSuccess;
+                    }, function(responseError) {
+                        return $q.reject(responseError);
+                    });
+                }
+                deferred.resolve(promise);
+                
+                return deferred.promise;
             };
             
             
@@ -2196,7 +2213,6 @@ angular.module('adminPanel').directive('apSelect', [
                 properties: '='
             },
             link: function (scope, elem, attr, ngModel) {
-                console.log($injector);
                 elem.addClass('select-ap');
                 
                 var resource = null;
@@ -2204,7 +2220,6 @@ angular.module('adminPanel').directive('apSelect', [
                 if($injector.has(scope.resource)) {
                     var crudResource = $injector.get(scope.resource, 'apSelect');
                     resource = crudResource.$resource;
-                    console.log('resource',resource);
                 }
                 if(!resource) {
                     console.error('El recurso no esta definido');
@@ -2253,6 +2268,7 @@ angular.module('adminPanel').directive('apSelect', [
                  */
                 function convertObjectToItemList(object) {
                     var name = '';
+                    
                     //Seteamos solamente los campos seleccionados a mostrar
                     for(var j = 0; j < objectProperties.length; j++) {
                         name += object[objectProperties[j]] + ', ';
@@ -2280,11 +2296,8 @@ angular.module('adminPanel').directive('apSelect', [
                         request.$cancelRequest();
                     }
                     
-                    var search = {};
-                    
-                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
-                        search.id = scope.requestParam;
-                    }
+                    var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
+                    console.log('search',search);
                     
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
@@ -2296,10 +2309,8 @@ angular.module('adminPanel').directive('apSelect', [
                     request = resource[defaultMethod](search);
                     
                     //seteamos en la vista que el request esta en proceso
-                    console.log('doRequest');
                     scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        console.log('rSuccess',rSuccess);
                         var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
                         //creamos la lista. Cada item es de la forma 
                         //{name:'name',id:'id'}
@@ -2517,7 +2528,7 @@ angular.module('adminPanel').directive('apSelect', [
                 }, function (val) {
                     if (val) {
                         //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
-                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
+//                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
                         
 
                         //seteamos el item actual
