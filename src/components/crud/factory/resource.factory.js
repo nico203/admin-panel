@@ -109,10 +109,13 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 transformRequest: [
                     function(data) {
                         var ret = {};
-                        ret.id = data.id;
-                        
                         ret[name] = NormalizeService.normalize(transforms.request(data));
                         delete ret[name].id;
+                        if(parentResource) {
+                            delete ret[name][parentResource.name];
+                        }
+                        console.log('ret',ret);
+                        //si depende de otro recurso, hay que borrar la propiedad tambien
                         
                         return ret;
                     },

@@ -48,15 +48,16 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             
             self.submit = function(actionDefault) {
                 var object = scope[resource.name];
-                
-                console.log('self.$$form',self.$$form);
+                if(resource.parent !== null) {
+                    object[resource.parent] = scope[resource.parent];
+                }
+
                 var action = (actionDefault) ? actionDefault : 'save';
               
                 //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
                 //if(!scope.form) {} ????
                 if(scope[self.$$form] && scope[self.$$form].$valid) {
-                    console.log('object',object);
-                    return self.$$crudFactory.doRequest(action, object, '$emit').then(function(responseSuccess) {
+                    return self.$$crudFactory.doRequest(action, object).then(function(responseSuccess) {
                         if(responseSuccess.data) {
                             scope[resource.name] = responseSuccess.data;
                         }

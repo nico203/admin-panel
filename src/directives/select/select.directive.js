@@ -75,6 +75,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+                console.log('requestParam',scope.requestParam);
 
                 var request = null;
                 var preventClickButton = false;

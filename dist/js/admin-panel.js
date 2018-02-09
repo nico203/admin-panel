@@ -170,15 +170,16 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             
             self.submit = function(actionDefault) {
                 var object = scope[resource.name];
-                
-                console.log('self.$$form',self.$$form);
+                if(resource.parent !== null) {
+                    object[resource.parent] = scope[resource.parent];
+                }
+
                 var action = (actionDefault) ? actionDefault : 'save';
               
                 //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
                 //if(!scope.form) {} ????
                 if(scope[self.$$form] && scope[self.$$form].$valid) {
-                    console.log('object',object);
-                    return self.$$crudFactory.doRequest(action, object, '$emit').then(function(responseSuccess) {
+                    return self.$$crudFactory.doRequest(action, object).then(function(responseSuccess) {
                         if(responseSuccess.data) {
                             scope[resource.name] = responseSuccess.data;
                         }
@@ -810,10 +811,13 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                 transformRequest: [
                     function(data) {
                         var ret = {};
-                        ret.id = data.id;
-                        
                         ret[name] = NormalizeService.normalize(transforms.request(data));
                         delete ret[name].id;
+                        if(parentResource) {
+                            delete ret[name][parentResource.name];
+                        }
+                        console.log('ret',ret);
+                        //si depende de otro recurso, hay que borrar la propiedad tambien
                         
                         return ret;
                     },
@@ -2254,6 +2258,7 @@ angular.module('adminPanel').directive('apSelect', [
                 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+                console.log('requestParam',scope.requestParam);
 
                 var request = null;
                 var preventClickButton = false;
