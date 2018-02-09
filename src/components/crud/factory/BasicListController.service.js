@@ -30,6 +30,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             var listParams = null;
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource);
+            self.parentData = null;
             
             /**
              * @description Inicializa el controlador
@@ -54,6 +55,15 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.list = function(params, actionDefault) {
+                //verificamos si tiene un recurso padre y seteamos el id del recurso padre (obtenido de los parametros) en una variable
+                if(resource.parent !== null) {
+                    if(!params[resource.parent]) {
+                        console.error('BasicListController: El recurso tiene un padre, el cual no fue entregado');
+                        return;
+                    }
+                    self.parentData = params[resource.parent];
+                }
+                
                 listParams = (params) ? params : {};
                 var promise = null;
                 
@@ -85,6 +95,10 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 var action = (actionDefault) ? actionDefault : 'delete';
                 var obj = {};
                 obj[resource.name] = elem.id;
+                if(resource.parent !== null) {
+                    obj[resource.parent] = self.parentData;
+                }
+                console.log('obj',obj);
                 return self.$$crudFactory.doRequest(action, obj).then(function (responseSuccess) {
                     scope.list = responseSuccess.data;
 
