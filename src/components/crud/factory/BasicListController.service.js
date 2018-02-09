@@ -27,7 +27,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          */
         function BasicListController(scope, resource) {
             var self = this;
-            var listParams = null;
+            self.listParams = null;
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource);
             self.parentData = null;
@@ -64,13 +64,13 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                     self.parentData = params[resource.parent];
                 }
                 
-                listParams = (params) ? params : {};
+                self.listParams = (params) ? params : {};
                 var promise = null;
                 
                 return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
+                    promise = self.$$crudFactory.doRequest(action, self.listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -98,20 +98,12 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 if(resource.parent !== null) {
                     obj[resource.parent] = self.parentData;
                 }
-                console.log('obj',obj);
-                return self.$$crudFactory.doRequest(action, obj).then(function (responseSuccess) {
-                    scope.list = responseSuccess.data;
-
-                    //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
-                    //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
-                    $timeout(function () {
-                        scope.$broadcast('pagination:paginate', {
-                            totalPageCount: responseSuccess.totalPageCount,
-                            currentPageNumber: responseSuccess.currentPageNumber
-                        });
-                    });
-
-                    return responseSuccess;
+                return self.$$crudFactory.doRequest(action, obj).then(function () {
+                    //chequeamos que si el recurso tiene un padre, el id de ese padre se envíe como parametro en el request
+                    if(resource.parent !== null && !self.listParams[resource.parent]) {
+                        self.listParams[resource.parent] = self.parentData;
+                    }
+                    return self.list(self.listParams);
                 }, function (responseError) {
                     return $q.reject(responseError);
                 });
@@ -132,8 +124,8 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             //Evento capturado cuando se listan las entidades
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
-                listParams.page = page;
-                self.list(listParams);
+                self.listParams.page = page;
+                self.list(self.listParams);
             });
             
             scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
