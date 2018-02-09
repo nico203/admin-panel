@@ -1083,7 +1083,35 @@ angular.module('adminPanel.crud').service('NormalizeService', [
 ]);;function navigationController($scope, $timeout, AdminPanelConfig) {
     $scope.items = AdminPanelConfig.navigationItems;
     $scope.elem = $('navigation');
-    
+    $scope.activeRole = null;
+
+    $scope.showItem = function (data) {
+        if (!data.roles || !$scope.activeRole) {
+            return true;
+        }
+        if (angular.isArray(data.roles)) {
+            return data.roles.some(function (element) {
+                return isActiveRole(element);
+            });
+        }
+        return isActiveRole(data.roles);
+    };
+
+    function isActiveRole(element) {
+        if (angular.isArray($scope.activeRole)) {
+            return $scope.activeRole.includes(element);
+        }
+        return element === $scope.activeRole;
+    }
+
+    $scope.$on('userData', function(e, data) {
+        if (data) {
+            $scope.activeRole = data.roles;
+        } else {
+            $scope.activeRole = null;
+        }
+    });
+
     this.$onInit = function() {
         //En este caso $timeout es usado para ejecutar una funcion despues de que termine el ciclo $digest actual
         //cuando se termino de linkear todos los elementos de ngRepeat
@@ -2482,7 +2510,7 @@ angular.module('adminPanel').directive('apSelect', [
         month: 'El mes no es válido'
     };
     var navigationItems = {};
-    
+
     /**
      * @param {String} path Ruta hacia el archivo de la imagen usada para carga
      */
@@ -2490,7 +2518,7 @@ angular.module('adminPanel').directive('apSelect', [
         imgLoadingRsc = path;
         return this;
     };
-    
+
     /**
      * @param {Integer} pages Paginas por default al listar elementos de una entidad
      */
@@ -2498,9 +2526,9 @@ angular.module('adminPanel').directive('apSelect', [
         pagination = pages;
         return this;
     };
-    
+
     /**
-     * @param {Object} msgs Objeto cuyas propiedades son los nombres de los validation tokens y los valores 
+     * @param {Object} msgs Objeto cuyas propiedades son los nombres de los validation tokens y los valores
      * son los mensajes
      */
     this.setDefaultFormMessenges = function(msgs) {
@@ -2509,7 +2537,7 @@ angular.module('adminPanel').directive('apSelect', [
         }
         return this;
     };
-    
+
     /**
      * @param {type} items Objeto que contiene la conformacion del menu
      * var items = {
@@ -2520,19 +2548,38 @@ angular.module('adminPanel').directive('apSelect', [
      *     }
      *   },
      *   ...
+     *
+     * // Example with roles
+     * var items = {
+     *   'Item menu name': {
+     *     link: 'link',
+     *     roles: ['Role1', 'Role2'],
+     *     items: {
+     *       'Nested item menu':{
+     *          link: 'link',
+     *          roles: 'Role2'
+     *       }
+     *     }
+     *   },
+     *   ...
      * }
      */
     this.setNavigationItems = function(items) {
         navigationItems = angular.copy(items);
         for(var item in navigationItems) {
             navigationItems[item].link = (navigationItems[item].link) ? '#!' + navigationItems[item].link : '#';
+            navigationItems[item].roles = navigationItems[item].roles || null;
             for(var nestedItem in navigationItems[item].items) {
-                navigationItems[item].items[nestedItem] = '#!' + navigationItems[item].items[nestedItem];
+                var nestedItemData = navigationItems[item].items[nestedItem];
+                navigationItems[item].items[nestedItem] = {
+                    link: angular.isString(nestedItemData) ? '#!' + nestedItemData : '#!' + nestedItemData.link,
+                    roles: nestedItemData.roles ? nestedItemData.roles : null
+                };
             }
         }
         return this;
     };
-    
+
     this.$get = [
         function () {
             return {
@@ -2547,7 +2594,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content class=row><div class=transition ng-view></div></div></div></div>");
   $templateCache.put("components/navigation/navigation.template.html",
-    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\"><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
+    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\"><a ng-if=showItem(item) href={{item.link}} ng-bind=name></a><ul ng-if=\"showItem(item) && item.items\" class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemData) in item.items\"><a ng-if=showItem(nestedItemData) href={{nestedItemData.link}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/top-bar.template.html",
     "<div class=top-bar><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",

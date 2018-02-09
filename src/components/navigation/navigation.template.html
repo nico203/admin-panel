@@ -1,53 +1,10 @@
 <ul class="vertical menu">
     <li ng-repeat="(name, item) in items">
-        <a href="{{item.link}}" ng-bind="name"></a>
-        <ul ng-if="item.items" class="vertical menu nested">
-            <li ng-repeat="(nestedItemName, nestedItemLink) in item.items">
-                <a href="{{nestedItemLink}}" ng-bind="nestedItemName"></a>
+        <a ng-if="showItem(item)" href="{{item.link}}" ng-bind="name"></a>
+        <ul ng-if="showItem(item) && item.items" class="vertical menu nested">
+            <li ng-repeat="(nestedItemName, nestedItemData) in item.items">
+                <a ng-if="showItem(nestedItemData)" href="{{nestedItemData.link}}" ng-bind="nestedItemName"></a>
             </li>
         </ul>
     </li>
-    
-    <!--li>
-        <a href="#">Inicio</a>
-    </li>
-    <li>
-        <a href="#">Solicitudes</a>
-        <ul class="vertical menu nested">
-            <li><a href="#!/solicitudes">Ver todos las solicitudes</a></li>
-            <li><a href="#!/solicitudes/nuevo">Nuevo</a></li>
-        </ul>
-    </li>
-    <li>
-        <a href="#!/rendiciones">Reportes</a>
-    </li>
-    <li>
-        <a href="#">Responsables</a>
-        <ul class="vertical menu nested">
-            <li><a href="#!/responsables">Ver todos los responsables</a></li>
-            <li><a href="#!/responsables/nuevo">Nuevo</a></li>
-        </ul>
-    </li>
-    <li>
-        <a href="#">Oficiales</a>
-        <ul class="vertical menu nested">
-            <li><a href="#!/oficiales">Ver todos los oficiales</a></li>
-            <li><a href="#!/oficiales/nuevo">Nuevo</a></li>
-        </ul>
-    </li>
-    <li>
-        <a href="#!/secretarias">Secretarías</a>
-    </li>
-    <li>
-        <a href="#!/subsecretarias">Subsecretarías</a>
-    </li>
-    <li>
-        <a href="#!/reparticiones">Reparticiones de Origen</a>
-    </li>
-    <li>
-        <a href="#!/dependencias">Dependencias</a>
-    </li>
-    <li>
-        <a href="#!/usuarios">Usuarios</a>
-    </li-->
 </ul>

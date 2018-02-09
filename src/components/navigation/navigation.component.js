@@ -1,7 +1,35 @@
 function navigationController($scope, $timeout, AdminPanelConfig) {
     $scope.items = AdminPanelConfig.navigationItems;
     $scope.elem = $('navigation');
-    
+    $scope.activeRole = null;
+
+    $scope.showItem = function (data) {
+        if (!data.roles || !$scope.activeRole) {
+            return true;
+        }
+        if (angular.isArray(data.roles)) {
+            return data.roles.some(function (element) {
+                return isActiveRole(element);
+            });
+        }
+        return isActiveRole(data.roles);
+    };
+
+    function isActiveRole(element) {
+        if (angular.isArray($scope.activeRole)) {
+            return $scope.activeRole.includes(element);
+        }
+        return element === $scope.activeRole;
+    }
+
+    $scope.$on('userData', function(e, data) {
+        if (data) {
+            $scope.activeRole = data.roles;
+        } else {
+            $scope.activeRole = null;
+        }
+    });
+
     this.$onInit = function() {
         //En este caso $timeout es usado para ejecutar una funcion despues de que termine el ciclo $digest actual
         //cuando se termino de linkear todos los elementos de ngRepeat
