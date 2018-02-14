@@ -1874,6 +1874,40 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apAppendInfo', [
+    function(){
+        return {
+            restrict: 'A',
+            scope: true,
+            link: function(scope, elem, attr) {
+                console.log('apAppendInfo',elem);
+                var appendElem = elem.find('[ap-info-on-table=""]');
+                var container = angular.element('<tr>');
+                container.append(appendElem);
+                elem.after(container);
+            },
+            controller: ['$scope',
+                function($scope) {
+                    $scope.fn = function() {
+                        
+                    };
+                }
+            ]
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apInfoOnTable', [
+    function(){
+        return {
+            restrict: 'A',
+            scope: true,
+            link: function(scope, elem, attr) {
+                console.log('apInfoOnTable',elem);
+            },
+            templateUrl: 'directives/infoOnTable/infoOnTable.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apLoad', [
     '$animate', '$compile', 
     function($animate, $compile){
@@ -2782,6 +2816,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
     "<div class=image-view><img ng-src={{image.path}} ng-click=loadImage()></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=image.name></div>");
+  $templateCache.put("directives/infoOnTable/infoOnTable.template.html",
+    "<tr><div class=row>hola</div></tr>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
