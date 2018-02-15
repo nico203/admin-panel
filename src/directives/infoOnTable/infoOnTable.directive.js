@@ -1,8 +1,7 @@
-angular.module('adminPanel').directive('apInfoOnTable', [
+angular.module('adminPanel').directive('apInfoOnTablea', [
     function(){
         return {
             restrict: 'A',
-            scope: true,
             link: function(scope, elem, attr) {
                 console.log('apInfoOnTable',elem);
             },
