@@ -1,19 +1,54 @@
-.ap-image-loader {
-    .image-view {
-        position: relative;
-        max-height: 250px;
-        margin-bottom: 10px;
-        
-        img {
-            cursor: pointer;
-            display: block;
-            margin: auto;
-            box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.2);
-            max-height: 250px;
-        }
+@mixin plusMinus($width, $lineWidth, $color) {
+    box-sizing: border-box;
+    transition: transform 0.3s;
+    width: $width;
+    height: $width;
+    transform: rotate(180deg);
+    position: relative;
+    &:hover {
+        transform: rotate(0deg);
     }
-    
-    .file {
-        padding-top: 25%
+    &::before {
+        content: '';
+        display: block;
+        width: $width;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+        transform: rotate(90deg);
+        transition: width 0.3s;
     }
+    &:hover::before {
+        content: '';
+        display: block;
+        width: 0px;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+        transform: rotate(90deg);
+    }
+    &::after {
+        content: '';
+        display: block;
+        width: $width;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+    }
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.ap-info-on-table {
+    width: 100%;
+    padding: 0.5rem 0.625rem 0.625rem;
+}
+
+.ap-info {
+    @include plusMinus(14px, 4px, #a1a1a1);
 }

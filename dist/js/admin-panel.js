@@ -1900,39 +1900,59 @@ angular.module('adminPanel').directive('formFieldError', [
     function(){
         return {
             restrict: 'A',
-            priority: 100,
-            link: function(scope, elem, $attr) {
+            scope: true,
+            link: function(scope, elem, attr) {
                 var self = this;
                 //es el puntero al DOM elem que se quiere manipular
-                self.targetElem = null;
+                scope.targetElem = null;
                 //el boton se inicializa como cerrado
                 //false = cerrado | true = abierto
-                self.currentState = false;
+                scope.currentState = false;
                 
-                elem.on('click', function(){
-                    self.currentState = !self.currentState;
-                    elem[self.currentState ? 'addClass' : 'removeClass']('open');
+                
+                self.init = function() {
+                    //ubicamos el elemento abajo del parent en otra fila de la tabla
+                    var trParent = elem.closest('tr');
+                    var colspan = trParent.find('td').length - 1;
+                    
+                    //ubicamos el elemento que queremos mover
+                    var container = trParent.find('[ap-info-on-table=""]');
+                    //le agregamos el colspan para que la cantidad de filas sea la necesaria para esta fila sea fullwidth
+                    container.attr('colspan',colspan);
+                    
+                    //extraemos el contenido
+                    var contents = container.contents();
+                    
+                    //envolvemos el contenido en un div para que tengan efecto las transiciones y lo inicializamos oculto
+                    scope.targetElem = angular.element('<div>')
+                            .addClass('ap-info-on-table')
+                            .append(contents)
+                            .hide();
+                    
+                    //envolvemos el targetElem en nuestro contenedor
+                    container.append(scope.targetElem);
+                    container.addClass('no-padding');
+                    
+                    //envolvemos el container en un tr y lo agregamos despues del tr actual, quedando como un elemento mas de la tabla
+                    trParent.after(angular.element('<tr>')
+                            .append(container));
+                };
+                
+                self.toggleButton = function() {
+                    scope.currentState = !scope.currentState;
+                    scope.targetElem[scope.currentState ? 'slideDown' : 'slideUp'](500);
+                    elem[scope.currentState ? 'addClass' : 'removeClass']('open');
+                };
+                
+                elem.on('click', self.toggleButton);
+                
+                scope.$on('$destroy', function() {
+                    elem.off('click', self.toggleButton);
                 });
                 
-                //init
-                
-                //ubicamos el elemento abajo del parent en otra fila de la tabla
-                var trParent = elem.closest('tr');
-                var colspan = trParent.find('td').length - 1;
-                self.targetElem = trParent.find('[ap-info-on-table=""]');
-                var container = angular.element('<tr>').append(self.targetElem);
-                self.targetElem.attr('colspan',colspan);
-                trParent.after(container);
-                
-                
+                self.init();
             },
-            controller: ['$scope',
-                function($scope) {
-                    $scope.fn = function() {
-                        
-                    };
-                }
-            ]
+            templateUrl: 'directives/infoOnTable/info.template.html'
         };
     }
 ]);
@@ -2855,6 +2875,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
     "<div class=image-view><img ng-src={{image.path}} ng-click=loadImage()></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=image.name></div>");
+  $templateCache.put("directives/infoOnTable/info.template.html",
+    "<div class=ap-info></div>");
   $templateCache.put("directives/infoOnTable/infoOnTable.template.html",
     "<tr><div class=row>hola</div></tr>");
   $templateCache.put("directives/load/load.template.html",
