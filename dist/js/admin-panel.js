@@ -1874,74 +1874,44 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('apAppendInfo', [
-    function(){
-        return {
-            restrict: 'A',
-            scope: true,
-            link: function(scope, elem, attr) {
-                console.log('apAppendInfo',elem);
-                var appendElem = elem.find('[ap-info-on-table=""]');
-                var container = angular.element('<tr>');
-                container.append(appendElem);
-                elem.after(container);
-            },
-            controller: ['$scope',
-                function($scope) {
-                    $scope.fn = function() {
-                        
-                    };
-                }
-            ]
-        };
-    }
-]);
 ;angular.module('adminPanel').directive('apInfo', [
-    function(){
+    '$timeout',
+    function($timeout){
         return {
             restrict: 'A',
             scope: true,
             link: function(scope, elem, attr) {
                 var self = this;
-                //es el puntero al DOM elem que se quiere manipular
-                scope.targetElem = null;
+                
                 //el boton se inicializa como cerrado
                 //false = cerrado | true = abierto
                 scope.currentState = false;
+                scope.apInfoOnTableController = null;
                 
-                
+                //se usa la funcion timeout para que se ejectue ultimo esta funcion, cuando ya todos los objetos hayan sido compilados
                 self.init = function() {
-                    //ubicamos el elemento abajo del parent en otra fila de la tabla
-                    var trParent = elem.closest('tr');
-                    var colspan = trParent.find('td').length - 1;
+                    $timeout(function() {
+                        //ubicamos el elemento abajo del parent en otra fila de la tabla
+                        var trParent = elem.closest('tr');
+                        var colspan = trParent.find('td').length - 1;
+
+                        //ubicamos el elemento que queremos mover
+                        var apInfoOnTableDirective = trParent.find('[ap-info-on-table=""]');
+                        
+                        scope.apInfoOnTableController = apInfoOnTableDirective.controller('apInfoOnTable');
+                        scope.apInfoOnTableController.setColspan(colspan);
+
+                        //envolvemos el container en un tr y lo agregamos despues del tr actual, quedando como un elemento mas de la tabla
+                        trParent.after(angular.element('<tr>')
+                                .append(apInfoOnTableDirective));
+                    });
                     
-                    //ubicamos el elemento que queremos mover
-                    var container = trParent.find('[ap-info-on-table=""]');
-                    //le agregamos el colspan para que la cantidad de filas sea la necesaria para esta fila sea fullwidth
-                    container.attr('colspan',colspan);
-                    
-                    //extraemos el contenido
-                    var contents = container.contents();
-                    
-                    //envolvemos el contenido en un div para que tengan efecto las transiciones y lo inicializamos oculto
-                    scope.targetElem = angular.element('<div>')
-                            .addClass('ap-info-on-table')
-                            .append(contents)
-                            .hide();
-                    
-                    //envolvemos el targetElem en nuestro contenedor
-                    container.append(scope.targetElem);
-                    container.addClass('no-padding');
-                    
-                    //envolvemos el container en un tr y lo agregamos despues del tr actual, quedando como un elemento mas de la tabla
-                    trParent.after(angular.element('<tr>')
-                            .append(container));
                 };
                 
                 self.toggleButton = function() {
                     scope.currentState = !scope.currentState;
-                    scope.targetElem[scope.currentState ? 'slideDown' : 'slideUp'](500);
-                    elem[scope.currentState ? 'addClass' : 'removeClass']('open');
+                    elem.find('.ap-info')[scope.currentState ? 'addClass' : 'removeClass']('open');
+                    scope.apInfoOnTableController.toggleElem();
                 };
                 
                 elem.on('click', self.toggleButton);
@@ -1952,18 +1922,47 @@ angular.module('adminPanel').directive('formFieldError', [
                 
                 self.init();
             },
-            templateUrl: 'directives/infoOnTable/info.template.html'
+            template: '<div class="ap-info"></div>'
         };
     }
 ]);
-;angular.module('adminPanel').directive('apInfoOnTablea', [
+;angular.module('adminPanel').directive('apInfoOnTable', [
     function(){
         return {
             restrict: 'A',
+            priority: 1000,
+            transclude: true,
             link: function(scope, elem, attr) {
-                console.log('apInfoOnTable',elem);
+                //false = cerrado | true = abierto
+                scope.currentState = false;
+                
+                elem.addClass('no-padding');
+                
+                //buscamos el contenedor del elemento 
+                scope.container = elem.find('.ap-info-on-table');
+                scope.container.hide();
+                
+                scope.toggleElem = function() {
+                    scope.currentState = !scope.currentState;
+                    scope.container[scope.currentState ? 'slideDown' : 'slideUp'](500, function() {
+                        scope.$apply();
+                    });
+                };
             },
-            templateUrl: 'directives/infoOnTable/infoOnTable.template.html'
+            controller: [
+                '$scope','$element',
+                function($scope,$element) {
+                    this.toggleElem = function() {
+                        $scope.toggleElem();
+                    };
+                    
+                    this.setColspan = function(colspan) {
+                        $element.attr('colspan',colspan);
+                    };
+                    
+                }
+            ],
+            template: '<div class="ap-info-on-table"><div ng-if="currentState"><div ng-transclude></div></div></div>'
         };
     }
 ]);
@@ -2875,10 +2874,6 @@ angular.module('adminPanel').directive('apSelect', [
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
     "<div class=image-view><img ng-src={{image.path}} ng-click=loadImage()></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=image.name></div>");
-  $templateCache.put("directives/infoOnTable/info.template.html",
-    "<div class=ap-info></div>");
-  $templateCache.put("directives/infoOnTable/infoOnTable.template.html",
-    "<tr><div class=row>hola</div></tr>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
