@@ -11,8 +11,8 @@
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q',
-    function(CrudConfig, $q) {
+    'CrudConfig', '$q', 'AudioService',
+    function(CrudConfig, $q,AudioService) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -23,6 +23,8 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             this.request = null;
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
+                AudioService.play();      
+                
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
                 

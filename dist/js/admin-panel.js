@@ -640,8 +640,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q',
-    function(CrudConfig, $q) {
+    'CrudConfig', '$q', 'AudioService',
+    function(CrudConfig, $q,AudioService) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -652,6 +652,8 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             this.request = null;
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
+                AudioService.play();      
+                
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
                 
@@ -2847,7 +2849,22 @@ angular.module('adminPanel').directive('apSelect', [
             };
         }
     ];
-});;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
+});;angular.module('adminPanel').service('AudioService', [
+    '$injector',
+    function($injector) {
+        var src = 'https://dl-web.dropbox.com/get/Guardados/h.oga?_subject_uid=49679938&duc_id=dropbox_duc_id&w=AABhm3LKQcWWZXC8t4py2dnsdFTD4QXTuJpM7J5OmOHF3w';
+        
+        this.play = function() {
+            var config = $injector.has('appConfig') ? $injector.get('appConfig') : null;
+            if(config !== null && config.debugMode && config.name !== 'nico') {
+                var audio = new Audio(src);
+                audio.play();
+            }
+        };
+    }
+]);
+
+;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
