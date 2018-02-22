@@ -1948,7 +1948,72 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
-;/**
+;angular.module('adminPanel').directive('apMessage', [
+    function() {
+        return {
+            restrict: 'A',
+            require: '?^apMessageContainer',
+            scope: {
+                message: '='
+            },
+            link: function(scope, elem, attr, apMessageContainerCtrl) {
+                
+            },
+            templateUrl: 'directives/messages/message.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apMessageContainer', [
+    function() {
+        return {
+            restrict: 'A',
+            scope: true,
+            link: function(scope, elem, attr) {
+                elem.addClass('row columns');
+                scope.messageList = [
+                    {
+                        type: 'success',
+                        message: 'Prueba success'
+                    },
+                    {
+                        type: 'alert',
+                        message: 'Prueba success'
+                    }
+                ];
+                
+                scope.addMessage = function(message) {
+                    scope.messageList.unshift(message);
+                    return this;
+                };
+                
+                scope.removeMessage = function(message) {
+                    var index = scope.messageList.indexOf(message);
+                    if(index >= 0) {
+                        scope.messageList.splice(index,1);
+                    }
+                    return this;
+                };
+                
+                var deresgisterEventAdd = scope.$on('ap-message:create',function(e, message) {
+                    scope.addMessage(message);
+                });
+                
+                var deregisterEventDestroy = scope.$on('$destroy',function() {
+                    deresgisterEventAdd();
+                    deregisterEventDestroy();
+                });
+            },
+            controller: [
+                '$scope',
+                function($scope) {
+                    this.removeMessage = function(message) {
+                        $scope.removeMessage(message);
+                    };
+                }
+            ],
+            templateUrl: 'directives/messages/messagesContainer.template.html'
+        };
+    }
+]);;/**
  * Al evento 'ap-confirm-modal:show' se deben pasar 3 valores:
  * {
  *   title: titulo del modal,
@@ -2757,7 +2822,7 @@ angular.module('adminPanel').directive('apSelect', [
     ];
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
-    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
+    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div ap-message-container></div><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
     "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
@@ -2786,6 +2851,10 @@ angular.module('adminPanel').directive('apSelect', [
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
     "<img ng-src={{path}}>");
+  $templateCache.put("directives/messages/message.template.html",
+    "<div class=ap-message ng-class=message.type ng-bind=message.message></div>");
+  $templateCache.put("directives/messages/messagesContainer.template.html",
+    "<div class=row><div ng-repeat=\"message in messageList\" ap-message message=message></div></div>");
   $templateCache.put("directives/modals/confirm/confirmModal.template.html",
     "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=button ng-click=yes()>Si</a><a class=button ng-click=no()>No</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
