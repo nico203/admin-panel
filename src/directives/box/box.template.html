@@ -16,7 +16,7 @@
             </h5>
             <p ng-if="!isArray(message.message)" ng-bind="message.message"></p>
             <ul ng-if="isArray(message.message)">
-                <li ng-repeat="item in message.message" ng-bind="item"></li>
+                <li ng-repeat="item in message.message track by $index" ng-bind="item"></li>
             </ul>
         </div>
         <div ng-transclude ap-load></div>
