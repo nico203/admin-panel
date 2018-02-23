@@ -24,4 +24,5 @@ top-bar {
     background: $top-bar-background;
     border-bottom: 1px solid lighten($top-bar-background, 10% );
     box-shadow: $top-bar-shadow;
+    z-index: 50;
 }

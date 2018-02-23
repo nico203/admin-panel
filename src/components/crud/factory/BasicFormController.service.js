@@ -36,6 +36,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
 
                         return responseSuccess;
                     }, function(responseError) {
+                        self.$$crudFactory.createMessage(CrudConfig.messages.getError,'alert');    
                         return $q.reject(responseError);
                     });
                 }
@@ -44,7 +45,11 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                 return deferred.promise;
             };
             
-            
+            self.reset = function() {
+                scope[resource.name] = {};
+                scope[self.$$form].$setPristine();
+                scope[self.$$form].$setUntouched();
+            };
             
             self.submit = function(actionDefault) {
                 var object = scope[resource.name];
@@ -61,8 +66,13 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                         if(responseSuccess.data) {
                             scope[resource.name] = responseSuccess.data;
                         }
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSusccess,'success');   
+                        self.reset();
+                        
                         return responseSuccess;
                     }, function(responseError) {
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveError,'alert');    
+                        
                         $q.reject(responseError);
                     });
                 }

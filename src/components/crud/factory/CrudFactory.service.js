@@ -11,8 +11,8 @@
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q',
-    function(CrudConfig, $q) {
+    'CrudConfig', '$q', '$rootScope',
+    function(CrudConfig, $q, $rootScope) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -21,6 +21,13 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
          */
         function CrudFactory($scope, resource) {
             this.request = null;
+            
+            this.createMessage = function(message, type) {
+                $rootScope.$broadcast('ap-message:create', {
+                    message: message,
+                    type: type
+                });
+            };
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga

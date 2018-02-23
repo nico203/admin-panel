@@ -4,17 +4,8 @@ angular.module('adminPanel').directive('apMessageContainer', [
             restrict: 'A',
             scope: true,
             link: function(scope, elem, attr) {
-                elem.addClass('row columns');
-                scope.messageList = [
-                    {
-                        type: 'success',
-                        message: 'Prueba success'
-                    },
-                    {
-                        type: 'alert',
-                        message: 'Prueba success'
-                    }
-                ];
+                elem.addClass('row columns ap-message-container');
+                scope.messageList = [];
                 
                 scope.addMessage = function(message) {
                     scope.messageList.unshift(message);
