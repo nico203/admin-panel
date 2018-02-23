@@ -441,8 +441,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q', '$rootScope',
-    function(CrudConfig, $q, $rootScope) {
+    'CrudConfig', '$q', '$rootScope', 'AudioService',
+    function(CrudConfig, $q, $rootScope, AudioService) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -460,6 +460,8 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             };
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
+                AudioService.play();      
+                
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
                 
@@ -1682,6 +1684,98 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apInfo', [
+    '$timeout',
+    function($timeout){
+        return {
+            restrict: 'A',
+            scope: true,
+            link: function(scope, elem, attr) {
+                var self = this;
+                
+                //el boton se inicializa como cerrado
+                //false = cerrado | true = abierto
+                scope.currentState = false;
+                scope.apInfoOnTableController = null;
+                
+                //se usa la funcion timeout para que se ejectue ultimo esta funcion, cuando ya todos los objetos hayan sido compilados
+                self.init = function() {
+                    $timeout(function() {
+                        //ubicamos el elemento abajo del parent en otra fila de la tabla
+                        var trParent = elem.closest('tr');
+                        var colspan = trParent.find('td').length - 1;
+
+                        //ubicamos el elemento que queremos mover
+                        var apInfoOnTableDirective = trParent.find('[ap-info-on-table=""]');
+                        
+                        scope.apInfoOnTableController = apInfoOnTableDirective.controller('apInfoOnTable');
+                        scope.apInfoOnTableController.setColspan(colspan);
+
+                        //envolvemos el container en un tr y lo agregamos despues del tr actual, quedando como un elemento mas de la tabla
+                        trParent.after(angular.element('<tr>')
+                                .append(apInfoOnTableDirective));
+                    });
+                    
+                };
+                
+                self.toggleButton = function() {
+                    scope.currentState = !scope.currentState;
+                    elem.find('.ap-info')[scope.currentState ? 'addClass' : 'removeClass']('open');
+                    scope.apInfoOnTableController.toggleElem();
+                };
+                
+                elem.on('click', self.toggleButton);
+                
+                scope.$on('$destroy', function() {
+                    elem.off('click', self.toggleButton);
+                });
+                
+                self.init();
+            },
+            template: '<div class="ap-info"></div>'
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apInfoOnTable', [
+    function(){
+        return {
+            restrict: 'A',
+            priority: 1000,
+            transclude: true,
+            link: function(scope, elem, attr) {
+                //false = cerrado | true = abierto
+                scope.currentState = false;
+                
+                elem.addClass('no-padding');
+                
+                //buscamos el contenedor del elemento 
+                scope.container = elem.find('.ap-info-on-table');
+                scope.container.hide();
+                
+                scope.toggleElem = function() {
+                    scope.currentState = !scope.currentState;
+                    scope.container[scope.currentState ? 'slideDown' : 'slideUp'](500, function() {
+                        scope.$apply();
+                    });
+                };
+            },
+            controller: [
+                '$scope','$element',
+                function($scope,$element) {
+                    this.toggleElem = function() {
+                        $scope.toggleElem();
+                    };
+                    
+                    this.setColspan = function(colspan) {
+                        $element.attr('colspan',colspan);
+                    };
+                    
+                }
+            ],
+            template: '<div class="ap-info-on-table"><div ng-if="currentState"><div ng-transclude></div></div></div>'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apLoad', [
     '$animate', '$compile', 
     function($animate, $compile){
@@ -2628,7 +2722,22 @@ angular.module('adminPanel').directive('apSelect', [
             };
         }
     ];
-});;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
+});;angular.module('adminPanel').service('AudioService', [
+    '$injector',
+    function($injector) {
+        var src = 'https://s0.vocaroo.com/media/download_temp/Vocaroo_s0PN2g9vvPeC.webm';
+        
+        this.play = function() {
+            var config = $injector.has('appConfig') ? $injector.get('appConfig') : null;
+            if(config !== null && config.debugMode && config.name !== 'nico') {
+                var audio = new Audio(src);
+                audio.play();
+            }
+        };
+    }
+]);
+
+;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div ap-message-container></div><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
