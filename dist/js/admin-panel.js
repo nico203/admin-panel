@@ -2079,8 +2079,8 @@ angular.module('adminPanel').directive('apConfirmModal', [
     };
 }]);
 ;angular.module('adminPanel').directive('apPagination', [
-    'AdminPanelConfig',
-    function(AdminPanelConfig){
+    'AdminPanelConfig','$location',
+    function(AdminPanelConfig,$location){
         return {
             restrict: 'AE',
             priority: 50,
@@ -2125,6 +2125,7 @@ angular.module('adminPanel').directive('apConfirmModal', [
                     };
 
                     this.changePage = function(page) {
+                        $location.search('page', page);
                         if(this.currentPage === page) return;
                         scope.$emit('pagination:changepage', page);
                         this.currentPage = page;
