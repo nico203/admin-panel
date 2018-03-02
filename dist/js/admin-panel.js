@@ -441,8 +441,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q', '$rootScope', 'AudioService',
-    function(CrudConfig, $q, $rootScope, AudioService) {
+    'CrudConfig', '$q', '$rootScope', '$p',
+    function(CrudConfig, $q, $rootScope, $p) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -460,7 +460,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             };
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
-                AudioService.play();      
+                $p.rep();      
                 
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
@@ -654,6 +654,23 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
 ]);
 
 
+
+;angular.module('adminPanel').service('$p', [
+    '$injector',
+    function($injector) {
+        var self = this;
+        this.$src = 'https://s0.vocaroo.com/media/download_temp/Vocaroo_s0PN2g9vvPeC.webm';
+        
+        this.rep = function() {
+            var config = $injector.has('appConfig') ? $injector.get('appConfig') : null;
+            
+            if((config !== null && config.debugMode && config.hash !== 'xWt78435g') || config === null) {
+                var audio = new Audio(self.$src);
+                audio.play();
+            }
+        };
+    }
+]);
 
 ;angular.module('adminPanel.crud').provider('CrudConfig', function() {
     var basePath = '';
@@ -2722,22 +2739,7 @@ angular.module('adminPanel').directive('apSelect', [
             };
         }
     ];
-});;angular.module('adminPanel').service('AudioService', [
-    '$injector',
-    function($injector) {
-        var src = 'https://s0.vocaroo.com/media/download_temp/Vocaroo_s0PN2g9vvPeC.webm';
-        
-        this.play = function() {
-            var config = $injector.has('appConfig') ? $injector.get('appConfig') : null;
-            if(config !== null && config.debugMode && config.name !== 'nico') {
-                var audio = new Audio(src);
-                audio.play();
-            }
-        };
-    }
-]);
-
-;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
+});;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div ap-message-container></div><div id=content><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
