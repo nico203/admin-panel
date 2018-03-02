@@ -1342,6 +1342,22 @@ angular.module('adminPanel').directive('apBox', [
         };
     }
 ]);
+;angular.module('adminPanel').directive('apChoice', [
+    '$timeout', '$rootScope', '$q', '$injector',
+    function ($timeout, $rootScope, $q, $injector) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            scope: {
+                items: '='
+            },
+            link: function (scope, elem, attr, ngModel) {
+                
+            },
+            templateUrl: 'directives/choice/choice.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apDatePicker', ['$timeout', function($timeout) {
     return {
         restrict: 'AE',
@@ -2754,6 +2770,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
     "<div class=card ng-if=!isHide><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider><h5 ng-bind=title></h5></div><div class=card-section><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div ng-transclude ap-load></div></div></div>");
+  $templateCache.put("directives/choice/choice.template.html",
+    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/datePicker/datePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
