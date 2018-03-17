@@ -61,7 +61,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                 //Se hace el request para guardar el objeto
                 request.$promise.then(function(responseSuccess) {
                     //Si no hay archivos se sigue el curso actual
-                    if(file === null) {
+                    if(file === null || angular.isUndefined(file)) {
                         scope.$emit('apLoad:finish', apLoadName, {
                             message: CrudConfig.messages.saveSusccess,
                             type: 'success'

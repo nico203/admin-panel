@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card" ng-if="!isHide">
     <button ng-if="closeButton" class="close-button" type="button" ng-click="close()">
         <span>&times;</span>
     </button>
@@ -20,6 +20,5 @@
             </ul>
         </div>
         <div ng-transclude ap-load></div>
-        <div class="pager"></div>
     </div>
 </div>

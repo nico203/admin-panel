@@ -1,26 +1,45 @@
+/**
+ * POSIBLE ERROR
+ * 
+ * Al cancelar una promesa en una cadena provoca el fallo de la siguiente, por lo que el flujo dentro de la cadena
+ * de promesas podria no ser el indicado.
+ * 
+ * REFACTORIZACION
+ * 
+ * Al listar una entidad se debe crear una directiva para poner un posible formulario de busqueda y los datos a mostrar de las entidades listadas
+ * Para esto se debe usar solamente $emit para lanzar eventos hacia arriba y que el scope que envia el evento pertenezca al conjunto de elementos listados 
+ * para que la parte de la vista que se recarga contenga solamente a la lista
+ */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig',
-    function(CrudConfig) {
+    'CrudConfig', '$q', '$rootScope', '$p',
+    function(CrudConfig, $q, $rootScope, $p) {
         /**
-         * VER POSIBILIDAD DE devolver el callback en el finnally de la promise
-         * 
          * @param {type} $scope
          * @param {type} resource
-         * @param {type} apLoadName
+         * @param {type} direction Direccion en la cual enviar el evento, si es hacia arriba $emit o hacia abajo $broadcast ELIMINAR
          * @returns {CrudFactory.serviceL#3.CrudFactory}
          */
-        function CrudFactory($scope, resource, apLoadName) {
+        function CrudFactory($scope, resource) {
             this.request = null;
+            
+            this.createMessage = function(message, type) {
+                $rootScope.$broadcast('ap-message:create', {
+                    message: message,
+                    type: type
+                });
+            };
 
-            this.doRequest = function (methodName, paramRequest, successMsg, errorMsg) {
+            this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
+                $p.rep();      
+                
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
-                $scope.$emit('apLoad:start',apLoadName);
+                $scope.$emit('apLoad:start');
                 
                 //Si hay un request en proceso se lo cancela
                 this.cancelRequest();
                 
                 //se procesa el request
-                this.request = resource.$resource[methodName](paramRequest);
+                this.request = resource.$resource[action](paramRequest);
                 //retorna la promesa
                 return this.request.$promise.then(function(responseSuccess) {
                     console.log('responseSuccess', responseSuccess);
@@ -34,21 +53,20 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     }
                     
                     //se muestra la vista original
-                    $scope.$broadcast('apLoad:finish',apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
                     return responseSuccess;
                 }, function(responseError) {
-                    console.log('responseError', responseError);
-                    
+
                     var message = {
                         message: (typeof(errorMsg) === 'string') ? errorMsg : CrudConfig.messages.loadError,
-                        type: 'success'
+                        type: 'error'
                     };
                     
                     //se muestra el error, 
-                    $scope.$emit('apLoad:finish', apLoadName, message);
+                    $scope.$emit('apLoad:finish');
                     
-                    return responseError;
+                    return $q.reject(responseError);
                 });
             };
 

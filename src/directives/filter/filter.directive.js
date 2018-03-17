@@ -15,7 +15,9 @@ angular.module('adminPanel').directive('apFilters',[
                 });
                 
                 scope.$on('$destroy', function() {
-                    accordionElem.foundation('_destroy');
+                    if(accordionElem !== null) {
+                        accordionElem.foundation('_destroy');
+                    }
                 });
             },
             templateUrl: 'directives/filter/filter.template.html'

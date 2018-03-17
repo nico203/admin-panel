@@ -6,8 +6,8 @@
  * FALTA implementar busqueda
  */
 angular.module('adminPanel.crud').factory('BasicListController', [
-    'CrudFactory','$timeout',
-    function(CrudFactory,$timeout) {
+    'CrudFactory','$timeout','$q',
+    function(CrudFactory,$timeout,$q) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -17,14 +17,20 @@ angular.module('adminPanel.crud').factory('BasicListController', [
          * }
          * implementa paginacion sobre los elementos devueltos.
          * 
+         * 
+         * Se incorpora un metodo para eliminar objetos basado en el id del elemento ya que se espera que al borrar un elemento se devuelva la lista
+         * de elementos resultante luego de la eliminacion.
+         * Está basada en un evento del scope que es capturado cuando se lanza desde la directiva apDeleteContainer
+         * 
          * @param {Scope} scope Scope del componente
          * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
          */
-        function BasicListController(scope, resource, apLoadName) {
+        function BasicListController(scope, resource) {
             var self = this;
+            self.listParams = null;
             scope.list = [];
-            self.$$crudFactory = new CrudFactory(scope, resource, apLoadName);
+            self.$$crudFactory = new CrudFactory(scope, resource);
+            self.parentData = null;
             
             /**
              * @description Inicializa el controlador
@@ -32,8 +38,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.init = function () {
-                self.list();
-                return self;
+                return self.list();
             };
             
             /**
@@ -50,32 +55,58 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * @returns {BasicListController}
              */
             self.list = function(params, actionDefault) {
-                var listParams = (params) ? params : {};
+                //verificamos si tiene un recurso padre y seteamos el id del recurso padre (obtenido de los parametros) en una variable
+                if(resource.parent !== null) {
+                    if(!params[resource.parent]) {
+                        console.error('BasicListController: El recurso tiene un padre, el cual no fue entregado');
+                        return;
+                    }
+                    self.parentData = params[resource.parent];
+                }
+                
+                self.listParams = (params) ? params : {};
                 var promise = null;
                 
-                $timeout(function () {
+                return $timeout(function () {
                     var action = (actionDefault) ? actionDefault : 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, listParams).then(function(responseSuccess) {
-                        console.log('list responseSuccess', responseSuccess);
-                        
+                    promise = self.$$crudFactory.doRequest(action, self.listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
-                        scope.$broadcast('pagination:paginate', {
-                            totalPageCount: responseSuccess.totalPageCount,
-                            currentPageNumber: responseSuccess.currentPageNumber
+                        //se lo envuelve en un timeout para que los cambios correspondientes a la vista se ejecuten primero (ng-if)
+                        $timeout(function() {
+                            scope.$broadcast('pagination:paginate', {
+                                totalPageCount: responseSuccess.totalPageCount,
+                                currentPageNumber: responseSuccess.currentPageNumber
+                            });
                         });
                         
                         return responseSuccess;
                     }, function (responseError) {
-                        console.log('list responseError', responseError);
-                        
-                        return responseError;
+                        return $q.reject(responseError);
                     });
+                    
+                    return promise;
                 });
-                
-                return promise;
+            };
+            
+            self.delete = function (elem, actionDefault) {
+                var action = (actionDefault) ? actionDefault : 'delete';
+                var obj = {};
+                obj[resource.name] = elem.id;
+                if(resource.parent !== null) {
+                    obj[resource.parent] = self.parentData;
+                }
+                return self.$$crudFactory.doRequest(action, obj).then(function () {
+                    //chequeamos que si el recurso tiene un padre, el id de ese padre se envíe como parametro en el request
+                    if(resource.parent !== null && !self.listParams[resource.parent]) {
+                        self.listParams[resource.parent] = self.parentData;
+                    }
+                    return self.list(self.listParams);
+                }, function (responseError) {
+                    return $q.reject(responseError);
+                });
             };
             
             //cancelamos los request al destruir el controller
@@ -85,12 +116,21 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 }
             };
             
+            //Configuracion del objeto para borrar un elemento
+            scope.deleteConfig = {
+                resource: resource
+            };
+            
             //Evento capturado cuando se listan las entidades
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
-                self.list({
-                    page: page
-                });
+                self.listParams.page = page;
+                self.list(self.listParams);
+            });
+            
+            scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
+                e.stopPropagation();
+                self.delete(elem);
             });
         }
         

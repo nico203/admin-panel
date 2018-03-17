@@ -38,7 +38,6 @@ angular.module('adminPanel').directive('apSelect', [
                 filters: '=?'
             },
             link: function (scope, elem, attr, ngModel) {
-                console.log($injector);
                 elem.addClass('select-ap');
 
                 var resource = null;
@@ -46,7 +45,6 @@ angular.module('adminPanel').directive('apSelect', [
                 if($injector.has(scope.resource)) {
                     var crudResource = $injector.get(scope.resource, 'apSelect');
                     resource = crudResource.$resource;
-                    console.log('resource',resource);
                 }
                 if(!resource) {
                     console.error('El recurso no esta definido');
@@ -92,6 +90,7 @@ angular.module('adminPanel').directive('apSelect', [
 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+                console.log('requestParam',scope.requestParam);
 
                 var request = null;
                 var preventClickButton = false;
@@ -100,11 +99,13 @@ angular.module('adminPanel').directive('apSelect', [
                  * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
                  * en la propiedad properties de la directiva
                  *
-                 * @param {Object} object
-                 * @returns {Object}
+                 * @param {Object} object | entidad serializada que se esta listando
+                 * @returns {Object} | tiene dos propiedades, name: que es por la que se lista despues en la vista
+                 * y object, que es el objeto el cual se está listando
                  */
                 function convertObjectToItemList(object) {
                     var name = '';
+
                     //Seteamos solamente los campos seleccionados a mostrar
                     for(var j = 0; j < objectProperties.length; j++) {
                         if (filtersData[j][0] && filtersData[j][1]) {
@@ -138,11 +139,8 @@ angular.module('adminPanel').directive('apSelect', [
                         request.$cancelRequest();
                     }
 
-                    var search = {};
-
-                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
-                        search.id = scope.requestParam;
-                    }
+                    var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
+                    console.log('search',search);
 
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
@@ -154,10 +152,8 @@ angular.module('adminPanel').directive('apSelect', [
                     request = resource[defaultMethod](search);
 
                     //seteamos en la vista que el request esta en proceso
-                    console.log('doRequest');
                     scope.loading = true;
                     var promise = request.$promise.then(function(rSuccess) {
-                        console.log('rSuccess',rSuccess);
                         var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
                         //creamos la lista. Cada item es de la forma
                         //{name:'name',id:'id'}
@@ -348,7 +344,7 @@ angular.module('adminPanel').directive('apSelect', [
                     ngModel.$setViewValue(item.$$object);
 
                     //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
-                    scope.$emit('ap-select:item-selected', name, item);
+                    scope.$emit('ap-select:item-selected', name, item.$$object);
                 };
 
                 /**
@@ -384,13 +380,20 @@ angular.module('adminPanel').directive('apSelect', [
 
                 //registramos los eventos
                 elem.on('mousedown', '.dropdown-ap', onListClick);
-                $document.on('keydown', enterHandler);
 
+                /**
+                 * Watcher que chequea cualquier cambio en el modelo de la entidad, tanto externo como interno
+                 * Cuando es externo, se se construye el objeto actual con base en la entidad a la que se esta listando
+                 * en cambio, cuando se elige un item de la lista, se usa la propiedad object del item de la lista seleccionado
+                 * para construir el objeto
+                 */
                 scope.$watch(function () {
                     return ngModel.$modelValue;
                 }, function (val) {
                     if (val) {
-                        console.log('val',val);
+                        //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
+//                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
+
 
                         //seteamos el item actual
                         scope.itemSelected = convertObjectToItemList(val);

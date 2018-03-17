@@ -1,207 +1,100 @@
+/**
+ * Obtiene los datos del servidor para ser editados. 
+ * Los expone a través de un atributo definido en el $scope del componente según la propiedad 'name' de 
+ * la instancia de CrudResource que se provea.
+ * 
+ * Si la propiedad 'name' es compuesta, es decir, es una entidad que depende de otra, se usa el campo name 
+ */
 angular.module('adminPanel.crud').factory('BasicFormController', [
-    'CrudConfig',
-    function(CrudConfig) {
-        /**
-         * @description Objeto que tiene dos funciones, submit e init. Realiza las funciones de consulta y actualizacion
-         * de formulario. Debe haber un solo de estos elementos por formulario.
-         * 
-         * @param {Scope} scope Scope al cual apunta los eventos
-         * @param {CrudResource} Resource | Resource que se utiliza para hacer las peticiones al servidor
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         * @returns {CrudService.serviceL#3.Form}
-         */
-        var Form = function(scope, Resource, apLoadName, file) {
+    'CrudFactory', 'CrudConfig',  '$q',
+    function(CrudFactory,CrudConfig, $q) {
+        function BasicFormController(scope, resource, formName) {
             var self = this;
+            self.$$crudFactory = new CrudFactory(scope, resource);
+            
+            //Nombre con el cual se expone al formulario dentro del scope. 
+            //Ver https://docs.angularjs.org/guide/forms
+            self.$$form = angular.isUndefined(formName) ? 'form' : formName;
+            
+            
+            self.get = function(params, actionDefault) {
+                var deferred = $q.defer();
+                var validRequest = true;
+
+                if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
+                    deferred.reject(false);
+                    validRequest = false;
+                }
+                var paramRequest = params;
+                
+                var action = (actionDefault) ? actionDefault : 'get';
+                
+                var promise = null;
+                if(validRequest) {
+                    promise = self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
+                        scope[resource.name] = responseSuccess.data;
+
+                        return responseSuccess;
+                    }, function(responseError) {
+                        self.$$crudFactory.createMessage(CrudConfig.messages.getError,'alert');    
+                        return $q.reject(responseError);
+                    });
+                }
+                deferred.resolve(promise);
+                
+                return deferred.promise;
+            };
+            
+            self.reset = function() {
+                scope[resource.name] = {};
+                scope[self.$$form].$setPristine();
+                scope[self.$$form].$setUntouched();
+            };
+            
+            self.submit = function(actionDefault) {
+                var object = scope[resource.name];
+                if(resource.parent !== null) {
+                    object[resource.parent] = scope[resource.parent];
+                }
+
+                var action = (actionDefault) ? actionDefault : 'save';
+              
+                //Si el formulario está expuesto y es válido se realiza la peticion para guardar el objeto
+                //if(!scope.form) {} ????
+                if(scope[self.$$form] && scope[self.$$form].$valid) {
+                    return self.$$crudFactory.doRequest(action, object).then(function(responseSuccess) {
+                        if(responseSuccess.data) {
+                            scope[resource.name] = responseSuccess.data;
+                        }
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSusccess,'success');   
+                        self.reset();
+                        
+                        return responseSuccess;
+                    }, function(responseError) {
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveError,'alert');    
+                        
+                        $q.reject(responseError);
+                    });
+                }
+            };
+            
             /**
-             * @description metodo que inicializa el formulario con datos del servicor.
+             * @description Inicializa el controlador
              * 
-             * @param {Object} object Objeto a enviar al servidor para hacer la consulta 
-             * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
-             * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
-             * @returns {undefined}
+             * @returns {BasicReadController}
              */
-            self.init = function(object, callbackSuccess, callbackError) {
-                scope.$emit('apLoad:start',apLoadName);
-                var request = Resource.get(object);
-                request.$promise.then(function(responseSuccess) {
-                    scope.$emit('apLoad:finish', apLoadName);
-                    if(callbackSuccess) {
-                        callbackSuccess(responseSuccess);
-                    }
-                }, function(responseError) {
-                    console.log('responseError',responseError);
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.loadError,
-                        type: 'error'
-                    });
-                    if(callbackError) {
-                        callbackError(responseError);
-                    }
-                });
+            self.init = function(id, action) {
                 
-                //aregamos el request al scope para poderlo cancelar
-                self.initRequest = request;
+                //inicializamos variables
+                var obj = {};
+                obj[resource.name] = id;
+                
+                return self.get(obj, action);
             };
-
-            /**
-             * @description Metodo que envia los datos del formulario al servidor para hacer la actualizacion
-             * 
-             * @param {Object} object Objeto a enviar al servidor para persistir los datos. 
-             * @param {type} callbackSuccess Funcion que se llama si la peticion es exitosa
-             * @param {type} callbackError Funcion que se llama si hubo un error en la peticion.
-             * @returns {undefined}
-             */
-            self.submit = function(object, callbackSuccess, callbackError) {
-                scope.$emit('apLoad:start',apLoadName);
-                console.log('object', object);
-                var request = Resource.save(object);
-                
-                //Se hace el request para guardar el objeto
-                request.$promise.then(function(responseSuccess) {
-                    //Si no hay archivos se sigue el curso actual
-                    if(file === null) {
-                        scope.$emit('apLoad:finish', apLoadName, {
-                            message: CrudConfig.messages.saveSusccess,
-                            type: 'success'
-                        });
-                        if(callbackSuccess) {
-                            callbackSuccess(responseSuccess);
-                        }
-                    } else {
-                        var requestFile = Resource[file.prop](responseSuccess.data);
-                        requestFile.$promise.then(function(fileResponseSuccess) {
-                            scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveSusccess,
-                                type: 'success'
-                            });
-                            if(callbackSuccess) {
-                                callbackSuccess(fileResponseSuccess);
-                            }
-                        }, function(fileResponseError) {
-                            scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveError,
-                                type: 'error'
-                            });
-                            if(callbackError) {
-                                callbackError(fileResponseError);
-                            }
-                            throw 'Form File Error: ' + fileResponseError;
-                        });
-                    }
-                }, function(responseError) {
-                    scope.$emit('apLoad:finish', apLoadName, {
-                        message: CrudConfig.messages.saveError,
-                        type: 'error'
-                    });
-                    if(callbackError) {
-                        callbackError(responseError);
-                    }
-                    throw 'Form Error: ' + responseError;
-                });
-                
-                //aregamos el request al scope para poderlo cancelar
-                self.submitRequest = request;
-            };
-            
-            
-            //cancelamos los request
-            self.destroy = function() {
-                if(self.initRequest) {
-                    self.initRequest.$cancelRequest();
-                }
-                if(self.submitRequest) {
-                    self.submitRequest.$cancelRequest();
-                }
-            };
-        };
-        
-        /**
-         * @description Inicializa el controlador del componente para tener el formulario del servidor
-         * 
-         * @param {Controller} controller Controller del componente
-         * @param {CrudResource} resource Recurso del servidor a usar para obtener los datos
-         * @param {Scope} scope Scope del componente
-         * @param {Funciton} callbackInit funcion que puede ser ejecutada luego del init
-         * @param {Funciton} function que puede ser ejecutada luego del submit
-         * @param {String} apLoadName | Nombre de la directiva load al que apuntar para ocultar la vista en los intercambios con el servidor
-         * @returns {undefined}
-         */
-        function BasicFormController(scope, resource, apLoadName) {
-            this.request = null;
-            var name = resource.name;
-            scope[name] = {};
-            
-            this.get = function(callbackSuccess, callbackError) {
-                var property = resource.property;
-                
-
-                //esta definida la propiedad, es decir tiene un sub recurso 
-                // pero este proviene de otro lugar y no hay que obtenerlo del servidor
-                if(property && !(angular.isUndefined(this[name][property]) || this[name][property] === null)) {
-                    scope[name] = this[name];
-                    if(scope[name][property]) {
-                        scope[property] = scope[name][property];
-                    } else {
-                        scope[name][property] = scope[property];
-                    }
-                    if(callbackInit) {
-                        callbackInit();
-                    }
-                    return;
-                } 
-                
-                //los datos se obtienen del servidor 
-                if(this[name] && this[name] !== 'nuevo') {
-                    var obj = {};
-                    obj[name] = this[name];
-                    form.init(obj, function(r) {
-                        scope[name] = r.data;
-                        if(property) {
-                            if(scope[name][property]) {
-                                scope[property] = scope[name][property];
-                            } else {
-                                scope[name][property] = r.data[property];
-                            }
-                        }
-                        if(callbackInit) {
-                            callbackInit();
-                        }
-                    });
-                }
-            };
-            
-            this.submit = function(callbackSuccess, callbackError) {
-                
-                
-                if(!scope.form) {
-                    form.submit(scope[name], function(r) {
-                        if(r.data) {
-                            scope[name] = r.data;
-                        }
-                        if(callbackSubmit) {
-                            callbackSubmit();
-                        }
-                    });
-                }
-                else if(scope.form.$valid) {
-                    form.submit(scope[name], function(r) {
-                        if(r.data) {
-                            scope[name] = r.data;
-                        }
-                        if(callbackSubmit) {
-                            callbackSubmit();
-                        }
-                    });
-                }
-            };
-
-            
             
             //cancelamos los request al destruir el controller
-            this.destroy = function() {
-                if(this.request) {
-                    this.request.$cancelRequest();
-                }
+            self.destroy = function() {
+                this.$$crudFactory.cancelRequest();
             };
         }
         
