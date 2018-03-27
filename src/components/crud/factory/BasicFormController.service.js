@@ -39,6 +39,8 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                         self.$$crudFactory.createMessage(CrudConfig.messages.getError,'alert');    
                         return $q.reject(responseError);
                     });
+                } else {
+                    scope[resource.name] = {};
                 }
                 deferred.resolve(promise);
                 
@@ -53,6 +55,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
             
             self.submit = function(actionDefault) {
                 var object = scope[resource.name];
+
                 if(resource.parent !== null) {
                     object[resource.parent] = scope[resource.parent];
                 }
