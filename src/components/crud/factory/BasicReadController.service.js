@@ -18,30 +18,14 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
             self.$$crudFactory = new CrudFactory(scope, resource);
 
             self.get = function(params, actionDefault) {
-                var deferred = $q.defer();
-                var validRequest = true;
-
-                if(angular.isUndefined(params[resource.name]) || params[resource.name] === null || params[resource.name] === CrudConfig.newPath) {
-                    deferred.reject(false);
-                    validRequest = false;
-                }
-                var paramRequest = params;
-
                 var action = (actionDefault) ? actionDefault : 'get';
+                return self.$$crudFactory.doRequest(action, params).then(function(responseSuccess) {
+                    scope[resource.name] = responseSuccess.data;
 
-                var promise = null;
-                if(validRequest) {
-                    promise = self.$$crudFactory.doRequest(action, paramRequest).then(function(responseSuccess) {
-                        scope[resource.name] = responseSuccess.data;
-
-                        return responseSuccess;
-                    }, function(responseError) {
-                        return $q.reject(responseError);
-                    });
-                }
-                deferred.resolve(promise);
-
-                return deferred.promise;
+                    return responseSuccess;
+                }, function(responseError) {
+                    return $q.reject(responseError);
+                });
             };
 
 
