@@ -30,7 +30,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             };
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
-                $p.rep();      
+               // $p.rep();      
                 
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
