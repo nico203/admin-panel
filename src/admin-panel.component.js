@@ -11,4 +11,9 @@ angular.module('adminPanel', [
             templateUrl: 'admin-panel.template.html'
         };
     }
+]).run([
+    'WindowResize',
+    function (WindowResize) {
+        WindowResize.init();
+    }
 ]);

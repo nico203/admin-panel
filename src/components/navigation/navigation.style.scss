@@ -27,13 +27,18 @@ $nested-menu-item-background-active: lighten($nested-menu-background, 2 ) !defau
 
 
 navigation {
-    position: fixed;
-    overflow: hidden;
-    overflow-y: auto;
+    
+    /* Large and up */
+    @media screen and (min-width: 64em) {
+        width: 250px;
+        position: fixed;
+        overflow: hidden;
+        overflow-y: auto;
+    }
+    
     top: $top-height;
     left: 0px;
     bottom: 0px;
-    width: 250px;
     padding-top: 8px;
     background: $navigation-background;
     

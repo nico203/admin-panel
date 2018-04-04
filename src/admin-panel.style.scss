@@ -68,8 +68,13 @@ body {
 }
 
 #parent {
+    /* Large and up */
+    @media screen and (min-width: 64em) {
+        margin-left: 250px;
+    }
+    
     margin-top: 56px;
-    margin-left: 250px;
+    
     position: relative;
 }
 #content {
