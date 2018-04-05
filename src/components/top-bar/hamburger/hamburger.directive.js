@@ -1,20 +1,4 @@
-function topBarController($scope, AuthenticationService, $location) {
-    $scope.clickBtn = function() {
-        AuthenticationService.logout();
-        $location.path('/login');
-    };
-    
-    this.$postLink = function() {
-        $('top-bar').foundation();
-    };
-}
-
-angular.module('adminPanel.topBar', [
-    'adminPanel.authentication'
-]).component('topBar', {
-    templateUrl: 'components/top-bar/top-bar.template.html',
-    controller: ['$scope', 'AuthenticationService', '$location', topBarController]
-}).directive('hamburger', [
+/*angular.module('adminPanel').directive('hamburger', [
     '$timeout',
     function ($timeout) {
         return {
@@ -23,7 +7,6 @@ angular.module('adminPanel.topBar', [
                 elem.addClass('hambruger-wrapper');
                 
                 var toggleClickElement = function() {
-                    $('#offCanvas').foundation('open');
                     $('#hamburger-icon').toggleClass('active');
                     return false;
                 };
@@ -36,7 +19,7 @@ angular.module('adminPanel.topBar', [
                     elem.off('click', toggleClickElement);
                 });
             },
-            templateUrl: 'components/top-bar/hamburger/hamburger.template.html'
+            templateUrl: 'directives/hamburger/hamburger.template.html'
         };
     }
-]);
+]);*/

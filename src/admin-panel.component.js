@@ -12,8 +12,11 @@ angular.module('adminPanel', [
         };
     }
 ]).run([
-    'WindowResize',
-    function (WindowResize) {
+    'WindowResize','$timeout',
+    function (WindowResize,$timeout) {
         WindowResize.init();
+        $timeout(function() {
+            $(document).foundation();
+        });
     }
 ]);

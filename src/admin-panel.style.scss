@@ -38,7 +38,7 @@ $top-height: 56px !default;
 @include foundation-responsive-embed;
 @include foundation-label;
 @include foundation-media-object;
-@include foundation-off-canvas;
+
 @include foundation-orbit;
 @include foundation-pagination;
 @include foundation-progress-bar;
@@ -67,19 +67,9 @@ body {
     z-index: 999;
 }
 
-#parent {
-    /* Large and up */
-    @media screen and (min-width: 64em) {
-        margin-left: 250px;
-    }
-    
-    margin-top: 56px;
-    
-    position: relative;
-}
 #content {
     position: relative;
-    padding: 20px;
+    padding-top: 20px;
     margin-top: $top-height;
     background: $content-background;
 }
