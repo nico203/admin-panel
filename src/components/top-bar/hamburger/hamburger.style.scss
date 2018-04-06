@@ -17,6 +17,7 @@ $translateY: ($height-icon / 2);
 $translateX: 0;
 
 .hambruger-wrapper {
+    display: block;
     background: $background;
     color: $color;
     font-family: 'Montserrat', sans-serif;
@@ -24,11 +25,10 @@ $translateX: 0;
     text-align:center;
     position: fixed;
     z-index: 12;
-    margin: $height-line;
-    border-radius: ($height-icon * 2);
+    border-radius: $height-line;
     
-    @media screen and (min-width: 40em) {
-        margin: 25px;
+    @media screen and (min-width: 64em) {
+        display: none;
     }
     
     &:hover, &:focus {

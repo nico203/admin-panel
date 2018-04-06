@@ -1174,17 +1174,28 @@ angular.module('adminPanel.topBar', [
             link: function (scope, elem, attr) {
                 elem.addClass('hambruger-wrapper');
                 
-                var toggleClickElement = function() {
-                    $('#offCanvas').foundation('open');
-                    $('#hamburger-icon').toggleClass('active');
+                var toggleClickElement = function(e) {
+                    $('#offCanvas').foundation('toggle');
+                    return false;
+                };
+                
+                var removeActiveClass = function() {
+                    $('#hamburger-icon').removeClass('active');
+                    return false;
+                };
+                
+                var addActiveClass = function() {
+                    $('#hamburger-icon').addClass('active');
                     return false;
                 };
                 
                 elem.on('click', toggleClickElement);
-                $(document).on('closed.zf.offcanvas', toggleClickElement);
+                $(document).on('closed.zf.offcanvas', removeActiveClass);
+                $(document).on('opened.zf.offcanvas', addActiveClass);
                 
                 scope.$on('$destroy', function() {
-                    $(document).off('closed.zf.offcanvas', toggleClickElement);
+                    $(document).off('closed.zf.offcanvas', removeActiveClass);
+                    $(document).off('opened.zf.offcanvas', addActiveClass);
                     elem.off('click', toggleClickElement);
                 });
             },
@@ -2841,7 +2852,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
     "<div id=hamburger-icon><span class=\"line line-1\"></span><span class=\"line line-2\"></span><span class=\"line line-3\"></span></div>");
   $templateCache.put("components/top-bar/top-bar.template.html",
-    "<div class=top-bar><div class=top-bar-left><button type=button class=button data-toggle=offCanvas>Open Left</button>Hola</div><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
+    "<div class=top-bar><div class=top-bar-left><div hamburger></div>Hola</div><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",

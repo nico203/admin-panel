@@ -22,17 +22,28 @@ angular.module('adminPanel.topBar', [
             link: function (scope, elem, attr) {
                 elem.addClass('hambruger-wrapper');
                 
-                var toggleClickElement = function() {
-                    $('#offCanvas').foundation('open');
-                    $('#hamburger-icon').toggleClass('active');
+                var toggleClickElement = function(e) {
+                    $('#offCanvas').foundation('toggle');
+                    return false;
+                };
+                
+                var removeActiveClass = function() {
+                    $('#hamburger-icon').removeClass('active');
+                    return false;
+                };
+                
+                var addActiveClass = function() {
+                    $('#hamburger-icon').addClass('active');
                     return false;
                 };
                 
                 elem.on('click', toggleClickElement);
-                $(document).on('closed.zf.offcanvas', toggleClickElement);
+                $(document).on('closed.zf.offcanvas', removeActiveClass);
+                $(document).on('opened.zf.offcanvas', addActiveClass);
                 
                 scope.$on('$destroy', function() {
-                    $(document).off('closed.zf.offcanvas', toggleClickElement);
+                    $(document).off('closed.zf.offcanvas', removeActiveClass);
+                    $(document).off('opened.zf.offcanvas', addActiveClass);
                     elem.off('click', toggleClickElement);
                 });
             },
