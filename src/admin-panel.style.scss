@@ -68,9 +68,12 @@ body {
 }
 
 #content {
+    @media screen and (min-width: 64em) {
+        margin-top: $top-height;
+    }
     position: relative;
     padding-top: 20px;
-    margin-top: $top-height;
+    margin-top: $top-height - 20;
     background: $content-background;
 }
 

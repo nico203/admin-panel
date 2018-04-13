@@ -23,7 +23,7 @@ $translateX: 0;
     font-family: 'Montserrat', sans-serif;
     -webkit-font-smoothing: antialiased;
     text-align:center;
-    position: fixed;
+    position: absolute;
     z-index: 12;
     border-radius: $height-line;
     
@@ -93,19 +93,3 @@ $translateX: 0;
         }
     }
 }
-/*
-
-Ver si entra
-h1 {
-    text-transform:uppercase;
-}
-a {
-    text-decoration:none;
-    color:#95a5a6;
-    margin: 0.5em 1.5em;
-    display:inline-block;
-    &:hover, &:focus {
-        color:$color;
-    }
-}*/
-

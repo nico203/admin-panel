@@ -2852,7 +2852,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
     "<div id=hamburger-icon><span class=\"line line-1\"></span><span class=\"line line-2\"></span><span class=\"line line-3\"></span></div>");
   $templateCache.put("components/top-bar/top-bar.template.html",
-    "<div class=top-bar><div class=top-bar-left><div hamburger></div>Hola</div><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
+    "<div class=top-bar><div class=top-bar-left><div hamburger></div>Hola</div><div class=logout title=\"cerrar sesión\" ng-click=clickBtn()><i class=\"fa fa-sign-out\"></i></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",
