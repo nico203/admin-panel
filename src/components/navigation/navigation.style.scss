@@ -18,22 +18,22 @@ $nested-menu-item-color-hover: $menu-item-color-hover !default;
 $nested-menu-item-color-active: $menu-item-color !default;
 $nested-menu-item-background-active: lighten($nested-menu-background, 2 ) !default;
 
-
+// off canvas 
+$offcanvas-background: $navigation-background;
 
 @include foundation-accordion;
 @include foundation-accordion-menu;
 @include foundation-menu;
 @include foundation-menu-icon;
+@include foundation-off-canvas;
 
 
 navigation {
-    position: fixed;
-    overflow: hidden;
-    overflow-y: auto;
-    top: $top-height;
+    display: block;
+    position: relative;
+    top: $top-height !important;
     left: 0px;
     bottom: 0px;
-    width: 250px;
     padding-top: 8px;
     background: $navigation-background;
     
