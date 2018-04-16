@@ -2842,11 +2842,11 @@ angular.module('adminPanel').directive('apSelect', [
     ];
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
-    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div class=\"off-canvas position-left reveal-for-large\" data-transition=overlap id=offCanvas data-off-canvas><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
+    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div class=\"off-canvas position-left reveal-for-large\" data-transition=overlap id=offCanvas data-off-canvas><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content class=\"row columns\"><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
     "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
-    "<ap-box title={{title}}><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><div ng-transclude=form></div><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
+    "<ap-box title={{title}}><div ng-if=newRoute class=\"row columns\"><a ng-href={{newRoute}} class=button>Nuevo</a></div><div ng-transclude=form></div><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
     "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\" ng-class=\"{'is-active': baseIndex === $index}\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemLink) in item.items\" ng-class=checkRoute(nestedItemLink)><a href={{nestedItemLink}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
