@@ -11,6 +11,14 @@ angular.module('adminPanel', [
             templateUrl: 'admin-panel.template.html'
         };
     }
+]).run([
+    'WindowResize','$timeout',
+    function (WindowResize,$timeout) {
+        WindowResize.init();
+        $timeout(function() {
+            $(document).foundation();
+        });
+    }
 ]);;angular.module('adminPanel.crud', [
     'adminPanel',
     'ngResource'
@@ -428,8 +436,8 @@ angular.module('adminPanel.crud').factory('BasicReadController', [
  * para que la parte de la vista que se recarga contenga solamente a la lista
  */
 angular.module('adminPanel.crud').factory('CrudFactory', [
-    'CrudConfig', '$q', '$rootScope', '$p',
-    function(CrudConfig, $q, $rootScope, $p) {
+    'CrudConfig', '$q', '$rootScope', 
+    function(CrudConfig, $q, $rootScope) {
         /**
          * @param {type} $scope
          * @param {type} resource
@@ -447,8 +455,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
             };
 
             this.doRequest = function (action, paramRequest, successMsg, errorMsg) {
-                $p.rep();      
-                
+
                 //emitimos el evento de carga, anulamos la vista actual y mostramos el gif de carga
                 $scope.$emit('apLoad:start');
                 
@@ -1289,7 +1296,31 @@ component('navigation', {
             });
         }
     ]
-});;function topBarController($scope, AuthenticationService, $location) {
+});;/*angular.module('adminPanel').directive('hamburger', [
+    '$timeout',
+    function ($timeout) {
+        return {
+            restrict: 'AE',
+            link: function (scope, elem, attr) {
+                elem.addClass('hambruger-wrapper');
+                
+                var toggleClickElement = function() {
+                    $('#hamburger-icon').toggleClass('active');
+                    return false;
+                };
+                
+                elem.on('click', toggleClickElement);
+                $(document).on('closed.zf.offcanvas', toggleClickElement);
+                
+                scope.$on('$destroy', function() {
+                    $(document).off('closed.zf.offcanvas', toggleClickElement);
+                    elem.off('click', toggleClickElement);
+                });
+            },
+            templateUrl: 'directives/hamburger/hamburger.template.html'
+        };
+    }
+]);*/;function topBarController($scope, AuthenticationService, $location) {
     $scope.clickBtn = function() {
         AuthenticationService.logout();
         $location.path('/login');
@@ -1305,7 +1336,43 @@ angular.module('adminPanel.topBar', [
 ]).component('topBar', {
     templateUrl: 'components/top-bar/top-bar.template.html',
     controller: ['$scope', 'AuthenticationService', '$location', topBarController]
-});;angular.module('adminPanel').directive('apAccordion',[
+}).directive('hamburger', [
+    '$timeout',
+    function ($timeout) {
+        return {
+            restrict: 'AE',
+            link: function (scope, elem, attr) {
+                elem.addClass('hambruger-wrapper');
+                
+                var toggleClickElement = function(e) {
+                    $('#offCanvas').foundation('toggle');
+                    return false;
+                };
+                
+                var removeActiveClass = function() {
+                    $('#hamburger-icon').removeClass('active');
+                    return false;
+                };
+                
+                var addActiveClass = function() {
+                    $('#hamburger-icon').addClass('active');
+                    return false;
+                };
+                
+                elem.on('click', toggleClickElement);
+                $(document).on('closed.zf.offcanvas', removeActiveClass);
+                $(document).on('opened.zf.offcanvas', addActiveClass);
+                
+                scope.$on('$destroy', function() {
+                    $(document).off('closed.zf.offcanvas', removeActiveClass);
+                    $(document).off('opened.zf.offcanvas', addActiveClass);
+                    elem.off('click', toggleClickElement);
+                });
+            },
+            templateUrl: 'components/top-bar/hamburger/hamburger.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apAccordion',[
     '$timeout',
     function($timeout){
         return {
@@ -2122,23 +2189,23 @@ angular.module('adminPanel').directive('formFieldError', [
  * }
  */
 
-angular.module('adminPanel').directive('apConfirmModal', [ 
+angular.module('adminPanel').directive('apConfirmModal', [
     '$timeout',
     function($timeout) {
         return {
             restrict: 'AE',
             priority: 60,
             link: function(scope, elem) {
-                var htmlElem = null;
+                var htmlElem = elem.find('.reveal');
                 var fnToRealize = null;
                 
                 //init
                 $timeout(function() {
-                    htmlElem = elem.find('.reveal');
-                    console.log('htmlElem',htmlElem);
-                    htmlElem.foundation();
+                    if (!htmlElem.foundation) {
+                        htmlElem.foundation();
+                    }
                 });
-                
+
                 scope.yes = function() {
                     if(fnToRealize !== null) {
                         fnToRealize();
@@ -2883,7 +2950,48 @@ angular.module('adminPanel').directive('apSelect', [
         return $sce.trustAsHtml(text);
     };
 }]);
-;angular.module('adminPanel').provider('AdminPanelConfig', function() {
+;angular.module('adminPanel').service('WindowResize', [
+    'AdminPanelConfig','$rootScope', '$window', '$timeout',
+    function(AdminPanelConfig,$rootScope,$window,$timeout) {
+        //Pantalla actual
+        var currentViewport = null;
+        var windowMinSizes = AdminPanelConfig.windowMinSizes;
+
+        //Primero vemos que tamaño tiene la pantalla al cargar la pagina
+        var calcViewport = function (width) {
+            var size = 'small';
+            if (width > windowMinSizes.medium) {
+                size = 'medium';
+            }
+            if (width > windowMinSizes.large) {
+                size = 'large';
+            }
+            if (currentViewport !== size) {
+                currentViewport = size;
+                console.log('size',size);
+                $rootScope.$broadcast('viewportChange', size);
+            }
+        };
+
+        angular.element($window).on('resize', function () {
+            calcViewport($window.innerWidth);
+        });
+
+        return {
+            init: function () {
+                //se pone el timeout para terminar el ciclo $digest
+                $timeout(function () {
+                    calcViewport($window.innerWidth);
+                }, 100);
+            },
+            //al iniciar cada componente deberia llamar a este metodo para elegir el comportamiento segun 
+            //la el tipo de pantalla del dispositivo
+            getCurrentViweport: function () {
+                return currentViewport;
+            }
+        };
+    }
+]);;angular.module('adminPanel').provider('AdminPanelConfig', function() {
     var imgLoadingRsc = '';
     var pagination = 11;
     var defaultFormMessages = {
@@ -2903,7 +3011,16 @@ angular.module('adminPanel').directive('apSelect', [
         month: 'El mes no es válido'
     };
     var navigationItems = {};
-
+    
+     var windowMinSizes = {
+        medium: 640,
+        large: 1024
+    };
+    
+    this.setWindowMinSizes = function(val) {
+        windowMinSizes = val;
+    };
+    
     /**
      * @param {String} path Ruta hacia el archivo de la imagen usada para carga
      */
@@ -2979,21 +3096,24 @@ angular.module('adminPanel').directive('apSelect', [
                 imgLoadingRsc: imgLoadingRsc,
                 pagination: pagination,
                 defaultFormMessages: defaultFormMessages,
-                navigationItems: navigationItems
+                navigationItems: navigationItems,
+                windowMinSizes: windowMinSizes
             };
         }
     ];
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
-    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div id=parent><navigation></navigation><div ap-message-container></div><div id=content class=row><div class=transition ng-view></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
+    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div class=\"off-canvas position-left reveal-for-large\" data-transition=overlap id=offCanvas data-off-canvas><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content class=\"row columns\"><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
     "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
-    "<ap-box title={{title}}><div ng-if=newRoute class=row><a ng-href={{newRoute}} class=button>Nuevo</a></div><div ng-transclude=form></div><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
+    "<ap-box title={{title}}><div ng-if=newRoute class=\"row columns\"><a ng-href={{newRoute}} class=button>Nuevo</a></div><div ng-transclude=form></div><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
     "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\" ng-class=\"{'is-active': baseIndex === $index}\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemData) in item.items\" ng-class=checkRoute(nestedItemData.link)><a href={{nestedItemData.link}} ng-bind=nestedItemName></a></li></ul></li></ul>");
+  $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
+    "<div id=hamburger-icon><span class=\"line line-1\"></span><span class=\"line line-2\"></span><span class=\"line line-3\"></span></div>");
   $templateCache.put("components/top-bar/top-bar.template.html",
-    "<div class=top-bar><div class=top-bar-left></div><div class=top-bar-right><ul class=menu><li><button type=button class=button ng-click=clickBtn()>Cerrar Sesión</button></li></ul></div></div>");
+    "<div class=top-bar><div class=top-bar-left><div hamburger></div>Desarrollo</div><div class=logout title=\"cerrar sesión\" ng-click=clickBtn()><i class=\"fa fa-sign-out\"></i></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",

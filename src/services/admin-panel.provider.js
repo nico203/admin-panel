@@ -18,7 +18,16 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         month: 'El mes no es válido'
     };
     var navigationItems = {};
-
+    
+     var windowMinSizes = {
+        medium: 640,
+        large: 1024
+    };
+    
+    this.setWindowMinSizes = function(val) {
+        windowMinSizes = val;
+    };
+    
     /**
      * @param {String} path Ruta hacia el archivo de la imagen usada para carga
      */
@@ -94,7 +103,8 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
                 imgLoadingRsc: imgLoadingRsc,
                 pagination: pagination,
                 defaultFormMessages: defaultFormMessages,
-                navigationItems: navigationItems
+                navigationItems: navigationItems,
+                windowMinSizes: windowMinSizes
             };
         }
     ];
