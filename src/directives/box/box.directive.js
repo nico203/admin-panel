@@ -49,6 +49,14 @@ angular.module('adminPanel').directive('apBox', [
                         }
                     }
 
+                    //Funcion que se usa para ocultar el box al lanzar determinado
+                    //evento con el nombre determinado para el box
+                    function hideOnEvent(e, name) {
+                        if (attr.name === name) {
+                            scope.isHide = true;
+                        }
+                    }
+
                     //Funcion ejecutada para cerrar el box
                     scope.close = function () {
                         scope.isHide = true;
@@ -57,11 +65,13 @@ angular.module('adminPanel').directive('apBox', [
                     elem.on('mouseenter', onMouseEnter);
                     var onMouseEnterInOtherBoxDestructor = scope.$on('box.directive.mouseenter', onMouseEnterInOtherBox);
                     var showOnEventDestructor = scope.$on('apBox:show', showOnEvent);
+                    var hideOnEventDestructor = scope.$on('apBox:hide', hideOnEvent);
                     var destroyEventDestructor = scope.$on('$destroy', function () {
                         //Unbind events
                         elem.off('mouseenter', onMouseEnter);
                         onMouseEnterInOtherBoxDestructor();
                         showOnEventDestructor();
+                        hideOnEventDestructor();
                         destroyEventDestructor();
                     });
 
