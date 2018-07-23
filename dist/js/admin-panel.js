@@ -266,6 +266,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource);
             self.parentData = null;
+            self.action = null;
             
             /**
              * @description Inicializa el controlador
@@ -303,9 +304,9 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 var promise = null;
                 
                 return $timeout(function () {
-                    var action = (actionDefault) ? actionDefault : 'get';
+                    self.action = actionDefault || 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, self.listParams).then(function(responseSuccess) {
+                    promise = self.$$crudFactory.doRequest(self.action, self.listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -360,7 +361,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
                 self.listParams.page = page;
-                self.list(self.listParams);
+                self.list(self.listParams, self.action);
             });
             
             scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
@@ -1744,6 +1745,70 @@ angular.module('adminPanel').directive('apBox', [
         templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
     };
 }]);
+;angular.module('adminPanel').directive('apFileSaver', [
+    '$http', 'CrudConfig',
+    function ($http, CrudConfig) {
+        return {
+            restrict: 'AE',
+            scope: {
+                url: '@',
+                params: '<',
+                type: '@',
+                value: '@'
+            },
+            link: function (scope, elem) {
+                elem.addClass('ap-file-saver');
+                
+                var self= this;
+                self.button = elem.find('button');
+                //Establecemos reportes
+                scope.buttonName = scope.value || 'Generar Reporte';
+                scope.loading = false;
+                
+                function doRequest() {
+                    scope.loading = true;
+                    return $http({
+                        url: CrudConfig.basePath + scope.url,
+                        method: 'GET',
+                        headers: {
+                            'Content-type': scope.type
+                        },
+                        responseType: 'arraybuffer',
+                        params: scope.params
+                    }).then(function (r) {
+                        console.log('resposeuta');
+                        console.log(r.data);
+                        console.log(r.headers);
+                        console.log(r.status);
+
+                        var fileName = r.headers('Content-Disposition').split('filename').pop().replace(/['"=]+/g, '');
+
+                        var blob = new Blob([r.data], {
+                            type: scope.type + ";charset=utf-8"
+                        });
+
+                        console.log('file', blob);
+                        saveAs(blob, fileName);
+
+                    }).finally(function() {
+                        scope.loading = false;
+                    });
+                }
+
+                function clickElem() {
+                    doRequest();
+                }
+
+                self.button.on('click', clickElem);
+
+                scope.$on('$destroy', function () {
+                    self.button.off('click', clickElem);
+                });
+            },
+            templateUrl: 'directives/fileSaver/fileSaver.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apFilters',[
     '$timeout',
     function($timeout) {
@@ -3136,6 +3201,8 @@ angular.module('adminPanel').directive('apSelect', [
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
     "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
+  $templateCache.put("directives/fileSaver/fileSaver.template.html",
+    "<button class=button type=button><i ng-hide=loading class=\"fa fa-download\"></i><div ng-show=loading class=animation><div style=width:100%;height:100% class=lds-rolling><div></div></div></div><span class=text ng-bind=buttonName></span></button>");
   $templateCache.put("directives/filter/filter.template.html",
     "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title>Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
@@ -3151,7 +3218,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/messages/messagesContainer.template.html",
     "<div class=row><div ng-repeat=\"message in messageList\" class=small-12 ap-message message=message></div></div>");
   $templateCache.put("directives/modals/confirm/confirmModal.template.html",
-    "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=button ng-click=yes()>Si</a><a class=button ng-click=no()>No</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
+    "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=\"button alert\" ng-click=yes()>Aceptar</a><a class=\"button secondary\" ng-click=no()>Cancelar</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
   $templateCache.put("directives/pagination/pagination.template.html",

@@ -31,6 +31,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource);
             self.parentData = null;
+            self.action = null;
             
             /**
              * @description Inicializa el controlador
@@ -68,9 +69,9 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 var promise = null;
                 
                 return $timeout(function () {
-                    var action = (actionDefault) ? actionDefault : 'get';
+                    self.action = actionDefault || 'get';
                     
-                    promise = self.$$crudFactory.doRequest(action, self.listParams).then(function(responseSuccess) {
+                    promise = self.$$crudFactory.doRequest(self.action, self.listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
                         
                         //se envia el evento para paginar, si es que la respuesta contiene los datos para paginacion
@@ -125,7 +126,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             scope.$on('pagination:changepage', function(e, page) {
                 e.stopPropagation();
                 self.listParams.page = page;
-                self.list(self.listParams);
+                self.list(self.listParams, self.action);
             });
             
             scope.$on('ap-delete-elem:list-ctrl', function(e, elem) {
