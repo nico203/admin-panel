@@ -2213,7 +2213,7 @@ angular.module('adminPanel').directive('formFieldError', [
                 };
                 
                 $timeout(function() {
-//                    scope.remove();
+                    scope.remove();
                 }, 5000);
             },
             templateUrl: 'directives/messages/message.template.html'
