@@ -69,7 +69,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                         if(responseSuccess.data) {
                             scope[resource.name] = responseSuccess.data;
                         }
-                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSusccess,'success');
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSuccess,'success');
                         self.reset();
 
                         return responseSuccess;

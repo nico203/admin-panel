@@ -6,8 +6,8 @@
  * FALTA implementar busqueda
  */
 angular.module('adminPanel.crud').factory('BasicListController', [
-    'CrudFactory','$timeout','$q',
-    function(CrudFactory,$timeout,$q) {
+    'CrudFactory', 'CrudConfig', '$timeout','$q',
+    function(CrudFactory, CrudConfig, $timeout, $q) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -104,8 +104,10 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                     if(resource.parent !== null && !self.listParams[resource.parent]) {
                         self.listParams[resource.parent] = self.parentData;
                     }
+                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteSuccess,'success');
                     return self.list(self.listParams);
                 }, function (responseError) {
+                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteError,'error');
                     return $q.reject(responseError);
                 });
             };

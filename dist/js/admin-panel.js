@@ -199,7 +199,7 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
                         if(responseSuccess.data) {
                             scope[resource.name] = responseSuccess.data;
                         }
-                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSusccess,'success');
+                        self.$$crudFactory.createMessage(CrudConfig.messages.saveSuccess,'success');
                         self.reset();
 
                         return responseSuccess;
@@ -241,8 +241,8 @@ angular.module('adminPanel.crud').factory('BasicFormController', [
  * FALTA implementar busqueda
  */
 angular.module('adminPanel.crud').factory('BasicListController', [
-    'CrudFactory','$timeout','$q',
-    function(CrudFactory,$timeout,$q) {
+    'CrudFactory', 'CrudConfig', '$timeout','$q',
+    function(CrudFactory, CrudConfig, $timeout, $q) {
         
         /**
          * @description Lista los objetos de una entidad. Si la respuesta desde el servidor es de la forma 
@@ -339,8 +339,10 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                     if(resource.parent !== null && !self.listParams[resource.parent]) {
                         self.listParams[resource.parent] = self.parentData;
                     }
+                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteSuccess,'success');
                     return self.list(self.listParams);
                 }, function (responseError) {
+                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteError,'error');
                     return $q.reject(responseError);
                 });
             };
@@ -687,8 +689,10 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
     var basePath = '';
     var messages = {
         saveError: 'Hubo un error al guardar los datos en el servidor. Recarga la página e inténtalo de nuevo',
-        saveSusccess: 'Datos guardados exitosamente',
+        saveSuccess: 'Datos guardados exitosamente',
         getError: 'Hubo un error al obtener los datos del servidor. Pruebe con recargar la página',
+        deleteError: 'Hubo un error al intentar eliminar el elemento',
+        deleteSuccess: 'Datos eliminados exitosamente',
 
         //textos al eliminar un objeto
         deleteMsg: '¿Está seguro de eliminar el objeto seleccionado?',
@@ -708,9 +712,11 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
 
     this.setMessages = function(msg) {
         messages.saveError = (msg.saveError) ? msg.saveError : messages.saveError;
-        messages.saveSusccess = (msg.saveSusccess) ? msg.saveSusccess : messages.saveSusccess;
+        messages.saveSuccess = (msg.saveSuccess) ? msg.saveSuccess : messages.saveSuccess;
         messages.loadError = (msg.loadError) ? msg.loadError : messages.loadError;
         messages.getError = (msg.getError) ? msg.getError : messages.getError;
+        messages.deleteError = (msg.deleteError) ? msg.deleteError : messages.deleteError;
+        messages.deleteSuccess = (msg.deleteSuccess) ? msg.deleteSuccess : messages.deleteSuccess;
         messages.deleteMsg = (msg.deleteMsg) ? msg.deleteMsg : messages.deleteMsg;
         messages.deleteTitle = (msg.deleteTitle) ? msg.deleteTitle : messages.deleteTitle;
 
@@ -800,7 +806,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                     //Si no hay archivos se sigue el curso actual
                     if(file === null || angular.isUndefined(file)) {
                         scope.$emit('apLoad:finish', apLoadName, {
-                            message: CrudConfig.messages.saveSusccess,
+                            message: CrudConfig.messages.saveSuccess,
                             type: 'success'
                         });
                         if(callbackSuccess) {
@@ -810,7 +816,7 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                         var requestFile = Resource[file.prop](responseSuccess.data);
                         requestFile.$promise.then(function(fileResponseSuccess) {
                             scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveSusccess,
+                                message: CrudConfig.messages.saveSuccess,
                                 type: 'success'
                             });
                             if(callbackSuccess) {

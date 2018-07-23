@@ -2,8 +2,10 @@ angular.module('adminPanel.crud').provider('CrudConfig', function() {
     var basePath = '';
     var messages = {
         saveError: 'Hubo un error al guardar los datos en el servidor. Recarga la página e inténtalo de nuevo',
-        saveSusccess: 'Datos guardados exitosamente',
+        saveSuccess: 'Datos guardados exitosamente',
         getError: 'Hubo un error al obtener los datos del servidor. Pruebe con recargar la página',
+        deleteError: 'Hubo un error al intentar eliminar el elemento',
+        deleteSuccess: 'Datos eliminados exitosamente',
 
         //textos al eliminar un objeto
         deleteMsg: '¿Está seguro de eliminar el objeto seleccionado?',
@@ -23,9 +25,11 @@ angular.module('adminPanel.crud').provider('CrudConfig', function() {
 
     this.setMessages = function(msg) {
         messages.saveError = (msg.saveError) ? msg.saveError : messages.saveError;
-        messages.saveSusccess = (msg.saveSusccess) ? msg.saveSusccess : messages.saveSusccess;
+        messages.saveSuccess = (msg.saveSuccess) ? msg.saveSuccess : messages.saveSuccess;
         messages.loadError = (msg.loadError) ? msg.loadError : messages.loadError;
         messages.getError = (msg.getError) ? msg.getError : messages.getError;
+        messages.deleteError = (msg.deleteError) ? msg.deleteError : messages.deleteError;
+        messages.deleteSuccess = (msg.deleteSuccess) ? msg.deleteSuccess : messages.deleteSuccess;
         messages.deleteMsg = (msg.deleteMsg) ? msg.deleteMsg : messages.deleteMsg;
         messages.deleteTitle = (msg.deleteTitle) ? msg.deleteTitle : messages.deleteTitle;
 

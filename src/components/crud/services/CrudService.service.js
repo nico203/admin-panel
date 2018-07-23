@@ -63,7 +63,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                     //Si no hay archivos se sigue el curso actual
                     if(file === null || angular.isUndefined(file)) {
                         scope.$emit('apLoad:finish', apLoadName, {
-                            message: CrudConfig.messages.saveSusccess,
+                            message: CrudConfig.messages.saveSuccess,
                             type: 'success'
                         });
                         if(callbackSuccess) {
@@ -73,7 +73,7 @@ angular.module('adminPanel.crud').service('CrudService', [
                         var requestFile = Resource[file.prop](responseSuccess.data);
                         requestFile.$promise.then(function(fileResponseSuccess) {
                             scope.$emit('apLoad:finish', apLoadName, {
-                                message: CrudConfig.messages.saveSusccess,
+                                message: CrudConfig.messages.saveSuccess,
                                 type: 'success'
                             });
                             if(callbackSuccess) {
