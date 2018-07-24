@@ -53,12 +53,6 @@ navigation {
             background: none;
             transition: background .25s;
 
-            a {
-                background: none;
-                transition: background .25s;
-                color: $menu-item-color;
-            }
-
             &.is-active {
                 > a {
                     color: $menu-item-color-active;
@@ -66,9 +60,44 @@ navigation {
                 }
             }
 
-            &:hover {
-                color: $menu-item-color-hover;
-                background: $menu-item-background-hover;
+            a {
+                background: none;
+                transition: background .25s;
+                color: $menu-item-color;
+
+                &:hover {
+                    color: $menu-item-color-hover;
+                    background: $menu-item-background-hover;
+
+                    .arrow-icon {
+                        color: $menu-item-color-hover;
+                        background: $menu-item-background-hover; 
+                    }
+                }
+            }
+
+            .arrow-icon {
+                display: block;
+                opacity: 1;
+                width: 14px;
+                height: 14px;
+                line-height: 14px;
+                text-shadow: none;
+                font-size: 18px;
+                position: absolute;
+                right: 10px;
+                top: 12px;
+                padding: 0;
+                text-align: center;
+                -webkit-transition: -webkit-transform .2s linear;
+                transition: -webkit-transform .2s linear;
+            }
+
+            &[aria-expanded="true"] {
+                .arrow-icon {
+                    -webkit-transform: rotate(180deg);
+                    transform: rotate(180deg);
+                }
             }
         }
 
@@ -79,6 +108,7 @@ navigation {
 
             li {
                 a {
+                    padding-left: 2rem;
                     &:hover {
                         background: $nested-menu-item-background-hover;
                         color: $nested-menu-item-color-hover;

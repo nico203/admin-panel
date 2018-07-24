@@ -3190,7 +3190,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("components/crud/directives/list/listContainer.template.html",
     "<ap-box title={{title}}><div ng-if=newRoute class=\"row columns\"><a ng-href={{newRoute}} class=button>Nuevo</a></div><div ng-transclude=form></div><div ap-load><div class=small-12 ng-transclude=list></div></div></ap-box>");
   $templateCache.put("components/navigation/navigation.template.html",
-    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\" ng-class=\"{'is-active': baseIndex === $index}\"><a href={{item.link}} ng-bind=name></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemData) in item.items\" ng-class=checkRoute(nestedItemData.link)><a href={{nestedItemData.link}} ng-bind=nestedItemName></a></li></ul></li></ul>");
+    "<ul class=\"vertical menu\"><li ng-repeat=\"(name, item) in items\" ng-class=\"{'is-active': baseIndex === $index}\"><a href={{item.link}}>{{name}}<i class=\"fa fa-angle-down arrow-icon\"></i></a><ul ng-if=item.items class=\"vertical menu nested\"><li ng-repeat=\"(nestedItemName, nestedItemData) in item.items\" ng-class=checkRoute(nestedItemData.link)><a href={{nestedItemData.link}} ng-bind=nestedItemName></a></li></ul></li></ul>");
   $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
     "<div id=hamburger-icon><span class=\"line line-1\"></span><span class=\"line line-2\"></span><span class=\"line line-3\"></span></div>");
   $templateCache.put("components/top-bar/top-bar.template.html",
