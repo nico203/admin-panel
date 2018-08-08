@@ -59,7 +59,7 @@ angular.module('adminPanel').directive('apBox', [
 
                     //Funcion ejecutada para cerrar el box
                     scope.close = function () {
-                        scope.isHide = true;
+                        $rootScope.$broadcast('apBox:hide', attr.name);
                     };
 
                     elem.on('mouseenter', onMouseEnter);
