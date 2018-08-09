@@ -1,3 +1,5 @@
+$ap-box-shadow: 3px 6px 9px -3px rgba(0,0,0,0.75) !default;
+
 .ap-box {
     
     .box {
@@ -32,5 +34,9 @@
     .close-button {
         z-index: 1;
     }
+
+    -webkit-box-shadow: $ap-box-shadow;
+    -moz-box-shadow: $ap-box-shadow;
+    box-shadow: $ap-box-shadow;
 }
 
