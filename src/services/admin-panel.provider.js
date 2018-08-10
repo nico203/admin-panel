@@ -18,8 +18,10 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         month: 'El mes no es válido'
     };
     var navigationItems = {};
+
+    var topBarTitle = 'Admin Panel';
     
-     var windowMinSizes = {
+    var windowMinSizes = {
         medium: 640,
         large: 1024
     };
@@ -97,6 +99,13 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         return this;
     };
 
+    /**
+     * @param {string} title Título de la barra
+     */
+    this.setTopBarTitle = function(title) {
+        topBarTitle = title;
+    };
+
     this.$get = [
         function () {
             return {
@@ -104,6 +113,7 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
                 pagination: pagination,
                 defaultFormMessages: defaultFormMessages,
                 navigationItems: navigationItems,
+                topBarTitle: topBarTitle,
                 windowMinSizes: windowMinSizes
             };
         }

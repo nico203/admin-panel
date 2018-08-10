@@ -2,7 +2,7 @@
     <button ng-if="closeButton" class="close-button" type="button" ng-click="close()">
         <span>&times;</span>
     </button>
-    <div class="card-divider">
+    <div class="card-divider" ng-if="title">
         <h1 ng-bind="title"></h1>
     </div>
     <div class="card-section">

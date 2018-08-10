@@ -1,4 +1,7 @@
-function topBarController($scope, AuthenticationService, $location) {
+function topBarController($scope, AuthenticationService, AdminPanelConfig, $location) {
+    
+    $scope.title = AdminPanelConfig.topBarTitle;
+    
     $scope.clickBtn = function() {
         AuthenticationService.logout();
         $location.path('/login');
@@ -13,7 +16,7 @@ angular.module('adminPanel.topBar', [
     'adminPanel.authentication'
 ]).component('topBar', {
     templateUrl: 'components/top-bar/top-bar.template.html',
-    controller: ['$scope', 'AuthenticationService', '$location', topBarController]
+    controller: ['$scope', 'AuthenticationService', 'AdminPanelConfig', '$location', topBarController]
 }).directive('hamburger', [
     '$timeout',
     function ($timeout) {
