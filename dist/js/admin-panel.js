@@ -3197,7 +3197,7 @@ angular.module('adminPanel').directive('apSelect', [
     ];
 });;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
-    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div class=\"off-canvas position-left reveal-for-large\" data-transition=overlap id=offCanvas data-off-canvas><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content class=\"row columns\"><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
+    "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div class=\"off-canvas position-left\" id=offCanvas data-off-canvas><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content class=\"row medium-12 large-11 columns\"><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",
     "<div ng-if=\"list.length !== 0\"><div ng-transclude></div><ap-pagination></ap-pagination></div><div ng-if=\"list.length === 0\" class=\"small-12 callout warning text-center\">{{noResultText}}</div>");
   $templateCache.put("components/crud/directives/list/listContainer.template.html",

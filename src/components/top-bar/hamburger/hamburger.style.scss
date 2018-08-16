@@ -27,10 +27,6 @@ $translateX: 0;
     z-index: 12;
     border-radius: $height-line;
     
-    @media screen and (min-width: 64em) {
-        display: none;
-    }
-    
     &:hover, &:focus {
         .line-1 {
             background:black;

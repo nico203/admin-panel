@@ -68,6 +68,10 @@ body {
     z-index: 999;
 }
 
+.off-canvas.is-closed {
+    visibility: visible;
+}
+
 #content {
     @media screen and (min-width: 64em) {
         margin-top: $top-height;
