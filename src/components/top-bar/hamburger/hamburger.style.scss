@@ -26,6 +26,9 @@ $translateX: 0;
     position: absolute;
     z-index: 12;
     border-radius: $height-line;
+    height: 30px;
+    margin-top: -2px;
+    cursor: pointer;
     
     &:hover, &:focus {
         .line-1 {
