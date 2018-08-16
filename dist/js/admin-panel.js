@@ -2263,9 +2263,7 @@ angular.module('adminPanel').directive('apConfirmModal', [
                 
                 //init
                 $timeout(function() {
-                    if (!htmlElem.foundation) {
-                        htmlElem.foundation();
-                    }
+                    htmlElem.foundation();
                 });
 
                 scope.yes = function() {
