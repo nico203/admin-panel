@@ -47,7 +47,6 @@ angular.module('adminPanel').directive('apLoad', [
         controller: ['$scope',function($scope) {
 
             this.getName = function() {
-                console.log('getName',$scope.name);
                 return $scope.name;
             };
 

@@ -1,12 +1,13 @@
 angular.module('adminPanel').directive('apOffCanvas', [
-    function() {
+    '$timeout',
+    function($timeout) {
         return {
             restrict: 'A',
             link: function(scope, elem, attr) {
                 elem.addClass('off-canvas');
-                if (!elem.foundation) {
+                $timeout(function() {
                     elem.foundation();
-                }
+                });
             }
         };
     }

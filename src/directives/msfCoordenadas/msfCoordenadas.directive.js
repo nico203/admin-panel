@@ -15,7 +15,6 @@ angular.module('adminPanel').directive('msfCoordenadas', [
                         latitud: null,
                         longitud: null
                     };
-                    console.log('ngModel.$modelValue',ngModel.$modelValue);
                 }
                 scope.model = {
                     latitud: angular.copy(ngModel.$modelValue.latitud),

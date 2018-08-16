@@ -16,7 +16,6 @@ angular.module('adminPanel').service('WindowResize', [
             }
             if (currentViewport !== size) {
                 currentViewport = size;
-                console.log('size',size);
                 $rootScope.$broadcast('viewportChange', size);
             }
         };

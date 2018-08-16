@@ -6,7 +6,6 @@ angular.module('adminPanel').directive('formValidation', [
             restrict: 'A',
             scope: true,
             link: function(scope, elem, attr, formCtrl) {
-                console.log('formCtrl',formCtrl);
                 //Definimos las validaciones
                 var required = function(fieldCtrl, expression) {
                     if(angular.isUndefined(expression)) {
@@ -31,7 +30,6 @@ angular.module('adminPanel').directive('formValidation', [
                 for(var field in validations) {
                     var fieldCtrl = formCtrl[field];
                     var fieldDOMElem = fieldCtrl.$$element;
-                    console.log(fieldCtrl);
                     var messages = {};
                     for(var validation in validations[field]) {
                         var validator = validations[field][validation];
@@ -46,7 +44,6 @@ angular.module('adminPanel').directive('formValidation', [
                     $compile(fieldErrorMessagesDirective)(scope);
                     fieldDOMElem.after(fieldErrorMessagesDirective);
                 }
-                console.log(scope.validations);
             }
         };
     }

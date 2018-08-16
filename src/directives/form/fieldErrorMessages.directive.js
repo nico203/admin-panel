@@ -7,7 +7,6 @@ angular.module('adminPanel').directive('fieldErrorMessages', [
             },
             link: function(scope, elem) {
                 elem.addClass('form-error');
-                console.log('fieldErrorMessages',scope);
             },
             templateUrl: 'directives/form/fieldErrorMessages.template.html'
         };

@@ -9,9 +9,7 @@ angular.module('adminPanel').directive('apFilters',[
 
                 $timeout(function() {
                     accordionElem = elem.find('.accordion.filtros');
-                    if (!accordionElem.foundation) {
-                        accordionElem.foundation();
-                    }
+                    accordionElem.foundation();
                 });
                 
                 scope.$on('$destroy', function() {

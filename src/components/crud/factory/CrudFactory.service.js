@@ -41,7 +41,6 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                 this.request = resource.$resource[action](paramRequest);
                 //retorna la promesa
                 return this.request.$promise.then(function(responseSuccess) {
-                    console.log('responseSuccess', responseSuccess);
                     
                     var message = null;
                     if(typeof(successMsg) === 'string') {

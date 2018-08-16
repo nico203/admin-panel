@@ -90,7 +90,6 @@ angular.module('adminPanel').directive('apSelect', [
 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
-                console.log('requestParam',scope.requestParam);
 
                 var request = null;
                 var preventClickButton = false;
@@ -140,7 +139,6 @@ angular.module('adminPanel').directive('apSelect', [
                     }
 
                     var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
-                    console.log('search',search);
 
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
@@ -192,8 +190,6 @@ angular.module('adminPanel').directive('apSelect', [
                     // es decir, la promesa no haya sido cancelada
                     if(timeoutCloseListPromise === null) return;
 
-                    console.log('cerrar lista');
-
                     //cerramos la lista
                     scope.lista.desplegado = false;
 
@@ -216,7 +212,6 @@ angular.module('adminPanel').directive('apSelect', [
                         return;
                     }
 
-                    console.log('abrir lista');
                     //se abre la lista
                     scope.lista.desplegado = true;
                     //si la lista interna esta vacia se hace el request sin parametros en la consulta
@@ -256,12 +251,9 @@ angular.module('adminPanel').directive('apSelect', [
                  * Solo se hace el request si la lista interna esta vacia
                  */
                 scope.onFocusInput = function () {
-                    console.log('onFocusInput');
 
                     if(!scope.lista.desplegado) {
-                        console.log('onFocusInput timeoutOpenListPromise created');
                         timeoutOpenListPromise = $timeout(openList).finally(function() {
-                            console.log('onFocusInput timeoutOpenListPromise resolved');
                             timeoutOpenListPromise = null;
                         });
                     }
@@ -272,19 +264,15 @@ angular.module('adminPanel').directive('apSelect', [
                  * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
                  */
                 scope.onBlurInput = function() {
-                    console.log('onBlurInput');
                     if(timeoutOpenListPromise !== null) {
                         $timeout.cancel(timeoutOpenListPromise);
                         timeoutOpenListPromise = null;
-                        console.log('onBlurInput timeoutOpenListPromise cancelled', timeoutOpenListPromise);
                     }
 
 
                     timeoutCloseListPromise = $timeout(closeList, 100).finally(function() {
-                        console.log('onBlurInput timeoutCloseListPromise resolved finally');
                         timeoutCloseListPromise = null;
                     });
-                    console.log('onBlurInput timeoutCloseListPromise created');
                 };
 
                 //eventos relacionados con el boton
@@ -295,17 +283,14 @@ angular.module('adminPanel').directive('apSelect', [
                  * tenga o no elementos.
                  */
                 scope.onClickButton = function() {
-                    console.log('onClickButton');
 
                     //si no se previene el evento, se despliega la lista
                     if(!preventClickButton) {
                         if(timeoutCloseListPromise !== null) {
                             $timeout.cancel(timeoutCloseListPromise);
                             timeoutCloseListPromise = null;
-                            console.log('onClickButton timeoutCloseListPromise canceled', timeoutCloseListPromise);
                         }
 
-                        console.log('onClickButton give focus input');
                         //le damos el foco al input
                         elem.find('input').focus();
                     }
@@ -320,11 +305,7 @@ angular.module('adminPanel').directive('apSelect', [
                  * click, lo que volvería a abrir la lista, lo cual NO es deseado.
                  */
                 scope.onMousedownButton = function(e) {
-                    console.log('onMousedownButton');
                     preventClickButton = scope.lista.desplegado;
-
-                    console.log('desplegado', preventClickButton);
-
                 };
 
                 //eventos relacionados con la lista
@@ -334,7 +315,6 @@ angular.module('adminPanel').directive('apSelect', [
                  * El menu se cierra dado el timeout del evento blur, que se dispara al hacer click sobre un item de la lista
                  */
                 scope.onClickItemList = function(e, item) {
-                    console.log('onClickItemList');
                     e.stopPropagation();
 
                     //seteamos el item actual
@@ -354,7 +334,6 @@ angular.module('adminPanel').directive('apSelect', [
                     if(timeoutCloseListPromise !== null) {
                         $timeout.cancel(timeoutCloseListPromise);
                         timeoutCloseListPromise = null;
-                        console.log('onListClick timeoutCloseListPromise canceled', timeoutCloseListPromise);
                     }
                 }
 
@@ -397,12 +376,10 @@ angular.module('adminPanel').directive('apSelect', [
 
                         //seteamos el item actual
                         scope.itemSelected = convertObjectToItemList(val);
-                        console.log('itemSelected',scope.itemSelected);
 
                         //seteamos el estado actual del modelo
                         scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
                         scope.input.vacio = (scope.itemSelected === null);
-                        console.log('scope.input',scope.input);
                     }
                 });
 

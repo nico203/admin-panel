@@ -15,8 +15,5 @@ angular.module('adminPanel', [
     'WindowResize','$timeout',
     function (WindowResize,$timeout) {
         WindowResize.init();
-        $timeout(function() {
-            $(document).foundation();
-        });
     }
 ]);

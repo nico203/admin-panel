@@ -15,9 +15,6 @@ angular.module('adminPanel', [
     'WindowResize','$timeout',
     function (WindowResize,$timeout) {
         WindowResize.init();
-        $timeout(function() {
-            $(document).foundation();
-        });
     }
 ]);;angular.module('adminPanel.crud', [
     'adminPanel',
@@ -469,7 +466,6 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                 this.request = resource.$resource[action](paramRequest);
                 //retorna la promesa
                 return this.request.$promise.then(function(responseSuccess) {
-                    console.log('responseSuccess', responseSuccess);
                     
                     var message = null;
                     if(typeof(successMsg) === 'string') {
@@ -774,7 +770,6 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
                         callbackSuccess(responseSuccess);
                     }
                 }, function(responseError) {
-                    console.log('responseError',responseError);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.loadError,
                         type: 'error'
@@ -798,7 +793,6 @@ angular.module('adminPanel.crud').factory('CrudFactory', [
              */
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
-                console.log('object', object);
                 var request = Resource.save(extraParams, object);
 
                 //Se hace el request para guardar el objeto
@@ -1785,10 +1779,6 @@ angular.module('adminPanel').directive('apBox', [
                         responseType: 'arraybuffer',
                         params: scope.params
                     }).then(function (r) {
-                        console.log('resposeuta');
-                        console.log(r.data);
-                        console.log(r.headers);
-                        console.log(r.status);
 
                         var fileName = r.headers('Content-Disposition').split('filename').pop().replace(/['"=]+/g, '');
 
@@ -1796,7 +1786,6 @@ angular.module('adminPanel').directive('apBox', [
                             type: scope.type + ";charset=utf-8"
                         });
 
-                        console.log('file', blob);
                         saveAs(blob, fileName);
 
                     }).finally(function() {
@@ -1829,9 +1818,7 @@ angular.module('adminPanel').directive('apBox', [
 
                 $timeout(function() {
                     accordionElem = elem.find('.accordion.filtros');
-                    if (!accordionElem.foundation) {
-                        accordionElem.foundation();
-                    }
+                    accordionElem.foundation();
                 });
                 
                 scope.$on('$destroy', function() {
@@ -1852,7 +1839,6 @@ angular.module('adminPanel').directive('apBox', [
             },
             link: function(scope, elem) {
                 elem.addClass('form-error');
-                console.log('fieldErrorMessages',scope);
             },
             templateUrl: 'directives/form/fieldErrorMessages.template.html'
         };
@@ -1867,7 +1853,6 @@ angular.module('adminPanel').directive('apBox', [
             restrict: 'A',
             scope: true,
             link: function(scope, elem, attr, formCtrl) {
-                console.log('formCtrl',formCtrl);
                 //Definimos las validaciones
                 var required = function(fieldCtrl, expression) {
                     if(angular.isUndefined(expression)) {
@@ -1892,7 +1877,6 @@ angular.module('adminPanel').directive('apBox', [
                 for(var field in validations) {
                     var fieldCtrl = formCtrl[field];
                     var fieldDOMElem = fieldCtrl.$$element;
-                    console.log(fieldCtrl);
                     var messages = {};
                     for(var validation in validations[field]) {
                         var validator = validations[field][validation];
@@ -1907,7 +1891,6 @@ angular.module('adminPanel').directive('apBox', [
                     $compile(fieldErrorMessagesDirective)(scope);
                     fieldDOMElem.after(fieldErrorMessagesDirective);
                 }
-                console.log(scope.validations);
             }
         };
     }
@@ -1951,7 +1934,6 @@ angular.module('adminPanel').directive('formFieldError', [
                 //Evaluamos los errores del campo hijo segun su nombre
                 //Ver propiedad $error en https://docs.angularjs.org/api/ng/type/form.FormController
                 scope.$watch('inputErrors', function(val) {
-                    console.log('inputErrors', val);
                     for(var key in val) {
                         if(!scope.errors[key]) {
                             scope.errors[key] = {
@@ -1966,7 +1948,6 @@ angular.module('adminPanel').directive('formFieldError', [
                 //Evaluamos la expresion pasada al atributo de la directiva, si es verdadero 
                 //seteamos las clases de error al formulario
                 scope.$watch('expr', function(val) {
-                    console.log('val', val);
                     $animate[val ? 'addClass' : 'removeClass'](elem, 'is-invalid-label');
                     $animate[val ? 'addClass' : 'removeClass'](scope.inputElem, 'is-invalid-input');
                     $animate[val ? 'addClass' : 'removeClass'](scope.fieldErrorMsgDirective, 'is-visible');
@@ -2014,9 +1995,7 @@ angular.module('adminPanel').directive('formFieldError', [
                 //evento que escucha el model para hacer el bindeo de las variables
                 var modelWatcher = scope.$watch(function () {
                     return ngModel.$modelValue;
-                }, function (modelValue) {
-                    console.log('modelValue',modelValue);
-                });
+                }, function (modelValue) {});
                 
                 //Desacoplamos los eventos al eliminar el objeto
                 scope.$on('$destroy', function() {
@@ -2170,7 +2149,6 @@ angular.module('adminPanel').directive('formFieldError', [
         controller: ['$scope',function($scope) {
 
             this.getName = function() {
-                console.log('getName',$scope.name);
                 return $scope.name;
             };
 
@@ -2333,7 +2311,6 @@ angular.module('adminPanel').directive('apConfirmModal', [
                         latitud: null,
                         longitud: null
                     };
-                    console.log('ngModel.$modelValue',ngModel.$modelValue);
                 }
                 scope.model = {
                     latitud: angular.copy(ngModel.$modelValue.latitud),
@@ -2395,14 +2372,15 @@ angular.module('adminPanel').directive('apConfirmModal', [
     };
 }]);
 ;angular.module('adminPanel').directive('apOffCanvas', [
-    function() {
+    '$timeout',
+    function($timeout) {
         return {
             restrict: 'A',
             link: function(scope, elem, attr) {
                 elem.addClass('off-canvas');
-                if (!elem.foundation) {
+                $timeout(function() {
                     elem.foundation();
-                }
+                });
             }
         };
     }
@@ -2609,7 +2587,6 @@ angular.module('adminPanel').directive('apSelect', [
 
                 var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
                 var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
-                console.log('requestParam',scope.requestParam);
 
                 var request = null;
                 var preventClickButton = false;
@@ -2659,7 +2636,6 @@ angular.module('adminPanel').directive('apSelect', [
                     }
 
                     var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
-                    console.log('search',search);
 
                     if(!all) {
                         for (var j = 0; j < queryParams.length; j++) {
@@ -2711,8 +2687,6 @@ angular.module('adminPanel').directive('apSelect', [
                     // es decir, la promesa no haya sido cancelada
                     if(timeoutCloseListPromise === null) return;
 
-                    console.log('cerrar lista');
-
                     //cerramos la lista
                     scope.lista.desplegado = false;
 
@@ -2735,7 +2709,6 @@ angular.module('adminPanel').directive('apSelect', [
                         return;
                     }
 
-                    console.log('abrir lista');
                     //se abre la lista
                     scope.lista.desplegado = true;
                     //si la lista interna esta vacia se hace el request sin parametros en la consulta
@@ -2775,12 +2748,9 @@ angular.module('adminPanel').directive('apSelect', [
                  * Solo se hace el request si la lista interna esta vacia
                  */
                 scope.onFocusInput = function () {
-                    console.log('onFocusInput');
 
                     if(!scope.lista.desplegado) {
-                        console.log('onFocusInput timeoutOpenListPromise created');
                         timeoutOpenListPromise = $timeout(openList).finally(function() {
-                            console.log('onFocusInput timeoutOpenListPromise resolved');
                             timeoutOpenListPromise = null;
                         });
                     }
@@ -2791,19 +2761,15 @@ angular.module('adminPanel').directive('apSelect', [
                  * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
                  */
                 scope.onBlurInput = function() {
-                    console.log('onBlurInput');
                     if(timeoutOpenListPromise !== null) {
                         $timeout.cancel(timeoutOpenListPromise);
                         timeoutOpenListPromise = null;
-                        console.log('onBlurInput timeoutOpenListPromise cancelled', timeoutOpenListPromise);
                     }
 
 
                     timeoutCloseListPromise = $timeout(closeList, 100).finally(function() {
-                        console.log('onBlurInput timeoutCloseListPromise resolved finally');
                         timeoutCloseListPromise = null;
                     });
-                    console.log('onBlurInput timeoutCloseListPromise created');
                 };
 
                 //eventos relacionados con el boton
@@ -2814,17 +2780,14 @@ angular.module('adminPanel').directive('apSelect', [
                  * tenga o no elementos.
                  */
                 scope.onClickButton = function() {
-                    console.log('onClickButton');
 
                     //si no se previene el evento, se despliega la lista
                     if(!preventClickButton) {
                         if(timeoutCloseListPromise !== null) {
                             $timeout.cancel(timeoutCloseListPromise);
                             timeoutCloseListPromise = null;
-                            console.log('onClickButton timeoutCloseListPromise canceled', timeoutCloseListPromise);
                         }
 
-                        console.log('onClickButton give focus input');
                         //le damos el foco al input
                         elem.find('input').focus();
                     }
@@ -2839,11 +2802,7 @@ angular.module('adminPanel').directive('apSelect', [
                  * click, lo que volvería a abrir la lista, lo cual NO es deseado.
                  */
                 scope.onMousedownButton = function(e) {
-                    console.log('onMousedownButton');
                     preventClickButton = scope.lista.desplegado;
-
-                    console.log('desplegado', preventClickButton);
-
                 };
 
                 //eventos relacionados con la lista
@@ -2853,7 +2812,6 @@ angular.module('adminPanel').directive('apSelect', [
                  * El menu se cierra dado el timeout del evento blur, que se dispara al hacer click sobre un item de la lista
                  */
                 scope.onClickItemList = function(e, item) {
-                    console.log('onClickItemList');
                     e.stopPropagation();
 
                     //seteamos el item actual
@@ -2873,7 +2831,6 @@ angular.module('adminPanel').directive('apSelect', [
                     if(timeoutCloseListPromise !== null) {
                         $timeout.cancel(timeoutCloseListPromise);
                         timeoutCloseListPromise = null;
-                        console.log('onListClick timeoutCloseListPromise canceled', timeoutCloseListPromise);
                     }
                 }
 
@@ -2916,12 +2873,10 @@ angular.module('adminPanel').directive('apSelect', [
 
                         //seteamos el item actual
                         scope.itemSelected = convertObjectToItemList(val);
-                        console.log('itemSelected',scope.itemSelected);
 
                         //seteamos el estado actual del modelo
                         scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
                         scope.input.vacio = (scope.itemSelected === null);
-                        console.log('scope.input',scope.input);
                     }
                 });
 
@@ -3066,7 +3021,6 @@ angular.module('adminPanel').directive('apSelect', [
             }
             if (currentViewport !== size) {
                 currentViewport = size;
-                console.log('size',size);
                 $rootScope.$broadcast('viewportChange', size);
             }
         };

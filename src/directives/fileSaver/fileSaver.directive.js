@@ -29,10 +29,6 @@ angular.module('adminPanel').directive('apFileSaver', [
                         responseType: 'arraybuffer',
                         params: scope.params
                     }).then(function (r) {
-                        console.log('resposeuta');
-                        console.log(r.data);
-                        console.log(r.headers);
-                        console.log(r.status);
 
                         var fileName = r.headers('Content-Disposition').split('filename').pop().replace(/['"=]+/g, '');
 
@@ -40,7 +36,6 @@ angular.module('adminPanel').directive('apFileSaver', [
                             type: scope.type + ";charset=utf-8"
                         });
 
-                        console.log('file', blob);
                         saveAs(blob, fileName);
 
                     }).finally(function() {

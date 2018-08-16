@@ -38,7 +38,6 @@ angular.module('adminPanel').directive('formFieldError', [
                 //Evaluamos los errores del campo hijo segun su nombre
                 //Ver propiedad $error en https://docs.angularjs.org/api/ng/type/form.FormController
                 scope.$watch('inputErrors', function(val) {
-                    console.log('inputErrors', val);
                     for(var key in val) {
                         if(!scope.errors[key]) {
                             scope.errors[key] = {
@@ -53,7 +52,6 @@ angular.module('adminPanel').directive('formFieldError', [
                 //Evaluamos la expresion pasada al atributo de la directiva, si es verdadero 
                 //seteamos las clases de error al formulario
                 scope.$watch('expr', function(val) {
-                    console.log('val', val);
                     $animate[val ? 'addClass' : 'removeClass'](elem, 'is-invalid-label');
                     $animate[val ? 'addClass' : 'removeClass'](scope.inputElem, 'is-invalid-input');
                     $animate[val ? 'addClass' : 'removeClass'](scope.fieldErrorMsgDirective, 'is-visible');

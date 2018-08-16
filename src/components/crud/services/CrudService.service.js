@@ -31,7 +31,6 @@ angular.module('adminPanel.crud').service('CrudService', [
                         callbackSuccess(responseSuccess);
                     }
                 }, function(responseError) {
-                    console.log('responseError',responseError);
                     scope.$emit('apLoad:finish', apLoadName, {
                         message: CrudConfig.messages.loadError,
                         type: 'error'
@@ -55,7 +54,6 @@ angular.module('adminPanel.crud').service('CrudService', [
              */
             self.submit = function(object, callbackSuccess, callbackError) {
                 scope.$emit('apLoad:start',apLoadName);
-                console.log('object', object);
                 var request = Resource.save(extraParams, object);
 
                 //Se hace el request para guardar el objeto
