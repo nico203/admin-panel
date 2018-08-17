@@ -339,7 +339,7 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                     self.$$crudFactory.createMessage(CrudConfig.messages.deleteSuccess,'success');
                     return self.list(self.listParams);
                 }, function (responseError) {
-                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteError,'error');
+                    self.$$crudFactory.createMessage(CrudConfig.messages.deleteError,'alert');
                     return $q.reject(responseError);
                 });
             };
