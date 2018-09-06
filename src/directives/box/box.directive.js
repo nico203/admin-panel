@@ -27,6 +27,10 @@ angular.module('adminPanel').directive('apBox', [
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
 
+                    attr.$observe('title', function(val) {
+                        scope.title = val;
+                    });
+
                     //Ejecutada al ingresar el mouse al elemento. Aplica la clase para iluminar el box
                     function onMouseEnter() {
                         scope.elem.removeClass('no-visible');

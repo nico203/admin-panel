@@ -1536,6 +1536,10 @@ angular.module('adminPanel').directive('apBox', [
 //                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
 
+                    attr.$observe('title', function(val) {
+                        scope.title = val;
+                    });
+
                     //Ejecutada al ingresar el mouse al elemento. Aplica la clase para iluminar el box
                     function onMouseEnter() {
                         scope.elem.removeClass('no-visible');
@@ -3189,7 +3193,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/fileSaver/fileSaver.template.html",
     "<button class=button type=button><i ng-hide=loading class=\"fa fa-download\"></i><div ng-show=loading class=animation><div style=width:100%;height:100% class=lds-rolling><div></div></div></div><span class=text ng-bind=buttonName></span></button>");
   $templateCache.put("directives/filter/filter.template.html",
-    "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title>Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
+    "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title><i class=\"fa fa-filter fa-lg\"></i>&nbsp; Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
   $templateCache.put("directives/form/fieldErrorMessages.template.html",
     "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
