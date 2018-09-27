@@ -3177,11 +3177,11 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("components/top-bar/hamburger/hamburger.template.html",
     "<div id=hamburger-icon><span class=\"line line-1\"></span><span class=\"line line-2\"></span><span class=\"line line-3\"></span></div>");
   $templateCache.put("components/top-bar/top-bar.template.html",
-    "<div class=top-bar><div class=top-bar-left><div hamburger></div>{{title}}</div><div class=logout title=\"cerrar sesión\" ng-click=clickBtn()><i class=\"fa fa-lg fa-sign-out\"></i></div></div>");
+    "<div class=top-bar><div class=top-bar-left><div hamburger></div>{{title}}</div><div class=logout title=\"cerrar sesión\" ng-click=clickBtn()><i class=\"fa fa-lg fa-sign-out-alt\"></i></div></div>");
   $templateCache.put("directives/accordion/accordion.template.html",
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",
-    "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-remove\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
+    "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-times\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
   $templateCache.put("directives/box/box.template.html",
     "<div class=card ng-if=!isHide><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider ng-if=title><h1 ng-bind=title></h1></div><div class=card-section><div ng-if=message class=\"message-container callout\" ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\"><h5 ng-if=message.title><i ng-if=\"message.type === 'error'\" class=\"fa fa-exclamation-triangle\"></i><span ng-bind=\"' {{message.title}}'\"></span></h5><p ng-if=!isArray(message.message) ng-bind=message.message></p><ul ng-if=isArray(message.message)><li ng-repeat=\"item in message.message track by $index\" ng-bind=item></li></ul></div><div ng-transclude ap-load></div></div></div>");
   $templateCache.put("directives/choice/choice.template.html",
