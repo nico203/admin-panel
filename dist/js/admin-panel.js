@@ -1507,17 +1507,18 @@ angular.module('adminPanel.topBar', [
             });
         }
     };
-}]);;//Mirar el componente cars de foundation
-
-//Ver de sacar el isolated scope asi se puede usar scope broadcast en este elemento
-
+}]);;/**
+ * @description Elemento que agrupa contenido. Ver componente card de foundation.
+ * Attrs:
+ *      - title: Título del card
+ *      - init: Función que se ejecuta al inicializar el componente.
+ */
 angular.module('adminPanel').directive('apBox', [
     '$rootScope',
     function ($rootScope) {
         return {
             restrict: 'AE',
             priority: 100,
-//        terminal: true,
             transclude: true,
             scope: {
                 title: '@',
@@ -1533,8 +1534,8 @@ angular.module('adminPanel').directive('apBox', [
                     scope.closeButton = (typeof (attr.name) !== 'undefined');
                     scope.message = null;
                     scope.elem = elem;
-//                    scope.isHide = false;
                     scope.isHide = scope.closeButton;
+                    scope.showOnEventSource = null;
 
                     attr.$observe('title', function(val) {
                         scope.title = val;
@@ -1555,18 +1556,39 @@ angular.module('adminPanel').directive('apBox', [
                     }
 
                     //Funcion que se usa para mostrar el box al lanzar determinado
-                    //evento con el nombre determinado para el box
+                    //evento con el nombre determinado para el box. Si name es un
+                    //objeto se usa el atributo destination de name y se guarda el
+                    //valor source de name.
                     function showOnEvent(e, name) {
+                        if (angular.isUndefined(name) || name === null) {
+                            return;
+                        }
                         if (attr.name === name) {
                             scope.isHide = false;
+                        } else if (typeof name === 'object' && attr.name === name.destination) {
+                            scope.isHide = false;
+                            scope.showOnEventSource = name.source; 
                         }
                     }
 
                     //Funcion que se usa para ocultar el box al lanzar determinado
-                    //evento con el nombre determinado para el box
+                    //evento con el nombre determinado para el box. Si name es un
+                    //objeto se usa el atributo destination de name y se emite un
+                    //evento llamado '' con los datos de name.data
                     function hideOnEvent(e, name) {
+                        if (angular.isUndefined(name) || name === null) {
+                            return;
+                        }
                         if (attr.name === name) {
                             scope.isHide = true;
+                        } else if (typeof name === 'object' && attr.name === name.destination) {
+                            scope.isHide = true;
+                            if (name.data) {
+                                $rootScope.$broadcast('select:loadSelectedData', {
+                                    destination: scope.showOnEventSource,
+                                    data: name.data
+                                });
+                            }
                         }
                     }
 
