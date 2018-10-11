@@ -3,7 +3,9 @@ angular.module('adminPanel', [
     'adminPanel.authentication',
     'adminPanel.crud',
     'adminPanel.topBar',
-    'adminPanel.navigation'
+    'adminPanel.navigation',
+    'adminPanel.filters',
+    'adminPanel.utils'
 ]).directive('adminPanel', [
     function() {
         return {

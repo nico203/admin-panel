@@ -3,7 +3,9 @@ angular.module('adminPanel', [
     'adminPanel.authentication',
     'adminPanel.crud',
     'adminPanel.topBar',
-    'adminPanel.navigation'
+    'adminPanel.navigation',
+    'adminPanel.filters',
+    'adminPanel.utils'
 ]).directive('adminPanel', [
     function() {
         return {
@@ -19,7 +21,8 @@ angular.module('adminPanel', [
 ]);;angular.module('adminPanel.crud', [
     'adminPanel',
     'ngResource'
-]);;angular.module('adminPanel.crud').directive('apDelete',[
+]);;angular.module('adminPanel.filters', []);;angular.module('adminPanel.utils', []);
+;angular.module('adminPanel.crud').directive('apDelete',[
     function() {
         return {
             restrict: 'A',
@@ -3071,16 +3074,140 @@ angular.module('adminPanel').directive('apSelect', [
         templateUrl: 'directives/timePicker/timePicker.template.html'
     };
 }]);
-;angular.module('adminPanel').filter('highlight', ['$sce', function ($sce) {
-    return function (text, phrase) {
-        if (phrase) {
-            text = text.replace(new RegExp('(' + phrase + ')', 'gi'),
-                    '<span class="highlighted">$1</span>');
-        }
-        return $sce.trustAsHtml(text);
+;/**
+ * @description Filtro que deja con mayúscula solo la primera letra de una palabra
+ *              o frase.
+ * 
+ * @param {String} input Ejemplo: 'la frase comenzará con mayúscula'.
+ * @returns {String} Ejemplo: 'La frase comenzará con mayúscula'.
+ */
+angular.module('adminPanel.filters').filter('capitalizeFirstLetter', function () {
+    return function (input) {
+        return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
     };
-}]);
-;angular.module('adminPanel').service('WindowResize', [
+});;/**
+ * @description Filtro que deja con mayúscula solo la primera letra de cada palabra.
+ *              Se debe especificar qué caracter separa cada palabra, de lo contrario se usa el
+ *              espacio en blanco.
+ * 
+ * @param {String} input Ejemplo: 'cada palabra quedará con mayúscula'.
+ * @returns {String} Ejemplo: 'Cada Palabra Quedará Con Mayúscula'.
+ */
+angular.module('adminPanel.filters').filter('capitalizeFirstLetters', [
+    'capitalizeFirstLetterFilter',
+    function (capitalizeFirstLetterFilter) {
+        return function (input, separatorCharacter) {
+            separatorCharacter = separatorCharacter ? separatorCharacter : " ";
+
+            var outputArray = input.split(separatorCharacter);
+            var output = "";
+
+            outputArray.forEach(function (element, key, array) {
+                output += capitalizeFirstLetterFilter(element);
+                if (key !== array.length - 1) {
+                    output += separatorCharacter;
+                }
+            });
+
+            return output;
+        };
+    }
+]);;/**
+ * @description Filtro que concatena un array de valores.
+ * 
+ * @param {Array} input ['item1', 'item2', 'item3'].
+ * @param {String} delimiter Caracter que une los elementos del input.
+ * @returns {String} Ejemplo: 'intem1, item2, intem3'
+ */
+angular.module('adminPanel.filters').filter('concat', function () {
+    return function (input, delimiter) {
+        if (angular.isUndefined(input) || input === null) {
+            return '';
+        } else if (!Array.isArray(input)) {
+            return input;
+        } else {
+            var newInputData = [];
+            input.forEach(function (element) {
+                if (angular.isDefined(element) && element !== null) {
+                    newInputData.push(element);
+                }
+            });
+            if (delimiter) {
+                return newInputData.join(delimiter);
+            } else {
+                return newInputData.join();
+            }
+        }
+    };
+});;/**
+ * @description Filtro que resalta una frase de un texto.
+ * 
+ * @param {String} input Texto que contiene la frase que será resaltada.
+ * @param {String} phrase Frase a resaltar.
+ * @returns {Object}
+ */
+angular.module('adminPanel.filters').filter('highlight', [
+    '$sce',
+    function ($sce) {
+        return function (input, phrase) {
+            if (phrase) {
+                input = input.replace(new RegExp('(' + phrase + ')', 'gi'),
+                    '<span class="highlighted">$1</span>');
+            }
+            return $sce.trustAsHtml(input);
+        };
+    }
+]);
+;/**
+ * @description Filtro para motrar el tiempo transcurrido en días, meses o años.
+ * 
+ * @param input Cantidad de días, meses o años.
+ * @param {String} timeUnit 'días', 'meses' o 'años'.
+ * @param {String} initialWords Cualquier string que se quiera anteponer a la frase.
+ * @returns {String} Ejemplos: 'Hace 3 años', 'Hace 2 días', '1 mes'.
+ */
+angular.module('adminPanel.filters').filter('howLong', function () {
+    return function (input, timeUnit, initialWords) {
+
+        if (angular.isUndefined(input) || input === null) {
+            return '';
+        }
+        if (typeof timeUnit !== 'string' || timeUnit === null) {
+            return '';
+        }
+        if (typeof initialWords !== 'string') {
+            initialWords = '';
+        } else {
+            initialWords += ' ';
+        }
+        timeUnit = timeUnit.toLowerCase();
+        if (input == '1') {
+            switch (timeUnit) {
+                case 'días':
+                    timeUnit = 'día';
+                    break;
+                case 'meses':
+                    timeUnit = 'mes';
+                    break;
+                case 'años':
+                    timeUnit = 'año';
+                    break;
+            }
+        }
+        return initialWords + input + ' ' + timeUnit;
+    };
+});;/**
+ * @description Filtro para mostrar 'Si' si el input es verdadero o 'No'
+ *              si es falso.
+ * 
+ * @param input Valor que será evaluado.
+ * @returns {String} 'Si' o 'No'
+ */
+angular.module('adminPanel.filters').filter('yesNo', function () {
+    return function (input) {
+        return input ? 'Si' : 'No';
+    };
+});;angular.module('adminPanel').service('WindowResize', [
     'AdminPanelConfig','$rootScope', '$window', '$timeout',
     function(AdminPanelConfig,$rootScope,$window,$timeout) {
         //Pantalla actual
@@ -3240,7 +3367,70 @@ angular.module('adminPanel').directive('apSelect', [
             };
         }
     ];
-});;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
+});;/**
+ * @description Función que busca un valor en la intersección de dos arreglos
+ *
+ * @param {Array} array1 Arreglo usado para calcular la intersección
+ * @param {Array} array2 Arreglo usado para calcular la intersección
+ * @param {String} value Valor que se busca en la intersección de array1 y array2
+ * @returns {Boolean} Indica si value se encontró o no
+ */
+angular.module('adminPanel.utils').factory('findInArrayIntersection', [
+    function() {
+        var findInArrayIntersection = function (array1, array2, value) {
+            var found = false;
+            var i = 0;
+            while (i < array2.length && !found) {
+                var j = array2[i];
+                if (angular.isArray(array1[j])) {
+                    found = array1[j].indexOf(value) >= 0;
+                }
+                i++;
+            }
+            return found;
+        };
+
+        return findInArrayIntersection;
+    }]
+);;/**
+ * @description Obtiene una propiedad de un objeto, de cualquiera de sus hijos,
+ *              hijos de hijos, etc.
+ * 
+ * @param {Object} obj Cualquier objeto
+ * @param key Propiedad que se quiere obtener del objeto. Ejemplo: 'loc.foo.bar'
+ */
+angular.module('adminPanel.utils').factory('getProperty', [
+    function () {
+        var getProperty = function (obj, key) {
+            return key.split(".").reduce(function (o, x) {
+                return (typeof o == "undefined" || o === null) ? o : o[x];
+            }, obj);
+        };
+
+        return getProperty;
+    }
+]);;/**
+ * @description Pregunta si una determinada propiedad de un objeto,
+ *              de cualquiera de sus hijos, hijos de hijos, etc existe.
+ * 
+ * @param {Object} obj Cualquier objeto
+ * @param key Propiedad por la que se pregunta. Ejemplo: 'loc.foo.bar'
+ */
+angular.module('adminPanel.utils').factory('hasProperty', [
+    function () {
+        var hasProperty = function (obj, key) {
+            return key.split(".").every(function (x) {
+                if (typeof obj != "object" || obj === null || !(x in obj)) {
+                    return false;
+                }
+                obj = obj[x];
+                return true;
+            });
+        };
+
+        return hasProperty;
+    }
+]);;angular.module('adminPanel').run(['$templateCache', function ($templateCache) {
   $templateCache.put("admin-panel.template.html",
     "<div ap-user><div class=wrapper-header><top-bar></top-bar></div><div class=off-canvas-wrapper><div ap-off-canvas class=position-left id=offCanvas data-off-canvas data-transition=overlap><navigation></navigation></div><div class=off-canvas-content data-off-canvas-content><div ap-message-container></div><div id=content class=\"row medium-12 large-11 columns\"><div ng-view></div></div></div></div><ap-confirm-modal></ap-confirm-modal></div>");
   $templateCache.put("components/crud/directives/list/list.template.html",

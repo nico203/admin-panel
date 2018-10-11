@@ -44,7 +44,7 @@ module.exports = function (grunt) {
                 separator: ';'
             },
             dist: {
-                src: ['src/**/*.js', 'tmp/*.js'],
+                src: ['src/*.js', 'src/**/*.module.js', 'src/**/*.js', 'tmp/*.js'],
                 dest: 'dist/js/<%= pkg.name %>.js'
             }
         },
@@ -65,9 +65,6 @@ module.exports = function (grunt) {
                 files: {
                     'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js']
                 }
-//                options: {
-//                    mangle: false
-//                }
             }
         },
         watch: {
