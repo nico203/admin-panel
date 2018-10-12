@@ -1,13 +1,15 @@
-<div class="input-group">
-    <span class="input-group-label prefix"><i class="fa fa-calendar"></i></span>
-    <input class="input-group-field ap-date" type="text" readonly>
-    <span class="input-group-label">Hs</span>
-    <input class="input-group-field" type="number" style="width: 60px;"
-           ng-model="hours"
-           ng-change="changeHour()">
-    <span class="input-group-label" >Min</span>
-    <input class="input-group-field" type="number" style="width: 60px;"
-           ng-model="minutes"
-           ng-change="changeMinute()">
-</div>
-    
+<label>
+    {{label}}
+    <div class="input-group ap-datetimepicker">
+        <span class="input-group-label prefix"><i class="far fa-calendar-alt"></i></span>
+        <input class="input-group-field date" type="text" readonly>
+        <span class="input-group-label">Hs</span>
+        <input class="input-group-field" type="number" style="width: 60px;"
+            ng-model="hours"
+            ng-change="changeHour()">
+        <span class="input-group-label" >Min</span>
+        <input class="input-group-field" type="number" style="width: 60px;"
+            ng-model="minutes"
+            ng-change="changeMinute()">
+    </div>
+</label>

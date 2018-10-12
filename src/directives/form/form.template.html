@@ -1,0 +1,13 @@
+<form name="form" novalidate ng-model-options="{updateOn: 'default blur'}">
+    <div class="alert callout ng-hide" ng-show="form.$invalid || errorData.errors">
+        <h5><i class="fa fa-exclamation-triangle"></i>&nbsp;El formulario contiene errores</h5>
+        <ul ng-if="errorData.errors">
+            <li ng-repeat="error in errorData.errors track by $index" ng-bind="error"></li>
+        </ul>
+    </div>
+    <div></div>
+    <span ng-click="scroll(formId)" class="submit-button">
+        <input type="submit" validation-submit="form" ng-click="submit()" class="button" value="{{submitButtonValue}}" title="Guardar datos">
+    </span>
+    <button ng-if="cancel && !hideCancelButton" ng-click="cancel()" class="button secondary" title="Cancelar">Cancelar</button>
+</form>

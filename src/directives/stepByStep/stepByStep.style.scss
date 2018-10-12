@@ -1,0 +1,184 @@
+$stepbystep-bg: #fafafa !default;
+$stepbystep-color: #0a0a0a !default;
+$stepbystep-hover-bg: #e6f4f9 !default;
+$stepbystep-hover-color: #0a0a0a !default;
+$stepbystep-active-bg: #007295 !default;
+$stepbystep-active-color: #fff !default;
+$stepbystep-disabled-bg: #fff !default;
+$stepbystep-disabled-color: #aaa !default;
+
+.steps {
+    display: inline-block;
+    font-size: 0px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    line-height: 1;
+    box-sizing: border-box;
+    padding-left: 0;
+    margin-left: 0px;
+    cursor: pointer;
+
+    &.expanded {
+        display: flex;
+    }
+
+    &.vertical {
+
+        li {
+            display: block;
+
+            &.active:after {
+                display: block;
+                position: absolute;
+                z-index: 2;
+                content: "";
+                top: 0px;
+                right: -1.45em;
+                background-color: transparent;
+                border-bottom: 1.5em solid transparent;
+                border-left: 1.5em solid $stepbystep-active-bg;
+                border-top: 1.5em solid transparent;
+                width: 0px;
+                height: 0px;
+                transform: none;
+            }
+
+            &:after {
+                display: none;
+            }
+        }
+
+        overflow: visible;
+        &.radius li {
+            &:first-child {
+                border-radius: 5px 5px 0 0;
+            }
+            &:last-child {
+                border-radius: 0 0 5px 5px;
+            }
+        }
+    }
+
+    &:not(.vertical) {
+
+        li {
+
+            &:first-child {
+                padding-left: 2.5em;
+            }
+
+            &:last-child {
+                padding-right: 2.5em;
+            }
+
+            &:after {
+                display: block;
+                position: absolute;
+                z-index: 2;
+                content: "";
+                top: 0.36em;
+                right: -1.2em;
+                width: 2.3em;
+                height: 2.3em;
+                background-color: $stepbystep-bg;
+                transform: rotate(-45deg);
+                border-right: 1px solid #ccc;
+                border-bottom: 1px solid #ccc;
+            }
+        }
+    }
+
+    li {
+        display: inline-block;
+        position: relative;
+        padding: 1em 2em 1em 3em;
+        vertical-align: top;
+        background-color: $stepbystep-bg;
+        color: $stepbystep-color;
+        box-sizing: border-box;
+        font-size: 1rem;
+
+        &:hover {
+            background-color: $stepbystep-hover-bg;
+            color: $stepbystep-hover-color;
+        }
+
+        &:hover:after {
+            background-color: $stepbystep-hover-bg;
+            color: $stepbystep-hover-color;
+        }
+
+        &.active {
+            background-color: $stepbystep-active-bg;
+            color: $stepbystep-active-color;
+            cursor: auto;
+        }
+
+        &.active:after {
+            background-color: $stepbystep-active-bg;
+            color: $stepbystep-active-color;
+            cursor: auto;
+        }
+
+        &.disabled {
+            background-color: $stepbystep-disabled-bg;
+            color: $stepbystep-disabled-color;
+            cursor: auto;
+        }
+
+        &.disabled:after {
+            background-color: $stepbystep-disabled-bg;
+            color: $stepbystep-disabled-color;
+            cursor: auto;
+        }
+    }
+
+    &.even-2 li {
+        width: 50%;
+    }
+
+    &.even-3 li {
+        width: 33.33334%;
+    }
+
+    &.even-4 li {
+        width: 25%;
+    }
+
+    &.even-5 li {
+        width: 20%;
+    }
+
+    &.even-6 li {
+        width: 16.66667%;
+    }
+
+    &.round:not(.vertical) {
+        border-radius: 1000px;
+    }
+
+    &.radius {
+        border-radius: 5px;
+    }
+}
+
+/* Small only */
+@media screen and (max-width: 39.9375em) {
+    .steps {
+
+        &.expanded {
+            display: block;
+        }
+
+        &.even-2,&.even-3,&.even-4,&.even-5,&.even-6 {
+            li {
+                width: 100%;
+                padding-left: 2rem;
+
+                &:first-child,&:last-child {
+                    padding-left: 2rem;
+                }
+            }
+        }
+    }
+}

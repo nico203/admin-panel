@@ -1,5 +1,6 @@
 angular.module('adminPanel', [
     'ngAnimate',
+    'duScroll',
     'adminPanel.authentication',
     'adminPanel.crud',
     'adminPanel.topBar',
@@ -1671,165 +1672,710 @@ angular.module('adminPanel').directive('apBox', [
                     }
                 };
             },
-            templateUrl: 'directives/box/box.template.html'
+            templateUrl: 'directives/boxes/box/box.template.html'
         };
     }
 ]);
-;angular.module('adminPanel').directive('apChoice', [
-    '$timeout', '$rootScope', '$q', '$injector',
-    function ($timeout, $rootScope, $q, $injector) {
+;/**
+ * @description Elemento que agrupa contenido. Características:
+ *  -   Utiliza el componente card de foundation.
+ *  -   No usa la directiva ap-load del admin-panel.
+ *  -   Se le puede indicar el título del card.
+ *  -   Se le puede indicar un estado.
+ *
+ *  Attrs:
+ *      - title: Título del card
+ *      - state: Posibles valores:
+ *          - 'hideContent' : Muestra un mensaje indicando que el usuario no cuenta con los permisos para ver el contenido.
+ *          - 'noContent' : Muestra un mensaje indicando que el contenedor está vacío.
+ *          - 'noEditable' : Muestra un mensaje indicando que el usuario no cuenta con los permisos para editar el contenido.
+ */
+angular.module('adminPanel').directive('apBoxState', [
+    function() {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                title: '@',
+                state: '<',
+                helpMessage: '@'
+            },
+            link: function($scope, element, attr, ctrl, transclude) {
+                
+                $scope.title = $scope.title ? $scope.title : '';
+                $scope.state = $scope.state ? $scope.state : '';
+                $scope.helpMessage = $scope.helpMessage ? $scope.helpMessage : '';
+                $scope.mouseOver = false;
+
+                $scope.message = {
+                    text: '',
+                    icon: ''
+                };
+
+                /**
+                 * Watcher que actualiza el estado
+                 */
+                $scope.$watch('state', function(newValue, oldValue) {
+                    
+                    switch (newValue) {
+                        case 'hideContent':
+                            $scope.message = {
+                                text: 'No tiene permisos para ver este contenido.',
+                                icon: 'fa-eye-slash'
+                            };
+                            break;
+                        case 'noContent':
+                            $scope.message = {
+                                text: 'No hay datos cargados.',
+                                icon: 'fa-minus-circle'
+                            };
+                            break;
+                        case 'noEditable':
+                            $scope.message = {
+                                text: 'No tiene permisos para editar este contenido.',
+                                icon: 'fa-times-circle'
+                            };
+                            break;
+                        default :
+                            $scope.message = {
+                                text: '',
+                                icon: ''
+                            };
+                            break;
+                    }
+                });
+
+                /**
+                 * Evento usado para mostrar mensaje
+                 */
+                $scope.onMouseOver = function (e) {
+                    $scope.mouseOver = true;
+                };
+
+                /**
+                 * Evento usado para ocultar mensaje
+                 */
+                $scope.onMouseLeave = function (e) {
+                    $scope.mouseOver = false;
+                };
+            },
+            templateUrl: 'directives/boxes/boxState/boxState.template.html'
+        };
+    }
+]);;
+/**
+ * KNOWN ISSUES
+ *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la
+ *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
+ *  y la lista deberia permanecer cerrada.
+ *
+ *  sugerencias
+ *  - La cantidad maxima de items a mostrar debe estar definida en el archivo de configuracion de la app. Para eso
+ *  se deberia definir una propiedad dentro del servicio CrudConfig
+ *
+ *  Consideraciones generales
+ *
+ *  En un evento, para cancelarlo en un hijo, el evento debe ser el mismo. En este caso se usa mousedown para todo.
+ *
+ *  //doc
+ *
+ *  resource: nombre del CrudResource especificado
+ *  queryParams: propiedades que se usan como parametros de la consulta para filtrar resultados, si no están definidos se usan las
+ *               propiedades definidas en el objeto properties
+ *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
+ *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
+ *  filters: filtros aplicados a las propiedades. Ejemplo: filters="['date::dd/MM/yyyy', 'uppercase', '', 'lowercase']".
+ *           para especificar el formato de un filtro utilizar "::".
+ *  details: atributos que serán mostrados como detalle, usado cuando se quiere mostrar más datos que los proporcionados por la lista.
+ *           formato: [label1: atribute1 | filter1 | filter2, label2: atribute2 | filter3 | filter1]
+ *           ejemplo: ["Dirección:domicilio", "Fecha de Nacimiento:fechaNacimiento | date: 'dd / MM / yyyy'"]
+ *  disable: Permite deshabilitar el input.
+ *  itemsLimit: Define el límite de elementos a mostrar. Si el valor negativo no se añade límite.
+ */
+angular.module('adminPanel').directive('apDataSelect', [
+    '$timeout', '$rootScope', '$q', '$injector', '$document', '$filter',
+    function ($timeout, $rootScope, $q, $injector, $document, $filter) {
         return {
             restrict: 'AE',
             require: 'ngModel',
             scope: {
-                items: '='
+                resource: '@',
+                queryParams: '=?',
+                method: '@?',
+                requestParam: '=?',
+                properties: '=',
+                filters: '=?',
+                details: '<?',
+                disabled: '<',
+                itemsLimit: '<',
+                label: '@'
             },
             link: function (scope, elem, attr, ngModel) {
+                elem.addClass('data-select');
+
+                var resource = null;
+                //obtenemos el servicio para hacer las consultas con el servidor}
+                if($injector.has(scope.resource)) {
+                    var crudResource = $injector.get(scope.resource, 'apSelect');
+                    resource = crudResource.$resource;
+                }
+                if(!resource) {
+                    console.error('El recurso no esta definido');
+                }
+
+                //se define el límite de items a mostrar. El valor por defecto es 6.
+                scope.itemsLimit = scope.itemsLimit ? scope.itemsLimit : 6;
+
+                //habilitamos el boton para agregar entidades
+                scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null || attr.new === '');
+
+                //inicializar valor de label
+                scope.label = scope.label ? scope.label : '';
+
+                //obtenemos el nombre del select dado el atributo name
+                var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
+
+                //se definen las propiedades del objeto a mostrar.
+                var objectProperties = angular.isString(scope.properies) ? scope.properties.split(',') : scope.properties;
+
+                //se generan los datos necesarios para aplicar los filtros
+                var filtersData = [];
+                var propertyFilters = angular.isString(scope.filters) ? scope.filters.split(',') : scope.filters;
+                objectProperties.forEach(function(filter, i) {
+                    if (angular.isDefined(propertyFilters) && propertyFilters[i]) {
+                        filtersData.push(propertyFilters[i].split('::'));
+                    } else {
+                        filtersData.push(['','']);
+                    }
+                });
+
+
+                //se generan los datos para mostrar los detalles del item que se está observando
+                scope.itemDetailsData = null;
+                if (angular.isArray(scope.details) && scope.details.length > 0) {
+                    scope.itemDetailsData = [];
+                    var aux, filters, i = null;
+                    scope.details.forEach(function(itemData) {
+                        if (!angular.isString(itemData)) {
+                            console.error("Formato incorrecto de parámetro details");
+                            return;
+                        }
+                        i = itemData.indexOf('|');
+                        if (i >= 0) {
+                            aux = [itemData.slice(0,i), itemData.slice(i+1)];
+                            itemData = aux[0];
+                            filters = aux[1];
+                        } else {
+                            filters = null;
+                        }
+                        itemData = itemData.split(':');
+                        if (itemData.length !== 2) {
+                            console.error("Formato incorrecto de parámetro details");
+                            return;
+                        }
+                        itemData[2] = filters ? ( '|' + filters) : '';
+                        scope.itemDetailsData.push(itemData);
+                    });
+                }
+
+                //elemento seleccionado
+                scope.itemSelected = null;
+
+                //inicializamos los componentes
+                scope.input = {
+                    model: null,
+                    vacio: true
+                };
+                scope.lista = {
+                    items: [],
+                    desplegado: false
+                };
+
+                //Indica el estado del request.
+                scope.loading = false;
+                var timeoutCloseListPromise = null;
+                var timeoutOpenListPromise = null;
+
+                var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
+                var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
+
+                var request = null;
+                var preventClickButton = false;
+
+                /**
+                 * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
+                 * en la propiedad properties de la directiva
+                 *
+                 * @param {Object} object
+                 * @returns {Object}
+                 */
+                function convertObjectToItemList(object) {
+                    var name = '';
+                    //Seteamos solamente los campos seleccionados a mostrar
+                    for(var j = 0; j < objectProperties.length; j++) {
+                        if (!object[objectProperties[j]]) {
+                            name +=' - , ';
+                        } else if (filtersData[j][0] && filtersData[j][1]) {
+                            name += $filter(filtersData[j][0])(object[objectProperties[j]], filtersData[j][1]) + ', ';
+                        } else if (filtersData[j][0]) {
+                            name += $filter(filtersData[j][0])(object[objectProperties[j]]) + ', ';
+                        } else {
+                            name += object[objectProperties[j]] + ', ';
+                        }
+                    }
+                    //borramos la ultima coma
+                    name = name.replace(/,\s*$/, "");
+
+                    return {
+                        name: name,
+                        $$object: angular.copy(object)
+                    };
+                }
+
+                /**
+                 * Se realiza el request. En caso de haber uno en proceso se lo cancela
+                 * Emite un evento en donde se manda la promise.
+                 *
+                 * El parametro all establece que se haga una consulta sin parametros.
+                 * Esta se hace cuando se inicializa el componente y todavia no se hizo ningun request
+                 *
+                 * @param {boolean} all Establece si se usan los filtros para filtrar las entidades
+                 */
+                function doRequest(all) {
+                    if(request) {
+                        request.$cancelRequest();
+                    }
+
+                    var search = {};
+
+                    if(!angular.isUndefined(scope.requestParam) && angular.isNumber(scope.requestParam)) {
+                        search.id = scope.requestParam;
+                    }
+
+                    if(!all) {
+                        for (var j = 0; j < queryParams.length; j++) {
+                            search[queryParams[j]] = scope.input.model;
+                        }
+                    }
+
+
+                    request = resource[defaultMethod](search);
+
+                    //seteamos en la vista que el request esta en proceso
+                    scope.loading = true;
+                    var promise = request.$promise.then(function(rSuccess) {
+                        var max = (rSuccess.data && scope.itemsLimit >=0 && rSuccess.data.length > scope.itemsLimit) ? scope.itemsLimit : rSuccess.data.length;
+                        //creamos la lista. Cada item es de la forma
+                        //{name:'name',id:'id'}
+                        var list = [];
+                        for(var i = 0; i < max; i++) {
+                            var object = rSuccess.data[i];
+                            list.push(convertObjectToItemList(object));
+                        }
+                        scope.lista.items = list;
+
+                        if(!scope.lista.desplegado) {
+                            scope.lista.desplegado = true;
+                        }
+
+                        return rSuccess.data;
+                    }, function(rError) {
+                        $q.reject(rError);
+                    });
+
+                    //steamos en la vista que el request se termino de procesar
+                    promise.finally(function() {
+                        if(request.$resolved) {
+                            scope.loading = false;
+                        }
+                    });
+                    scope.$emit('ap-select:request', name, promise);
+                }
+
+
+                /**
+                 * Por ahora la lista solo se cierra en el evento blur del input
+                 */
+                function closeList() {
+                    //dado el caso de que el comportamiento de $timeout.cancel() no esta rechazando las promesas
+                    // (posible bug de angular) se verifica que el timeoutCloseListPromise sea distinto de null
+                    // es decir, la promesa no haya sido cancelada
+                    if(timeoutCloseListPromise === null) return;
+
+                    //cerramos la lista
+                    scope.lista.desplegado = false;
+
+                    //si hay un request en proceso se lo cancela
+                    if(request) {
+                        request.$cancelRequest();
+                    }
+
+                    //seteamos el modelo si no hubo cambios
+                    scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                    scope.input.vacio = (scope.itemSelected === null);
+                }
+
+                /**
+                 * Por ahora la lista se abre solo en el foco al input
+                 */
+                function openList() {
+                    //en caso de haber una promesa activa para cerrar la lista no se la vuelve a abrir
+                    if(timeoutCloseListPromise !== null) {
+                        return;
+                    }
+
+                    //se abre la lista
+                    scope.lista.desplegado = true;
+                    //si la lista interna esta vacia se hace el request sin parametros en la consulta
+                    if (scope.lista.items.length === 0) {
+                        doRequest(true);
+                    }
+                }
+
+                //eventos relacionados con el input
+
+                /**
+                 * Cambiar valor seleccionado.
+                 */
+                function changeSelectedValue(val) {
+                    ngModel.$setViewValue(val);
+                    if (val) {
+                        //seteamos el item actual
+                        scope.itemSelected = convertObjectToItemList(val);
+
+                        //seteamos el estado actual del modelo
+                        scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
+                        scope.input.vacio = (scope.itemSelected === null);
+                    }
+                }
+
+                /**
+                 * Si la lista no esta desplegada se la despliega. En todos los casos se hace el request
+                 */
+                scope.onChangeInput = function() {
+                    if(!scope.lista.desplegado) {
+                        scope.lista.desplegado = true;
+                    }
+
+                    //chequeamos si el input esta vacio
+                    scope.input.vacio = (angular.isUndefined(scope.input.model) && scope.input.model.length !== 0);
+                    doRequest();
+                };
+
+                /**
+                 * Si el valor referenciado por ng-model cambia programáticamente y $modelValue y $viewValue
+                 * son diferentes, el valor del modelo vuelve a ser null.
+                 */
+                ngModel.$render = function() {
+                    scope.input = {
+                        model: null,
+                        vacio: true
+                    };
+                };
+
+                /**
+                 * Se despliega la lista si no esta desplegada.
+                 * Solo se hace el request si la lista interna esta vacia
+                 */
+                scope.onFocusInput = function () {
+
+                    if(!scope.lista.desplegado) {
+                        timeoutOpenListPromise = $timeout(openList).finally(function() {
+                            timeoutOpenListPromise = null;
+                        });
+                    }
+                };
+
+                /**
+                 * Se usa el $timeout que retorna una promesa. Si el click proximo viene dado por un evento dentro
+                 * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
+                 */
+                scope.onBlurInput = function() {
+                    if(timeoutOpenListPromise !== null) {
+                        $timeout.cancel(timeoutOpenListPromise);
+                        timeoutOpenListPromise = null;
+                    }
+
+
+                    timeoutCloseListPromise = $timeout(closeList, 100).finally(function() {
+                        timeoutCloseListPromise = null;
+                    });
+                };
+
+                //eventos relacionados con el boton
+                /**
+                 * Hace un toggle de la lista, es decir si esta desplegada, la cierra y sino la abre
+                 * En caso de que la lista este desplegada no se hace nada, ya que el evento blur del input cierra la lista
+                 * Si no está desplegada, la despliega, viendo de hacer o no el request, segun la lista interna tenga
+                 * tenga o no elementos.
+                 */
+                scope.onClickButton = function() {
+
+                    //si no se previene el evento, se despliega la lista
+                    if(!preventClickButton) {
+                        if(timeoutCloseListPromise !== null) {
+                            $timeout.cancel(timeoutCloseListPromise);
+                            timeoutCloseListPromise = null;
+                        }
+
+                        //le damos el foco al input
+                        elem.find('input').focus();
+                    }
+                };
+
+                /**
+                 * Toma el evento antes del click, dado que el click se computa cuando el usuario suelta el raton
+                 * Si la lista no esta desplegada, el curso es el de no prevenir el evento click, para que la lista
+                 * se despliegue.
+                 * Si la lista esta desplegada, el curso es el de prevenir el evento click, para que cuando el input
+                 * pierda el foco, la lista se cierre, pero cuando el usuario suelte el raton no se dispare el evento
+                 * click, lo que volvería a abrir la lista, lo cual NO es deseado.
+                 */
+                scope.onMousedownButton = function(e) {
+                    preventClickButton = scope.lista.desplegado;
+                };
+
+                //eventos relacionados con la lista
+
+                /**
+                 * Al seleccionar un item de la lista se guarda en el modelo y la lista pasa a estado no desplegado
+                 * El menu se cierra dado el timeout del evento blur, que se dispara al hacer click sobre un item de la lista
+                 */
+                scope.onClickItemList = function(e, item) {
+                    e.stopPropagation();
+
+                    //seteamos el item actual
+                    scope.itemSelected = item;
+
+                    //asignamos el id de la entidad al modelo
+                    ngModel.$setViewValue(item.$$object);
+
+                    //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
+                    scope.$emit('ap-select:item-selected', name, item);
+                };
+
+                /**
+                 * Al hacer click en la lista se cancela el evento para no cerrar la lista
+                 */
+                function onListClick() {
+                    if(timeoutCloseListPromise !== null) {
+                        $timeout.cancel(timeoutCloseListPromise);
+                        timeoutCloseListPromise = null;
+                    }
+                }
+
+                /**
+                 * Evento usado para mostrar detalles de items
+                 */
+                scope.onOverItemList = function (e, item) {
+                    scope.itemOver = item.$$object;
+                };
+
+                /**
+                 * Se ejecuta cuando el usuario da click al boton nuevo.
+                 * Lanza el evento para mostrar el box correspondiente
+                 */
+                scope.newObject = function (e) {
+                    e.stopPropagation();
+
+                    $rootScope.$broadcast('apBox:show', {
+                        source: attr.name,
+                        destination: attr.new
+                    });
+                };
+
+                //Eventos relacionados con entradas del teclado
+
+                function enterHandler(event) {
+                    var ENTER_KEY_CODE = 13;
+                    if (scope.lista.desplegado && event.keyCode === ENTER_KEY_CODE) {
+                        elem.find('input').blur();
+                        event.preventDefault();
+                    }
+                }
+
+                //registramos los eventos
                 
+                scope.$on('select:loadSelectedData', function(e, data) {
+                    if (attr.name === data.destination && data.data) {
+                        changeSelectedValue(data.data);
+                    }
+                });
+                elem.on('mousedown', '.dropdown-ap', onListClick);
+                $document.on('keydown', enterHandler);
+
+                scope.$watch(function () {
+                    return ngModel.$modelValue;
+                }, changeSelectedValue);
+
+                /**
+                 * Liberamos los eventos que hayan sido agregados a los elementos
+                 */
+                var destroyEventOnDestroy = scope.$on('$destroy', function() {
+                    elem.off('mousedown', '.dropdown-ap', onListClick);
+                    $document.off('keydown', enterHandler);
+                    destroyEventOnDestroy();
+                });
             },
-            templateUrl: 'directives/choice/choice.template.html'
+            templateUrl: 'directives/dataSelect/dataSelect.template.html'
         };
     }
 ]);
-;angular.module('adminPanel').directive('apDatePicker', ['$timeout', function($timeout) {
-    return {
-        restrict: 'AE',
-        require: 'ngModel',
-        scope: {
-            format: '@?' /* NO TENIDO EN CUENTA */
-        },
-        link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-datepicker');
-            scope.date = null;
-            var options = {
-                format: 'dd/mm/yyyy',
-                language: 'es'
-            };
+;angular.module('adminPanel').directive('apDatePicker',[
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                label: '@'
+            },
+            link: function(scope, elem, attr, ngModel) {
+                scope.label = scope.label ? scope.label : '';
+                scope.date = null;
 
-            scope.$watch(function() {
-                return ngModel.$modelValue;
-            }, function(val) {
-                if(val) {
-                    var date = new Date(val);
-                    scope.date = date;
-                    $(elem.find('.ap-date')).fdatepicker('update', date);
-                }
-            });
+                var options = {
+                    format: 'dd/mm/yyyy',
+                    language: 'es'
+                };
 
-            //Funcion que realiza el cambio de la hora en el modelo
-            function changeDate(date) {
-
-                //cambio hecho al terminar el ciclo $digest actual
-                $timeout(function() {
-                    scope.$apply(function(){
-                        ngModel.$setViewValue(date);
+                //Funcion que realiza el cambio de la hora en el modelo
+                function changeDate(date) {
+                    //cambio hecho al terminar el ciclo $digest actual
+                    $timeout(function() {
+                        scope.$apply(function() {
+                            ngModel.$setViewValue(date);
+                        });
                     });
-                });
-            }
-
-            //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
-            //detectar cuando se cambia la hora
-            $(elem.find('.ap-date')).fdatepicker(options)
-                    .on('changeDate', function(ev){
-                scope.date = ev.date;
-                scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
-                changeDate(scope.date);
-            });
-
-        },
-        templateUrl: 'directives/datePicker/datePicker.template.html'
-    };
-}]);
-;angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function($timeout) {
-    return {
-        restrict: 'AE',
-        require: 'ngModel',
-        scope: {
-            format: '@?' /* NO TENIDO EN CUENTA */
-        },
-        link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-datetimepicker');
-            scope.hours = null;
-            scope.minutes = null;
-            scope.date = null;
-            var options = {
-                format: 'dd/mm/yyyy',
-                language: 'es'
-//                pickTime: true,
-//                initialDate: scope.date
-            };
-
-            scope.$watch(function() {
-                return ngModel.$modelValue;
-            }, function(val) {
-                if(val) {
-                    var date = new Date(val);
-                    if(isNaN(date)) return; //la fecha no es valida
-                    scope.date = date;
-                    $(elem.find('.ap-date')).fdatepicker('update', date);
-                    scope.hours = date.getHours();
-                    scope.minutes = date.getMinutes();
                 }
-            });
 
-            //Funcion que realiza el cambio de la hora en el modelo
-            function changeDateTime(date, hours, minutes) {
-                var h = (angular.isUndefined(hours) || hours === null) ?
-                        ((scope.hours !== null) ? scope.hours : 0) : hours;
-                var m = (angular.isUndefined(minutes) || minutes === null) ?
-                        ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
-                date.setSeconds(0);
-                date.setHours(h);
-                date.setMinutes(m);
+                //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
+                //detectar cuando se cambia la hora
+                $(elem.find('.date')).fdatepicker(options).on('changeDate', function(ev) {
+                    scope.date = ev.date;
+                    scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
+                    changeDate(scope.date);
+                });
 
-                //cambio hecho al terminar el ciclo $digest actual
-                $timeout(function() {
-                    scope.$apply(function(){
-                        ngModel.$setViewValue(date);
+                /**
+                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse.
+                 */
+                ngModel.$render = function() {
+                    if(ngModel.$modelValue) {
+                        var date = new Date(ngModel.$modelValue);
+                        if(isNaN(date)) {
+                            return; //la fecha no es valida
+                        }
+                        scope.date = date;
+                        $(elem.find('.date')).fdatepicker('update', date);
+                    } else {
+                        $(elem.find('input')).val(null);
+                    }
+                };
+            },
+            templateUrl: 'directives/datePicker/datePicker.template.html'
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apDateTimePicker', [
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                label: '@'
+            },
+            link: function(scope, elem, attr, ngModel) {
+                
+                scope.hours = null;
+                scope.minutes = null;
+                scope.date = null;
+                scope.label = scope.label ? scope.label : '';
+
+                var options = {
+                    format: 'dd/mm/yyyy',
+                    language: 'es'
+                };
+
+                //Funcion que realiza el cambio de la hora en el modelo
+                function changeDateTime(date, hours, minutes) {
+                    var h = (angular.isUndefined(hours) || hours === null) ?
+                            ((scope.hours !== null) ? scope.hours : 0) : hours;
+                    var m = (angular.isUndefined(minutes) || minutes === null) ?
+                            ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
+                    date.setSeconds(0);
+                    date.setHours(h);
+                    date.setMinutes(m);
+
+                    //cambio hecho al terminar el ciclo $digest actual
+                    $timeout(function() {
+                        scope.$apply(function(){
+                            ngModel.$setViewValue(date);
+                        });
                     });
+                }
+
+                //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
+                //detectar cuando se cambia la hora
+                $(elem.find('.date')).fdatepicker(options)
+                        .on('changeDate', function(ev){
+                    scope.date = ev.date;
+                    scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
+                    changeDateTime(scope.date);
                 });
-            }
 
-            //Se inicializa el componente fdatepicker en la vista y se le asigna un eventListener para
-            //detectar cuando se cambia la hora
-            $(elem.find('.ap-date')).fdatepicker(options)
-                    .on('changeDate', function(ev){
-                scope.date = ev.date;
-                scope.date.setHours(scope.date.getHours() + (scope.date.getTimezoneOffset() / 60));
-                changeDateTime(scope.date);
-            });
+                //Funcion que se ejecuta al cambiar de hora en la vista
+                scope.changeHour = function() {
+                    if (typeof scope.hours === 'undefined') {
+                        return;
+                    }
+                    if(scope.hours < 0) {
+                        scope.hours = 0;
+                    }
+                    if(scope.hours > 23) {
+                        scope.hours = 23;
+                    }
+                    changeDateTime(scope.date, scope.hours, scope.minutes);
+                };
 
-            //Funcion que se ejecuta al cambiar de hora en la vista
-            scope.changeHour = function() {
-                if (typeof scope.hours === 'undefined') {
-                    return;
-                }
-                if(scope.hours < 0) {
-                    scope.hours = 0;
-                }
-                if(scope.hours > 23) {
-                    scope.hours = 23;
-                }
-                changeDateTime(scope.date, scope.hours, scope.minutes);
-            };
+                //Funcion que se ejecuta al cambiar de minuto en la vista
+                scope.changeMinute = function() {
+                    if (typeof scope.minutes === 'undefined') {
+                        return;
+                    }
+                    if(scope.minutes < 0) {
+                        scope.minutes = 0;
+                    }
+                    if(scope.minutes > 59) {
+                        scope.minutes = 59;
+                    }
+                    changeDateTime(scope.date, scope.hours, scope.minutes);
+                };
 
-            //Funcion que se ejecuta al cambiar de minuto en la vista
-            scope.changeMinute = function() {
-                if (typeof scope.minutes === 'undefined') {
-                    return;
-                }
-                if(scope.minutes < 0) {
-                    scope.minutes = 0;
-                }
-                if(scope.minutes > 59) {
-                    scope.minutes = 59;
-                }
-                changeDateTime(scope.date, scope.hours, scope.minutes);
-            };
-        },
-        templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
-    };
-}]);
+                /**
+                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse.
+                 */
+                ngModel.$render = function() {
+                    if(ngModel.$modelValue) {
+                        var date = new Date(ngModel.$modelValue);
+                        if(isNaN(date)) {
+                            return; //la fecha no es valida
+                        }
+                        scope.date = date;
+                        $(elem.find('.date')).fdatepicker('update', date);
+                        scope.hours = date.getHours();
+                        scope.minutes = date.getMinutes();
+                    } else {
+                        $(elem.find('input')).val(null);
+                    }
+                };
+            },
+            templateUrl: 'directives/dateTimePicker/dateTimePicker.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apFileSaver', [
     '$http', 'CrudConfig',
     function ($http, CrudConfig) {
@@ -1912,133 +2458,170 @@ angular.module('adminPanel').directive('apBox', [
             templateUrl: 'directives/filter/filter.template.html'
         };
     }
-]);;angular.module('adminPanel').directive('fieldErrorMessages', [
-    function() {
+]);;/**
+ * @description Directiva que reemplaza a <form>. Cuenta con las siguientes funcionaldiades:
+ *  - Llamar a angular-validator para que se verifique si el formulario contiene errores.
+ *  - Mostrar un mensaje en caso de que el formulario no sea correcto.
+ *  - Realizar un scroll hasta el mensaje mencionado previamente una vez presionado el botón de submit.
+ *  - Agregar el botón de submit.
+ *  - Agregar el botón de cancel si existe $scope.cancel.
+ *  - Cambiar el nombre del botón del submit con el valor de $scope.submitButtonValue
+ * 
+ *  Attrs:
+ *      - id: El id de <form>
+ */
+angular.module('adminPanel').directive('apForm',[
+    '$document', '$timeout',
+    function($document, $timeout) {
         return {
             restrict: 'E',
-            scope: {
-                errors: '='
+            transclude: true,
+            replace: true,
+            scope: false,
+            link: function($scope, element, attr, ctrl, transclude) {
+                $scope.formId = attr.id;
+                $scope.errorData = {};
+                $scope.submitButtonValue = $scope.submitButtonValue ? $scope.submitButtonValue : 'Guardar';
+                
+                var contentElement = $(element).children().eq(1);
+
+                //Se define la función transclude para que el contenido utilice el mismo scope
+                transclude($scope, function(clone, $scope) {
+                    contentElement.append(clone);
+                });
+
+                $scope.$watch('errorDetails', function() {
+                    if ($scope.errorDetails) {
+                        transformErrorData($scope.errorDetails, $scope.errorData);
+                    } else {
+                        $scope.errorData = {};
+                    }
+                });
+
+                $scope.scroll = function(formId) {
+                    if ($document.scrollToElement) {
+                        var element = angular.element(document.getElementById(formId));
+                        if (element) {
+                            $timeout( function () {
+                                $document.scrollToElement(
+                                    element,
+                                    110,
+                                    500
+                                );
+                            });
+                        }
+                    }
+                };
+
+                /**
+                 * @description Función que crea un objeto con los mensajes de error a partir de la respuesta de symfony
+                 *
+                 * @param {Object} dataObj Objeto data de la respuesta de symfony
+                 * @param {type} newData Objeto donde se guarda el arreglo de errores
+                 * @returns {undefined}
+                 */
+                function transformErrorData(dataObj, newData) {
+                    newData.errors = [];
+                    if (dataObj && dataObj.code === 400 || dataObj.code === 404) {
+                        if (dataObj.errors) {
+                            iterateErrorObject(dataObj.errors, newData);
+                        } else {
+                            newData.errors.push(dataObj.message);
+                        }
+                    }
+
+                    function iterateErrorObject(obj, data) {
+                        for (var property in obj) {
+                            if (obj.hasOwnProperty(property)) {
+                                if (angular.isArray(obj[property]) && property === 'errors') {
+                                    data.errors = data.errors.concat(obj[property]);
+                                } else if (angular.isObject(obj[property])) {
+                                    iterateErrorObject(obj[property], data);
+                                }
+                            }
+                        }
+                    }
+                }
             },
-            link: function(scope, elem) {
-                elem.addClass('form-error');
-            },
-            templateUrl: 'directives/form/fieldErrorMessages.template.html'
+            templateUrl: 'directives/form/form.template.html'
         };
     }
-]);
-
-;angular.module('adminPanel').directive('formValidation', [
-    '$parse','$compile',
-    function($parse,$compile) {
+]);;/**
+ * @description Atributo que se coloca en un elemento para que
+ *              actue como botón que redirecciona a una parte
+ *              específica del documento.
+ *
+ *  Ejemplo de uso:
+ *  <ul class="menu vertical">
+ *      <li><a href="" ap-go-to-anchor="elem1Id">Go to element 1</a></li>
+ *      <li><a href="" ap-go-to-anchor="elem2Id">Go to element 2</a></li>
+ *  </ul>
+ *  Attrs:
+ *      - ap-go-to-anchor: Id del elemento donde se va a colocar la pantalla.
+ */
+angular.module('adminPanel').directive('apGoToAnchor',[
+    '$timeout', '$document',
+    function($timeout, $document) {
         return {
-            require: 'form',
             restrict: 'A',
-            scope: true,
-            link: function(scope, elem, attr, formCtrl) {
-                //Definimos las validaciones
-                var required = function(fieldCtrl, expression) {
-                    if(angular.isUndefined(expression)) {
-                        expression = true;
+            link: function(scope , element, attrs) {
+
+                scope.options = {
+                    duration: 500,
+                    offest: 60,
+                    easing: function (t) {
+                        return t;
                     }
-                    return function(modelValue, viewValue) {
-                        return !expression || !fieldCtrl.$isEmpty(viewValue);
-                    };
                 };
-                var number = function(ctrl) {
-                    
-                };
-                
-                var validators = {
-                    required: required
-                };
-                
-                
-                //Seteamos las validaciones
-                var validations = $parse(attr.formValidation)(scope);
-                scope.validations = {};
-                for(var field in validations) {
-                    var fieldCtrl = formCtrl[field];
-                    var fieldDOMElem = fieldCtrl.$$element;
-                    var messages = {};
-                    for(var validation in validations[field]) {
-                        var validator = validations[field][validation];
-                        fieldCtrl.$validators[validation] = validators[validation](fieldCtrl, validator.expression);
-                        messages[validation] = validator.message;
+
+                element.bind("click", function(e) {
+                    var element = angular.element(document.getElementById(attrs.apGoToAnchor));
+                    if (element) {
+                        $timeout( function () {
+                            $document.scrollToElement(
+                                element,
+                                scope.options.offest,
+                                scope.options.duration,
+                                scope.options.easing
+                            ).then(
+                                function() {
+                                    //El scroll fue realizado con éxito
+                                },
+                                function() {
+                                    //El scroll falló, posiblemente porque otro fue iniciado
+                                }
+                            );
+                        });
                     }
-                    scope.validations[field] = {
-                        errors: fieldCtrl.$error,
-                        messages: messages
-                    };
-                    var fieldErrorMessagesDirective = angular.element('<field-error-messages errors="validations.'+field+'.errors" messages="validations.'+field+'.messages">');
-                    $compile(fieldErrorMessagesDirective)(scope);
-                    fieldDOMElem.after(fieldErrorMessagesDirective);
-                }
+                });
             }
         };
     }
 ]);;/**
- * Directiva que maneja el control de las clases de error en un campo de un formulario. 
- * Usa las clases de foundation para el estado de error de un campo.
- * http://foundation.zurb.com/sites/docs/abide.html
- * 
- * Tambien setea los mensajes a mostrar en la aplicacion. Si no se setea ninguno se toman los mensajes por defecto.
- * Toma los errores del input que tiene definido como elemento hijo.
- * Los mensajes deben ser definidos como un objeto en donde la clave es el nombre del error y el valor es el mensaje
- * var obj = {
- *   error: 'msg'
- * }
+ * @description Atributo que redirecciona con el evento de click.
+ *              Similar al atributo href del elemento <a>.
  */
-angular.module('adminPanel').directive('formFieldError', [
-    '$animate','$compile','AdminPanelConfig',
-    function($animate,$compile,AdminPanelConfig) {
+angular.module('adminPanel').directive('apGoToPath', [
+    '$location',
+    function ($location) {
         return {
-            require: '^form',
             restrict: 'A',
-            scope: {
-                messages: '=?',
-                expr: '='
-            },
-            link: function(scope, elem, attr, ctrl) {
-                scope.inputElem = elem.find('input');
-                scope.inputErrors = ctrl[scope.inputElem.attr('name')].$error;
-                scope.errors = {};
-                for(var key in scope.messages) {
-                    scope.errors[key] = {
-                        expresion: false,
-                        message: scope.messages[key]
-                    };
-                }
-                scope.fieldErrorMsgDirective = angular.element('<field-error-messages>');
-                scope.fieldErrorMsgDirective.attr('errors', 'errors');
-                elem.append(scope.fieldErrorMsgDirective);
-                $compile(scope.fieldErrorMsgDirective)(scope);
-                
-                //Evaluamos los errores del campo hijo segun su nombre
-                //Ver propiedad $error en https://docs.angularjs.org/api/ng/type/form.FormController
-                scope.$watch('inputErrors', function(val) {
-                    for(var key in val) {
-                        if(!scope.errors[key]) {
-                            scope.errors[key] = {
-                                expresion: false,
-                                message: (scope.messages) ? scope.messages[key] : AdminPanelConfig.defaultFormMessages[key]
-                            };
-                        }
-                        scope.errors[key].expresion = val[key];
-                    }
+            link: function(scope , element, attrs) {
+                var path;
+
+                attrs.$observe('apGoToPath', function (val) {
+                    path = val;
                 });
-                
-                //Evaluamos la expresion pasada al atributo de la directiva, si es verdadero 
-                //seteamos las clases de error al formulario
-                scope.$watch('expr', function(val) {
-                    $animate[val ? 'addClass' : 'removeClass'](elem, 'is-invalid-label');
-                    $animate[val ? 'addClass' : 'removeClass'](scope.inputElem, 'is-invalid-input');
-                    $animate[val ? 'addClass' : 'removeClass'](scope.fieldErrorMsgDirective, 'is-visible');
+
+                element.bind('click', function () {
+                    scope.$apply(function () {
+                        $location.path(path);
+                    });
                 });
             }
         };
     }
-]);
-;angular.module('adminPanel').directive('apImageLoader', [
+]);;angular.module('adminPanel').directive('apImageLoader', [
     function(){
         return {
             require: 'ngModel',
@@ -2259,7 +2842,44 @@ angular.module('adminPanel').directive('formFieldError', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('apMessage', [
+;/**
+ * @description Magellan
+ */
+angular.module('adminPanel').directive('apMagellan',[
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                items: '<',
+                title: '@'
+            },
+            link: function($scope, element, attr) {
+
+                /**
+                 * Eliminar los items que referencian a un id que no existe.
+                 */
+                function filterItems() {
+                    for (var key in $scope.items) {
+                        if ($scope.items[key] && !angular.element('#' + $scope.items[key]).length) {
+                            delete $scope.items[key];
+                        }
+                    }
+                }
+
+                $scope.$on('magellan:filterItems', function(e) {
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    }
+                    $timeout(filterItems);
+                });
+            },
+            templateUrl: 'directives/magellan/magellan.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apMessage', [
     '$timeout',
     function($timeout) {
         return {
@@ -2374,7 +2994,126 @@ angular.module('adminPanel').directive('apConfirmModal', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('msfCoordenadas', [
+;/**
+ * @description Modal con clase Reveal de foundation.
+ *
+ *  Ejemplo de uso:
+ *  <a class="tiny button" ap-show-modal="modalId"><i class="fa fa-info medium animate"></i></a>
+ *  <ap-modal id="modalId" dialog-buttons confirm-button-type="alert">
+ *      <h4>Título de Modal</h4>
+ *      <p class="lead">Contenido del modal.</p>
+ *  </ap-modal>
+ *
+ *  Attrs:
+ *      - dialog-buttons: Hace que se muestren dos botones en el modal:
+ *        "confirmar" y "cancelar". El botón "confirmar" hace que se emita un evento
+ *        con nombre "modalConfirm", enviando como dato el ID del modal.
+ *      - confirm-button-type: Permite asignarle el estilo al botón de "confirmar"
+ *        cuando la opción "dialog-buttons" esta activa. Las opciones son:
+ *        "primary", "secondary", "success", "alert", "warning".
+ *      - id: id del elemento, lo usa el botón un otro elemento que tenga la directiva
+ *        ap-show-modal para saber qué modal abrir.
+ */
+angular.module('adminPanel').directive('apModal',[
+    '$timeout', '$document',
+    function($timeout, $document) {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                id: '@'
+            },
+            link: function(scope, element, attrs, ctrl, transclude) {
+
+                //Constantes
+                var ESC_KEY_CODE = 27;
+
+                //Inicializar variables del scope
+                scope.dialogButtons = angular.isUndefined(attrs.dialogButtons) ? false : true;
+                scope.confirmButtonType = attrs.confirmButtonType;
+                scope.show = false;
+
+                scope.hideModal = function() {
+                    scope.show = false;
+                };
+
+                scope.showModal = function() {
+                    scope.show = true;
+                };
+
+                function escHandler (event) {
+                    if (scope.show === true && event.keyCode === ESC_KEY_CODE) {
+                        $timeout(scope.hideModal, 0);
+                        event.preventDefault();
+                    }
+                }
+
+                /**
+                 * Evento disparado al destruir la directiva
+                 */
+                scope.$on('$destroy', function() {
+                    $document.off('keydown', escHandler);
+                });
+
+                $document.on('keydown', escHandler);
+            },
+            controller: ['$scope', function($scope) {
+
+                //Evento disparado al presionar el botón confirmar
+                $scope.confirm = function() {
+                    $scope.$emit('modalConfirm', {id: $scope.id});
+                    //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
+                    $timeout($scope.hideModal, 0);
+                };
+
+                //Event listener para abrir el modal
+                $scope.$on("showModal", function (event, data) {
+                    if (data.id === $scope.id) {
+                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
+                        $timeout($scope.showModal, 0);
+                    }
+                });
+
+                //Event listener 2 para abrir el modal
+                $scope.$on('apBox:show', function showOnEvent(e, name) {
+                    if (name === $scope.id) {
+                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
+                        $timeout($scope.showModal, 0);
+                    }
+                });
+            }],
+            templateUrl: 'directives/modals/modal/modal.template.html'
+        };
+    }
+]);;/**
+ * @description Atributo para abrir ap-modals.
+ *
+ *  Ejemplo de uso:
+ *  <a class="tiny button" ap-show-modal="modalId1"><i class="fa fa-info medium animate"></i></a>
+ *  <a class="tiny button" ap-show-modal="modalId2"><i class="fa fa-info medium animate"></i></a>
+ *  <ap-modal id="modalId1">
+ *      <p class="lead">Este modal se abre con el primer botón.</p>
+ *  </ap-modal>
+ *  <ap-modal id="modalId2">
+ *      <p class="lead">Este modal se abre con el segundo botón.</p>
+ *  </ap-modal>
+ *  Attrs:
+ *      - ap-show-modal: Id del modal que se va a abrir al hacer click en el elemento.
+ */
+angular.module('adminPanel').directive('apShowModal',[
+    '$rootScope',
+    function($rootScope) {
+        return {
+            restrict: 'A',
+            link: function(scope , element, attrs) {
+                element.bind("click", function(e) {
+                    $rootScope.$broadcast("showModal", {id: attrs.apShowModal});
+                });
+            }
+        };
+    }
+]);;angular.module('adminPanel').directive('msfCoordenadas', [
     '$timeout',
     function($timeout) {
     return {
@@ -2451,6 +3190,34 @@ angular.module('adminPanel').directive('apConfirmModal', [
         templateUrl: 'directives/msfCoordenadas/msfCoordenadas.template.html'
     };
 }]);
+;angular.module('adminPanel').directive('apNumberInput', [
+    function() {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                label: '@',
+                ngModel: '=',
+                placeholder: '@',
+                max: '@',
+                min: '@',
+                step: '@',
+                previousLabel: '@'
+            },
+            link: function(scope, elem, attr, ngModelCtrl) {
+                
+                scope.label = scope.label ? scope.label : '';
+                scope.placeholder = scope.placeholder ? scope.placeholder : scope.label;
+                scope.previousLabel = scope.previousLabel ? scope.previousLabel : null;
+
+                scope.updateModel = function() {
+                    ngModelCtrl.$setViewValue(scope.ngModel);
+                };
+            },
+            templateUrl: 'directives/numberInput/numberInput.template.html'
+        };
+    }
+]);
 ;angular.module('adminPanel').directive('apOffCanvas', [
     '$timeout',
     function($timeout) {
@@ -2575,505 +3342,1113 @@ angular.module('adminPanel').directive('apConfirmModal', [
     }
 ]);
 
-;
-/**
- * KNOWN ISSUES
- *  - Si la lista esta cerrada, y el foco lo posee el input de la lista al cambiar de ventana en el SO y volver a la
- *  ventana actual, el navegador le da el foco al input, que al estar la lista cerrada la despliega. Esto no deberia pasar
- *  y la lista deberia permanecer cerrada.
+;/**
+ * @description Select que obtiene las opciones del servidor. Tiene los mismos parámetros
+ *              que un select normal + los parámetros "resource" y "field" más abajo detallados.
  *
- *  sugerencias
- *  - La cantidad maxima de items a mostrar debe estar definida en el archivo de configuracion de la app. Para eso
- *  se deberia definir una propiedad dentro del servicio CrudConfig
+ *  Ejemplo de uso:
+ *  <ap-select
+ *      name="fieldName"
+ *      label="Label del select"
+ *      ng-model="nombreEntidad.fieldName"
+ *      entity="entityName">
+ *  </ap-select>
  *
- *  Consideraciones generales
- *
- *  En un evento, para cancelarlo en un hijo, el evento debe ser el mismo. En este caso se usa mousedown para todo.
- *
- *  //doc
- *
- *  resource: nombre del CrudResource especificado
- *  queryParams: propiedades que se usan como parametros de la consulta para filtrar resultados, si no están definidos se usan las
- *               propiedades definidas en el objeto properties
- *  method: es el metodo del CrudResource que se establece para realizar la consulta. Por defecto 'get'
- *  properties: son las propiedades de las entidades a mostrar como opcion en la lista desplegable, concatenadas por una coma (,)
- *  filters: filtros aplicados a las propiedades. Ejemplo: filters="['date::dd/MM/yyyy', 'uppercase', '', 'lowercase']".
- *           para especificar el formato de un filtro utilizar "::".
+ *  Attrs:
+ *      - resource: nombre del crudResource que se usará para obtener la
+ *        lista de opciones. La ruta del mismo debe contener un parámetro
+ *        llamado "field", por ejemplo: bundleName/choices/:field. El valor
+ *        de este atributo por defecto es "Choices".
+ *      - field: Parámetro que se usará en la consulta para obtener las
+ *        opciones. Si este atributo no existe se usa el valor del atributo
+ *        "name".
+ *      - entity: Parámetro que se usará en la consulta para obtener las
+ *        opciones. El valor por defecto se determina del atributo ng-model.
+ *      - ngModel: Modelo que modificará la directiva.
+ *      - allowEmpty: Agrega un string vacio como opción en el select. Nota:
+ *        si el campo en la BD acepta un string vacio agregar la opción en el
+ *        backend, usar este atributo en los casos que no se requiera guardar
+ *        el dato, por ejemplo para filtrar una tabla.
+ *      - label: Label de input
  */
-angular.module('adminPanel').directive('apSelect', [
-    '$timeout', '$rootScope', '$q', '$injector', '$document', '$filter',
-    function ($timeout, $rootScope, $q, $injector, $document, $filter) {
+angular.module('adminPanel').directive('apSelect',[
+    '$injector', '$timeout', '$document', '$q', 'apSelectProvider',
+    function($injector, $timeout, $document, $q, apSelectProvider) {
         return {
-            restrict: 'AE',
+            restrict: 'E',
             require: 'ngModel',
             scope: {
                 resource: '@',
-                queryParams: '=?',
-                method: '@?',
-                requestParam: '=?',
-                properties: '=',
-                filters: '=?'
+                field: '@',
+                entity: '@',
+                ngModel: '=',
+                label: '@'
             },
-            link: function (scope, elem, attr, ngModel) {
-                elem.addClass('select-ap');
+            link: function(scope, element, attrs, ngModelCtrl) {
+                element.addClass('ap-select');
 
-                var resource = null;
-                //obtenemos el servicio para hacer las consultas con el servidor}
-                if($injector.has(scope.resource)) {
-                    var crudResource = $injector.get(scope.resource, 'apSelect');
+                //Constantes
+                var ENTER_KEY_CODE = 13;
+
+                //Inicializar variables
+                var field = scope.field ? scope.field : attrs.name;
+                var resource = scope.resource ? scope.resource : 'Choices';
+                var entity = scope.entity ? scope.entity : null;
+                var name = angular.isUndefined(attrs.name) ? 'default' : attrs.name;
+                var timeoutToggleListPromise = null;
+                var preventClickButton = false;
+                var inputElement = element.find('input');
+                var allowEmpty = angular.isUndefined(attrs.allowEmpty) ? null : true;
+                
+                //Si no se paso el atributo entity se calcula con el nombre de ng-model
+                if (!entity && attrs.ngModel) {
+                    entity = getEntityName(attrs.ngModel);
+                }
+
+                //Realizar verificaciones y conversiones de parámetros
+                if(!resource) {
+                    console.error('El recurso esta definido');
+                    return;
+                }
+                if(!field) {
+                    console.error('Los atributos name y field no estan definidos, al menos uno debe estarlo.');
+                    return;
+                }
+                if(typeof field !== 'string') {
+                    console.error('Atributo field con formato invalido.');
+                    return;
+                }
+                field = field.toLowerCase();
+                entity = entity.toLowerCase();
+
+                //Inicializar scope
+                scope.label = scope.label ? scope.label : '';
+                scope.selectedValue = null;
+                scope.loading = true;
+                scope.list = {
+                    options: [],
+                    displayed: false
+                };
+
+                //Obtener servicio para realizar consultas al servidor
+                if($injector.has(resource)) {
+                    var crudResource = $injector.get(resource, 'apSelect');
                     resource = crudResource.$resource;
                 }
-                if(!resource) {
-                    console.error('El recurso no esta definido');
-                }
-
-
-                //habilitamos el boton para agregar entidades
-                scope.enableNewButton = !(angular.isUndefined(attr.new) || attr.new === null);
-
-                //obtenemos el nombre del select dado el atributo name
-                var name = angular.isUndefined(attr.name) ? 'default' : attr.name;
-
-                //se definen las propiedades del objeto a mostrar.
-                var objectProperties = angular.isString(scope.properies) ? scope.properties.split(',') : scope.properties;
-
-                //se generan los datos necesarios para aplicar los filtros
-                var filtersData = [];
-                var propertyFilters = angular.isString(scope.filters) ? scope.filters.split(',') : scope.filters;
-                objectProperties.forEach(function(filter, i) {
-                    if (angular.isDefined(propertyFilters) && propertyFilters[i]) {
-                        filtersData.push(propertyFilters[i].split('::'));
-                    } else {
-                        filtersData.push(['','']);
-                    }
-                });
-
-                //elemento seleccionado
-                scope.itemSelected = null;
-
-                //inicializamos los componentes
-                scope.input = {
-                    model: null,
-                    vacio: true
-                };
-                scope.lista = {
-                    items: [],
-                    desplegado: false
-                };
-                //Indica el estado del request.
-                scope.loading = false;
-                var timeoutCloseListPromise = null;
-                var timeoutOpenListPromise = null;
-
-                var defaultMethod = (angular.isUndefined(scope.method) || scope.method === null) ? 'get' : scope.method;
-                var queryParams = angular.isString(scope.queryParams) ? scope.queryParams.split(',') : scope.queryParams || objectProperties;
-
-                var request = null;
-                var preventClickButton = false;
 
                 /**
-                 * Funcion que convierte un objeto a un item de la lista segun las propiedades especificadas
-                 * en la propiedad properties de la directiva
-                 *
-                 * @param {Object} object | entidad serializada que se esta listando
-                 * @returns {Object} | tiene dos propiedades, name: que es por la que se lista despues en la vista
-                 * y object, que es el objeto el cual se está listando
+                 * Cargar opciones
                  */
-                function convertObjectToItemList(object) {
-                    var name = '';
-
-                    //Seteamos solamente los campos seleccionados a mostrar
-                    for(var j = 0; j < objectProperties.length; j++) {
-                        if (filtersData[j][0] && filtersData[j][1]) {
-                            name += $filter(filtersData[j][0])(object[objectProperties[j]], filtersData[j][1]) + ', ';
-                        } else if (filtersData[j][0]) {
-                            name += $filter(filtersData[j][0])(object[objectProperties[j]]) + ', ';
-                        } else {
-                            name += object[objectProperties[j]] + ', ';
-                        }
+                function loadOptions() {
+                    var request = apSelectProvider.get(entity, field);
+                    if(!request) {
+                        request = resource.get({entity: entity, field: field});
+                        apSelectProvider.register(entity, field, request);
                     }
-                    //borramos la ultima coma
-                    name = name.replace(/,\s*$/, "");
+                    request.$promise.then(
+                        function(responseSuccess) {
+                            if (typeof responseSuccess.data !== 'object') {
+                                console.error('Los datos recibidos no son validos.');
+                                return;
+                            }
+                            scope.list.options = angular.copy(responseSuccess.data);
 
-                    return {
-                        name: name,
-                        $$object: angular.copy(object)
-                    };
-                }
-
-                /**
-                 * Se realiza el request. En caso de haber uno en proceso se lo cancela
-                 * Emite un evento en donde se manda la promise.
-                 *
-                 * El parametro all establece que se haga una consulta sin parametros.
-                 * Esta se hace cuando se inicializa el componente y todavia no se hizo ningun request
-                 *
-                 * @param {boolean} all Establece si se usan los filtros para filtrar las entidades
-                 */
-                function doRequest(all) {
-                    if(request) {
-                        request.$cancelRequest();
-                    }
-
-                    var search = angular.isUndefined(scope.requestParam) ? {} : scope.requestParam;
-
-                    if(!all) {
-                        for (var j = 0; j < queryParams.length; j++) {
-                            search[queryParams[j]] = scope.input.model;
+                            if (allowEmpty && scope.list.options[0] !== '') {
+                                scope.list.options.unshift('');
+                            }
+                            changeSelectedValue(scope.list.options[0], true);
+                            return responseSuccess.data;
+                        },
+                        function(responseError) {
+                            console.error('Error ' + responseError.status + ': ' + responseError.statusText);
+                            apSelectProvider.remove(entity, field);
+                            $q.reject(responseError);
                         }
-                    }
-
-
-                    request = resource[defaultMethod](search);
-
-                    //seteamos en la vista que el request esta en proceso
-                    scope.loading = true;
-                    var promise = request.$promise.then(function(rSuccess) {
-                        var max = (rSuccess.data && rSuccess.data.length > 6) ? 6 : rSuccess.data.length;
-                        //creamos la lista. Cada item es de la forma
-                        //{name:'name',id:'id'}
-                        var list = [];
-                        for(var i = 0; i < max; i++) {
-                            var object = rSuccess.data[i];
-                            list.push(convertObjectToItemList(object));
-                        }
-                        scope.lista.items = list;
-
-                        if(!scope.lista.desplegado) {
-                            scope.lista.desplegado = true;
-                        }
-
-                        return rSuccess.data;
-                    }, function(rError) {
-                        $q.reject(rError);
-                    });
-
-                    //steamos en la vista que el request se termino de procesar
-                    promise.finally(function() {
+                    ).finally(function() {
                         if(request.$resolved) {
                             scope.loading = false;
                         }
                     });
-                    scope.$emit('ap-select:request', name, promise);
                 }
 
+                /**
+                 * Retorna el estado de la lista:
+                 *  - true  -> abierta
+                 *  - false -> cerrada
+                 */
+                function listDisplayed() {
+                    return scope.list.displayed;
+                }
 
                 /**
-                 * Por ahora la lista solo se cierra en el evento blur del input
+                 * Cerrar lista
                  */
                 function closeList() {
-                    //dado el caso de que el comportamiento de $timeout.cancel() no esta rechazando las promesas
-                    // (posible bug de angular) se verifica que el timeoutCloseListPromise sea distinto de null
-                    // es decir, la promesa no haya sido cancelada
-                    if(timeoutCloseListPromise === null) return;
-
-                    //cerramos la lista
-                    scope.lista.desplegado = false;
-
-                    //si hay un request en proceso se lo cancela
-                    if(request) {
-                        request.$cancelRequest();
-                    }
-
-                    //seteamos el modelo si no hubo cambios
-                    scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
-                    scope.input.vacio = (scope.itemSelected === null);
-                }
-
-                /**
-                 * Por ahora la lista se abre solo en el foco al input
-                 */
-                function openList() {
-                    //en caso de haber una promesa activa para cerrar la lista no se la vuelve a abrir
-                    if(timeoutCloseListPromise !== null) {
+                    if(timeoutToggleListPromise) {
                         return;
                     }
-
-                    //se abre la lista
-                    scope.lista.desplegado = true;
-                    //si la lista interna esta vacia se hace el request sin parametros en la consulta
-                    if (scope.lista.items.length === 0) {
-                        doRequest(true);
+                    if(listDisplayed()) {
+                        timeoutToggleListPromise = $timeout( function() {
+                            scope.list.displayed = false;
+                        }).finally(function() {
+                            timeoutToggleListPromise = null;
+                        });
                     }
                 }
 
-                //eventos relacionados con el input
-
                 /**
-                 * Si la lista no esta desplegada se la despliega. En todos los casos se hace el request
+                 * Abrir lista
                  */
-                scope.onChangeInput = function() {
-                    if(!scope.lista.desplegado) {
-                        scope.lista.desplegado = true;
+                function openList() {
+                    if(timeoutToggleListPromise) {
+                        return;
                     }
-
-                    //chequeamos si el input esta vacio
-                    scope.input.vacio = (angular.isUndefined(scope.input.model) && scope.input.model.length !== 0);
-                    doRequest();
-                };
-
-                /**
-                 * Si el valor referenciado por ng-model cambia programáticamente y $modelValue y $viewValue
-                 * son diferentes, el valor del modelo vuelve a ser null.
-                 */
-                ngModel.$render = function() {
-                    scope.input = {
-                        model: null,
-                        vacio: true
-                    };
-                };
-
-                /**
-                 * Se despliega la lista si no esta desplegada.
-                 * Solo se hace el request si la lista interna esta vacia
-                 */
-                scope.onFocusInput = function () {
-
-                    if(!scope.lista.desplegado) {
-                        timeoutOpenListPromise = $timeout(openList).finally(function() {
-                            timeoutOpenListPromise = null;
+                    if(!listDisplayed()) {
+                        timeoutToggleListPromise = $timeout( function() {
+                            scope.list.displayed = true;
+                        }).finally(function() {
+                            timeoutToggleListPromise = null;
                         });
                     }
+                }
+
+                /**
+                 * Buscar y retornar primer coincidencia del valor del input en la lista
+                 */
+                function searchFirstMatch() {
+                    var inputValue = inputElement.val();
+                    return scope.list.options.find(function (item) {
+                        return item.toLowerCase().indexOf(inputValue.toLowerCase()) >= 0;
+                    });
+                }
+
+                /**
+                 * Cambiar valor seleccionado.
+                 */
+                function changeSelectedValue(newValue, externalChange) {
+                    if (externalChange && angular.isDefined(scope.ngModel) && scope.ngModel !== null) {
+                        scope.selectedValue = ngModelCtrl.$modelValue;
+                    } else if (angular.isDefined(newValue) && newValue !== null) {
+                        scope.selectedValue = newValue;
+                        if (externalChange) {
+                            scope.ngModel = newValue;
+                        } else {
+                            ngModelCtrl.$setViewValue(newValue);
+                        }
+                    } else {
+                        scope.selectedValue = ngModelCtrl.$modelValue;
+                    }
+                }
+
+                /**
+                 * Hacer foco en el input
+                 */
+                function focusInput() {
+                    inputElement.focus();
+                }
+
+                /**
+                 * Quitar foco del input
+                 */
+                function blurInput() {
+                    inputElement.blur();
+                }
+
+                /**
+                 * Obtener nombre de la entidad (parámetro para hacer el request) dado
+                 * el valor de ng-model
+                 */
+                function getEntityName(ngModel) {
+                    if (typeof ngModel !== 'string') {
+                        return '';
+                    }
+                    var entity = ngModel.split(".");
+                    var length = entity.length;
+                    if (length === 0) {
+                        return '';
+                    }
+                    if (length === 1) {
+                        return entity[0];
+                    }
+                    return entity[length-2];
+                }
+
+                /**
+                 * Evento disparado al cambiar el valor del input
+                 */
+                scope.onChangeInput = function() {
+                    openList();
                 };
 
                 /**
-                 * Se usa el $timeout que retorna una promesa. Si el click proximo viene dado por un evento dentro
-                 * del select se cancela la promesa. Caso contrario, se ejecuta este codigo
+                 * Evento disparado al hacer foco en el input
+                 */
+                scope.onFocusInput = function () {
+                    openList();
+                };
+
+                /**
+                 * Evento disparado cuando el input pierde el foco
                  */
                 scope.onBlurInput = function() {
-                    if(timeoutOpenListPromise !== null) {
-                        $timeout.cancel(timeoutOpenListPromise);
-                        timeoutOpenListPromise = null;
-                    }
-
-
-                    timeoutCloseListPromise = $timeout(closeList, 100).finally(function() {
-                        timeoutCloseListPromise = null;
-                    });
+                    closeList();
+                    changeSelectedValue(searchFirstMatch());
                 };
 
-                //eventos relacionados con el boton
                 /**
-                 * Hace un toggle de la lista, es decir si esta desplegada, la cierra y sino la abre
-                 * En caso de que la lista este desplegada no se hace nada, ya que el evento blur del input cierra la lista
-                 * Si no está desplegada, la despliega, viendo de hacer o no el request, segun la lista interna tenga
-                 * tenga o no elementos.
+                 * Evento disparado al presionar el botón
                  */
                 scope.onClickButton = function() {
-
-                    //si no se previene el evento, se despliega la lista
                     if(!preventClickButton) {
-                        if(timeoutCloseListPromise !== null) {
-                            $timeout.cancel(timeoutCloseListPromise);
-                            timeoutCloseListPromise = null;
-                        }
-
-                        //le damos el foco al input
-                        elem.find('input').focus();
+                        focusInput();
                     }
                 };
 
                 /**
-                 * Toma el evento antes del click, dado que el click se computa cuando el usuario suelta el raton
-                 * Si la lista no esta desplegada, el curso es el de no prevenir el evento click, para que la lista
-                 * se despliegue.
-                 * Si la lista esta desplegada, el curso es el de prevenir el evento click, para que cuando el input
-                 * pierda el foco, la lista se cierre, pero cuando el usuario suelte el raton no se dispare el evento
-                 * click, lo que volvería a abrir la lista, lo cual NO es deseado.
+                 * Evento disparado al presionar el botón
                  */
                 scope.onMousedownButton = function(e) {
-                    preventClickButton = scope.lista.desplegado;
+                    preventClickButton = listDisplayed();
                 };
 
-                //eventos relacionados con la lista
-
                 /**
-                 * Al seleccionar un item de la lista se guarda en el modelo y la lista pasa a estado no desplegado
-                 * El menu se cierra dado el timeout del evento blur, que se dispara al hacer click sobre un item de la lista
+                 * Evento disparado al seleccionar un elemento de la lista
                  */
                 scope.onClickItemList = function(e, item) {
                     e.stopPropagation();
-
-                    //seteamos el item actual
-                    scope.itemSelected = item;
-
-                    //asignamos el id de la entidad al modelo
-                    ngModel.$setViewValue(item.$$object);
-
-                    //emitimos un evento al seleccionar un item, con el item y el nombre del elemento que se selecciono
-                    scope.$emit('ap-select:item-selected', name, item.$$object);
+                    changeSelectedValue(item);
                 };
 
                 /**
-                 * Al hacer click en la lista se cancela el evento para no cerrar la lista
+                 * Evento disparado al presionar enter
                  */
-                function onListClick() {
-                    if(timeoutCloseListPromise !== null) {
-                        $timeout.cancel(timeoutCloseListPromise);
-                        timeoutCloseListPromise = null;
+                function enterHandler(event) {
+                    if (listDisplayed() && event.keyCode === ENTER_KEY_CODE) {
+                        blurInput();
+                        event.preventDefault();
                     }
                 }
 
                 /**
-                 * Se ejecuta cuando el usuario da click al boton nuevo.
-                 * Lanza el evento para mostrar el box correspondiente
+                 * Evento disparado al destruir la directiva
                  */
-                scope.newObject = function (e) {
-                    e.stopPropagation();
+                scope.$on('$destroy', function() {
+                    $document.off('keydown', enterHandler);
+                });
 
-                    $rootScope.$broadcast('apBox:show', attr.new);
+                $document.on('keydown', enterHandler);
+
+                /**
+                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse.
+                 */
+                ngModelCtrl.$render = function() {
+                    loadOptions();
+                };
+            },
+            templateUrl: 'directives/select/select.template.html'
+        };
+    }
+]);;/**
+ * @description Filtro aplicado a las opciones del select
+ */
+angular.module('adminPanel').filter('selectOption', function() {
+    return function(input) {
+        var output = input;
+        if (input === '') {
+            output = ' - Sin selección -';
+        }
+        return output;
+    };
+});;/**
+ * @description Provider que guarda las opciones de los selects con el fin de disminuir la cantidad de request realizadas
+ * al servidor.
+ *
+ */
+angular.module('adminPanel').factory('apSelectProvider', function() {
+        var options = {};
+
+        options.data = {};
+
+        options.register = function(entity, field, request) {
+            if (angular.isUndefined(options.data[entity])) {
+                options.data[entity] = {};
+            }
+            options.data[entity][field] = request;
+        };
+
+        options.get = function(entity, field) {
+            if (angular.isUndefined(options.data[entity])) {
+                return null;
+            }
+            return options.data[entity][field];
+        };
+        
+        options.remove = function(entity, field) {
+            if (!angular.isUndefined(options.data[entity])) {
+                options.data[entity][field] = null;
+            }
+        };
+
+        return options;
+    }
+);;/**
+ * @description Select que permite seleccionar multiples valores y que obtiene las opciones del servidor.
+ *              Tiene los mismos parámetros que un select normal + los parámetros "resource" y "field" más abajo detallados.
+ *
+ *  Ejemplo de uso:
+ *  <label>Label del select</label>
+ *
+ *  <ap-select-multiple
+ *      name="fieldName"
+ *      ng-model="nombreEntidad.fieldName"
+ *      entity="entityName">
+ *  </ap-select-multiple>
+ *
+ *
+ *  Attrs:
+ *      - resource: nombre del crudResource que se usará para obtener la
+ *        lista de opciones. La ruta del mismo debe contener un parámetro
+ *        llamado "field", por ejemplo: bundleName/choices/:field. El valor
+ *        de este atributo por defecto es "Choices".
+ *      - field: Parámetro que se usará en la consulta para obtener las
+ *        opciones. Si este atributo no existe se usa el valor del atributo
+ *        "name".
+ *      - entity: Parámetro que se usará en la consulta para obtener las
+ *        opciones. El valor por defecto se determina del atributo ng-model.
+ *      - ngModel: Modelo que modificará la directiva.
+ */
+angular.module('adminPanel').directive('apSelectMultiple',[
+    '$injector', '$timeout', '$document', '$q', 'apSelectMultipleProvider',
+    function($injector, $timeout, $document, $q, apSelectMultipleProvider) {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                resource: '@',
+                field: '@',
+                entity: '@',
+                ngModel: '='
+            },
+            link: function(scope, element, attrs, ngModelCtrl) {
+                element.addClass('select-multiple');
+
+                var ENTER_KEY_CODE = 13;
+
+                //Inicializar variables
+
+                var field = scope.field ? scope.field : attrs.name;
+                var resource = scope.resource ? scope.resource : 'Choices';
+                var entity = scope.entity ? scope.entity : null;
+                var name = angular.isUndefined(attrs.name) ? 'default' : attrs.name;
+                var timeoutToggleListPromise = null;
+                var preventClickButton = false;
+                var inputElement = element.find('input');
+
+                //Si no se paso el atributo entity se calcula con el nombre de ng-model
+                if (!entity && attrs.ngModel) {
+                    entity = getEntityName(attrs.ngModel);
+                }
+
+                //Realizar verificaciones y conversiones de parámetros
+
+                if(!resource) {
+                    console.error('El recurso esta definido');
+                    return;
+                }
+                if(!field) {
+                    console.error('Los atributos name y field no estan definidos, al menos uno debe estarlo.');
+                    return;
+                }
+                if(typeof field !== 'string') {
+                    console.error('Atributo field con formato invalido.');
+                    return;
+                }
+                field = field.toLowerCase();
+                entity = entity.toLowerCase();
+
+                //Inicializar scope
+
+                scope.selectedValues = [];
+                scope.loading = true;
+                scope.list = {
+                    options: [],
+                    displayed: false
+                };
+                scope.searchValue = '';
+
+                //Obtener servicio para realizar consultas al servidor
+                if($injector.has(resource)) {
+                    var crudResource = $injector.get(resource, 'apSelect');
+                    resource = crudResource.$resource;
+                }
+
+                /**
+                 * Cargar opciones
+                 */
+                function loadOptions() {
+                    var request = apSelectMultipleProvider.get(entity, field);
+                    if(!request) {
+                        request = resource.get({entity: entity, field: field});
+                        apSelectMultipleProvider.register(entity, field, request);
+                    }
+                    request.$promise.then(
+                        function(responseSuccess) {
+                            var data = responseSuccess.data;
+                            if (typeof data !== 'object') {
+                                console.error('Los datos recibidos no son validos.');
+                                return;
+                            }
+                            scope.list.options = data;
+                            if (angular.isDefined(scope.ngModel) && scope.ngModel !== null) {
+                                //Si existe un valor en el modelo se coloca ese valor
+                                scope.selectedValues = scope.ngModel;
+                            }
+                            return data;
+                        },
+                        function(responseError) {
+                            console.error('Error ' + responseError.status + ': ' + responseError.statusText);
+                            $q.reject(responseError);
+                        }
+                    ).finally(function() {
+                        if(request.$resolved) {
+                            scope.loading = false;
+                        }
+                    });
+                }
+
+                /**
+                 * Retorna el estado de la lista:
+                 *  - true  -> abierta
+                 *  - false -> cerrada
+                 */
+                function listDisplayed() {
+                    return scope.list.displayed;
+                }
+
+                /**
+                 * Cerrar lista
+                 */
+                function closeList() {
+                    if(timeoutToggleListPromise) {
+                        return;
+                    }
+                    if(listDisplayed()) {
+                        timeoutToggleListPromise = $timeout( function() {
+                            scope.list.displayed = false;
+                        }).finally(function() {
+                            timeoutToggleListPromise = null;
+                        });
+                    }
+                    scope.searchValue = '';
+                }
+
+                /**
+                 * Abrir lista
+                 */
+                function openList() {
+                    if(timeoutToggleListPromise) {
+                        return;
+                    }
+                    if(!listDisplayed()) {
+                        timeoutToggleListPromise = $timeout( function() {
+                            scope.list.displayed = true;
+                        }).finally(function() {
+                            timeoutToggleListPromise = null;
+                        });
+                    }
+                }
+
+                /**
+                 * Agregar un elemento a la lista de valores seleccionados
+                 */
+                function addSelectedValue(value) {
+                    if (angular.isDefined(value) && value !== null) {
+                        if (!isSelected(value)) {
+                            scope.selectedValues.push(value);
+                            ngModelCtrl.$setViewValue(scope.selectedValues);
+                        }
+                    } else {
+                        //Si el valor recibido no está definido se usa el valor del modelo
+                        scope.selectedValues = ngModelCtrl.$modelValue;
+                    }
+                }
+
+                /**
+                 * Quitar un elemento de la lista de valores seleccionados
+                 */
+                function removeSelectedValue(value) {
+                    if (angular.isDefined(value) && value !== null) {
+                        scope.selectedValues.splice(scope.selectedValues.indexOf(value), 1);
+                        ngModelCtrl.$setViewValue(scope.selectedValues);
+                    } else {
+                        //Si el valor recibido no está definido se usa el valor del modelo
+                        scope.selectedValues = ngModelCtrl.$modelValue;
+                    }
+                }
+
+                /**
+                 * Comprobar si un elemento se encuentra en la lista de elementos seleccionados
+                 */
+                function isSelected(value) {
+                    return (scope.selectedValues.indexOf(value) >= 0);
+                }
+
+                /**
+                 * Hacer foco en el input
+                 */
+                function focusInput() {
+                    inputElement.focus();
+                }
+
+                /**
+                 * Quitar foco del input
+                 */
+                function blurInput() {
+                    inputElement.blur();
+                }
+
+                /**
+                 * Obtener nombre de la entidad (parámetro para hacer el request) dado
+                 * el valor de ng-model
+                 */
+                function getEntityName(ngModel) {
+                    if (typeof ngModel !== 'string') {
+                        return '';
+                    }
+                    var entity = ngModel.split(".");
+                    var length = entity.length;
+                    if (length === 0) {
+                        return '';
+                    }
+                    if (length === 1) {
+                        return entity[0];
+                    }
+                    return entity[length-2];
+                }
+
+                //Eventos relacionados con el input
+
+                /**
+                 * Evento disparado al cambiar el valor del input
+                 */
+                scope.onChangeInput = function() {
+                    openList();
+                };
+
+                /**
+                 * Evento disparado al hacer foco en el input
+                 */
+                scope.onFocusInput = function () {
+                    openList();
+                };
+
+                /**
+                 * Evento disparado cuando el input pierde el foco
+                 */
+                scope.onBlurInput = function() {
+                    closeList();
+                };
+
+                //Eventos relacionados con los botones
+
+                /**
+                 * Evento disparado al presionar el botón agregar
+                 */
+                scope.onClickAddButton = function() {
+                    if(!preventClickButton) {
+                        focusInput();
+                    }
+                };
+
+                /**
+                 * Evento disparado al presionar el botón quitar
+                 */
+                scope.onClickRemoveButton = function(value) {
+                    removeSelectedValue(value);
+                };
+
+                /**
+                 * Evento disparado al presionar el botón
+                 */
+                scope.onMousedownButton = function(e) {
+                    preventClickButton = listDisplayed();
+                };
+
+                //Eventos relacionados con la lista
+
+                /**
+                 * Evento disparado al seleccionar un elemento de la lista
+                 */
+                scope.onClickItemList = function(e, item) {
+                    e.stopPropagation();
+                    addSelectedValue(item);
                 };
 
                 //Eventos relacionados con entradas del teclado
 
                 function enterHandler(event) {
-                    var ENTER_KEY_CODE = 13;
-                    if (scope.lista.desplegado && event.keyCode === ENTER_KEY_CODE) {
-                        elem.find('input').blur();
+                    if (listDisplayed() && event.keyCode === ENTER_KEY_CODE) {
+                        blurInput();
                         event.preventDefault();
                     }
                 }
 
-                //registramos los eventos
-                elem.on('mousedown', '.dropdown-ap', onListClick);
+                //Eventos relacionados con la directiva
 
                 /**
-                 * Watcher que chequea cualquier cambio en el modelo de la entidad, tanto externo como interno
-                 * Cuando es externo, se se construye el objeto actual con base en la entidad a la que se esta listando
-                 * en cambio, cuando se elige un item de la lista, se usa la propiedad object del item de la lista seleccionado
-                 * para construir el objeto
+                 * Evento disparado al destruir la directiva
                  */
-                scope.$watch(function () {
-                    return ngModel.$modelValue;
-                }, function (val) {
-                    if (val) {
-                        //verificamos si el objeto proviene de la lista o del modelo y seteamos el item actual
-//                        itemSelected = (val.$$object) ? val : convertObjectToItemList(val);
-
-
-                        //seteamos el item actual
-                        scope.itemSelected = convertObjectToItemList(val);
-
-                        //seteamos el estado actual del modelo
-                        scope.input.model = (scope.itemSelected === null) ? '' : scope.itemSelected.name;
-                        scope.input.vacio = (scope.itemSelected === null);
-                    }
-                });
-
-                /**
-                 * Liberamos los eventos que hayan sido agregados a los elementos
-                 */
-                var destroyEventOnDestroy = scope.$on('$destroy', function() {
-                    elem.off('mousedown', '.dropdown-ap', onListClick);
+                scope.$on('$destroy', function() {
                     $document.off('keydown', enterHandler);
-                    destroyEventOnDestroy();
                 });
+
+                //Eventos relacionados con el modelo
+
+                /**
+                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse. Esta función
+                 * epermite que los valores mencionados queden sincronizados.
+                 */
+                ngModelCtrl.$render = function() {
+                    if (angular.isUndefined(scope.ngModel) || scope.ngModel.length === 0 && scope.selectedValues.length > 0) {
+                        //Si el valor del modelo se pierde pero existen valores seleccionados se utilizan los valores seleccionados
+                        scope.ngModel = scope.selectedValues;
+                    }
+                    if (angular.isDefined(scope.ngModel) && angular.isArray(scope.ngModel) && scope.ngModel.length > 0) {
+                        //Si el modelo cambia se usan los valores del modelo
+                        scope.selectedValues = scope.ngModel;
+                    }
+                };
+
+                // Asociar eventos y ejecutar funciones de inicialización
+
+                $document.on('keydown', enterHandler);
+                loadOptions();
             },
-            templateUrl: 'directives/select/select.template.html'
+            templateUrl: 'directives/selectMultiple/selectMultiple.template.html'
         };
     }
-]);
-;angular.module('adminPanel').directive('apSwitch', [
-    '$timeout',
-    function($timeout) {
+]);;/**
+ * @description Provider que guarda las opciones de los selects con el fin de disminuir la cantidad de request realizadas
+ * al servidor.
+ *
+ */
+angular.module('adminPanel').factory('apSelectMultipleProvider', function() {
+        var options = {};
+
+        options.data = {};
+
+        options.register = function(entity, field, request) {
+            if (angular.isUndefined(options.data[entity])) {
+                options.data[entity] = {};
+            }
+            options.data[entity][field] = request;
+        };
+
+        options.get = function(entity, field) {
+            if (angular.isUndefined(options.data[entity])) {
+                return null;
+            }
+            return options.data[entity][field];
+        };
+
+        return options;
+    }
+);;/**
+ * @description Muestra una lista de pasos.
+ *
+ *  Ejemplo de uso:
+ *  <ap-step-by-step>
+ *      <li>First Step</li>
+ *      <li class="active">Current Step</li>
+ *      <li class="disabled">Next Step</li>
+ *  </ap-step-by-step>
+ *
+ *  Clases:
+ *      - expanded even-N: Hace que la lista ocupe todo el ancho posible.
+ *        Usar expanded y even-N juntos. Reemplazar N por cantidad de elementos <li>
+ *      - vertical: Muestra la lista de pasos en forma vertical
+ *      - round: aplica border-radius
+ */
+angular.module('adminPanel').directive('apStepByStep',[
+    function() {
         return {
-            restrict: 'AE',
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {},
+            link: function($scope, elem, attr) {
+            },
+            templateUrl: 'directives/stepByStep/stepByStep.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apSwitch', [
+    function() {
+        return {
+            restrict: 'E',
             require: 'ngModel',
             scope: {
-                id: '@',
-                title: '@'
+                name: '@',
+                label: '@',
+                ngModel: '='
             },
-            link: function(scope, elem, attr, ngModel) {
-                elem.addClass('row column');
-
-                scope.$watch(function() {
-                    return ngModel.$modelValue;
-                }, function(val) {
-                    if(val) {
-                        var date = new Date(val);
-                        scope.date = date;
-                        $(elem.find('.ap-date')).fdatepicker('update', date);
-                    }
-                });
-                
-                scope.$watch('model', function(val) {
-                    ngModel.$setViewValue(val);
-                });
-                
-                //init
-                $timeout(function(){
-                    elem.foundation();
-                });
+            link: function(scope, elem, attr, ngModelCtrl) {
+                scope.updateModel = function() {
+                    ngModelCtrl.$setViewValue(scope.ngModel);
+                };
             },
             templateUrl: 'directives/switch/switch.template.html'
         };
     }
 ]);
-;angular.module('adminPanel').directive('apTimePicker', ['$timeout', function($timeout) {
-    return {
-        restrict: 'AE',
-        require: 'ngModel',
-        link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-timepicker');
-            scope.hours = null;
-            scope.minutes = null;
-            
-            scope.$watch(function() {
-                return ngModel.$modelValue;
-            }, function(val) {
-                if(val) {
-                    var date = new Date(val);
-                    scope.hours = date.getHours();
-                    scope.minutes = date.getMinutes();
+;angular.module('adminPanel').directive('apTab',[
+    function() {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                name: '@',
+                title: '@',
+                state: '@',
+                endIcon: '<'
+            },
+            require: '^apTabs',
+            link: function($scope, elem, attr, tabsCtrl) {
+
+                if (!$scope.name) {
+                    console.error('Tab directive requires "name" attribute.');
+                    return;
                 }
-            });
-            
-            
-            //Funcion que realiza el cambio de la hora en el modelo
-            function changeTime(hours, minutes) {
-                var h = (hours === null) ? 
-                        ((scope.hours !== null) ? scope.hours : 0) : hours;
-                var m = (minutes === null) ?  
-                        ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
-                
-                var date = new Date();
-                date.setSeconds(0);
-                date.setHours(h);
-                date.setMinutes(m);
-                
-                //cambio hecho al terminar el ciclo $digest actual
-                $timeout(function() {
-                    scope.$apply(function(){
-                        ngModel.$setViewValue(date);
-                    });
+
+                $scope.loadedContent = false; //Indica si su contenido ya fue cargado en el DOM
+
+                /**
+                 * Indica si la pestaña debe o no mostrar su contenido
+                 * @return {Boolean} isVisible
+                 */
+                $scope.isVisible = function() {
+                    return tabsCtrl.isActive(attr.name);
+                };
+
+                /**
+                 * Indica si la pestaña fue abierta al menos una vez
+                 * @return {Boolean} wasOpened
+                 */
+                $scope.wasOpened = function() {
+                    if (!$scope.loadedContent && tabsCtrl.isActive(attr.name)) {
+                        $scope.loadedContent = true;
+                    }
+                    return $scope.loadedContent;
+                };
+
+                /**
+                 * Watcher para actualizar los datos
+                 * @return {Boolean}
+                 */
+                $scope.$watchGroup(['title', 'state', 'endIcon'], function(newValues, oldValues) {
+                    tabsCtrl.register($scope.name, newValues[0], newValues[1], newValues[2]);
                 });
-            }
-            
-            //Funcion que se ejecuta al cambiar de hora en la vista
-            scope.changeHour = function() {
-                if(scope.hours < 0) {
-                    scope.hours = 0;
+            },
+            templateUrl: 'directives/tabs/tab.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apTabs',[
+    '$location', '$timeout', '$interval', '$window',
+    function($location, $timeout, $interval, $window) {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                onChange: '&'
+            },
+            link: function($scope, elem, attr) {
+                $scope.tabs = {}; //Lista de tabs
+                $scope.allowScrollToLeft = false;
+                $scope.allowScrollToRight = true;
+                $scope.enableScrollButtons = false;
+
+                var tabsElement = elem.find('.tabs');
+                var scrollDuration = 500;
+                var scrollPromise;
+
+                enableOrDisableScrollButtons();
+
+                tabsElement.bind('scroll', function() {
+                    showOrHideScrollButtons();
+                });
+
+                angular.element($window).bind('resize', function() {
+                    enableOrDisableScrollButtons();
+                });
+
+                /**
+                 * Cambia el estado de un Tab
+                 * @param {Object} tab
+                 * @return {undefined}
+                 */
+                $scope.switch = function (tab) {
+                    if (tab.state === 'default') {
+                        $timeout(function() {
+                            if ($scope.active !== tab.name) {
+                                $scope.active = tab.name;
+                                $location.hash(tab.name);
+                                if ($scope.onChange) {
+                                    $scope.onChange();
+                                }
+                            }
+                        });
+                    }
+                };
+
+                /**
+                 * Permite que cambie el tab activo al cambiar el hash de  la ruta
+                 */
+                $scope.$on('$routeUpdate', function() {
+                    if($location.hash() in $scope.tabs) {
+                        $timeout(function() {
+                            $scope.active = $location.hash();
+                        });
+                    }
+                });
+
+                $scope.scrollToLeft = function() {
+                    scroll(getScrollStep() * -1);
+                };
+
+                $scope.scrollToRight = function() {
+                    scroll(getScrollStep());
+                };
+
+                $scope.mouseUp = function () {
+                    $interval.cancel(scrollPromise);
+                    scrollPromise = null;
+                };
+
+                /**
+                 * Calcula el paso del scroll a partir del tamaño del elemento html
+                 */
+                function getScrollStep() {
+                    return tabsElement[0].scrollWidth / Math.ceil(tabsElement[0].scrollWidth / tabsElement[0].clientWidth);
                 }
-                if(scope.hours > 23) {
-                    scope.hours = 23;
+
+                /**
+                 * Habilita o deshabilita los botones de scroll dependiendo del tamaño
+                 * del elemento html.
+                 */
+                function enableOrDisableScrollButtons() {
+                    $timeout(function() {
+                        if (tabsElement[0].clientWidth < tabsElement[0].scrollWidth) {
+                            $scope.enableScrollButtons = true;
+                        } else {
+                            $scope.enableScrollButtons = false;
+                        }
+                    });
                 }
-                changeTime(scope.hours, scope.minutes);
-            };
-            
-            //Funcion que se ejecuta al cambiar de minuto en la vista
-            scope.changeMinute = function() {
-                if(scope.minutes < 0) {
-                    scope.minutes = 0;
+
+                /**
+                 * Oculta o no los botones de desplazamiento dependiendo del scroll
+                 * actual del elemento.
+                 */
+                function showOrHideScrollButtons() {
+                    $timeout(function() {
+                        var scrollLeft = tabsElement.scrollLeft();
+                        
+                        if (scrollLeft <= 0) {
+                            $scope.allowScrollToLeft = false;
+                        } else {
+                            $scope.allowScrollToLeft = true;
+                        }
+
+                        if (scrollLeft >= tabsElement[0].scrollLeftMax) {
+                            $scope.allowScrollToRight = false;
+                        } else {
+                            $scope.allowScrollToRight = true;
+                        }
+                    });
                 }
-                if(scope.minutes > 59) {
-                    scope.minutes = 59;
+
+                /**
+                 * Realiza el desplazamiento del elemento tabs.
+                 * @param {int} step cantidad de píxeles que debe desplazarse el 
+                 * elemento
+                 */
+                function scroll(step) {
+                    tabsElement.scrollLeftAnimated(
+                        tabsElement.scrollLeft() + step, scrollDuration
+                    );
+
+                    if(scrollPromise) {
+                        $interval.cancel(scrollPromise);
+                    }
+
+                    scrollPromise = $interval(function () {
+                        tabsElement.scrollLeftAnimated(
+                            tabsElement.scrollLeft() + step, scrollDuration
+                        );
+                    }, scrollDuration);
                 }
-                changeTime(scope.hours, scope.minutes);
-            };
-        },
-        templateUrl: 'directives/timePicker/timePicker.template.html'
-    };
-}]);
+
+            },
+            controller: ['$scope', function($scope) {
+
+                /**
+                 * Registra o actualiza un Tab
+                 * @param {String} name
+                 * @param {String} title
+                 * @return {undefined}
+                 */
+                this.register = function(name, title, state, endIcon) {
+                    $scope.tabs[name] = {
+                        name: name, 
+                        title: title || name,
+                        state: state || 'default',
+                        endIcon: endIcon || null
+                    };
+                    if (!$scope.active && state!='disabled') {
+                        $scope.active = name;
+                    }
+                    if ($location.hash() === name && state !== 'disabled') {
+                        $scope.active = name;
+                    }
+                };
+
+                /**
+                 * Verifica si el Tab con nombre "name" esta activo
+                 * @param {String} name
+                 * @return {Boolean} active
+                 */
+                this.isActive = function(name) {
+                    return $scope.active === name;
+                };
+
+            }],
+            templateUrl: 'directives/tabs/tabs.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apTextInput', [
+    function() {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                label: '@',
+                ngModel: '=',
+                placeholder: '@',
+                maxlength: '@'
+            },
+            link: function(scope, elem, attr, ngModelCtrl) {
+                
+                var DEFAULT_MAX_LENGTH = 300;
+
+                scope.label = scope.label ? scope.label : '';
+                scope.maxlength = scope.maxlength ? scope.maxlength : DEFAULT_MAX_LENGTH;
+                scope.placeholder = scope.placeholder ? scope.placeholder : scope.label;
+
+                scope.updateModel = function() {
+                    ngModelCtrl.$setViewValue(scope.ngModel);
+                };
+            },
+            templateUrl: 'directives/textInput/textInput.template.html'
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apTextarea', [
+    function() {
+        return {
+            restrict: 'E',
+            require: 'ngModel',
+            scope: {
+                label: '@',
+                ngModel: '=',
+                placeholder: '@',
+                maxlength: '@',
+                helpInfo: '@'
+            },
+            link: function(scope, elem, attr, ngModelCtrl) {
+                
+                var DEFAULT_MAX_LENGTH = 6000;
+
+                scope.label = scope.label ? scope.label : '';
+                scope.maxlength = scope.maxlength ? scope.maxlength : DEFAULT_MAX_LENGTH;
+                scope.placeholder = scope.placeholder ? scope.placeholder : scope.label;
+                scope.modalId = attr.name + 'Modal';
+
+                scope.updateModel = function() {
+                    ngModelCtrl.$setViewValue(scope.ngModel);
+                };
+            },
+            templateUrl: 'directives/textarea/textarea.template.html'
+        };
+    }
+]);
+;angular.module('adminPanel').directive('apTimePicker', [
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function(scope, elem, attr, ngModel) {
+                elem.addClass('row collapse date ap-timepicker');
+                scope.hours = null;
+                scope.minutes = null;
+                
+                scope.$watch(function() {
+                    return ngModel.$modelValue;
+                }, function(val) {
+                    if(val) {
+                        var date = new Date(val);
+                        scope.hours = date.getHours();
+                        scope.minutes = date.getMinutes();
+                    }
+                });
+                
+                //Funcion que realiza el cambio de la hora en el modelo
+                function changeTime(hours, minutes) {
+                    var h = (hours === null) ? 
+                            ((scope.hours !== null) ? scope.hours : 0) : hours;
+                    var m = (minutes === null) ?  
+                            ((scope.minutes !== null) ? scope.minutes : 0) : minutes;
+                    
+                    var date = new Date();
+                    date.setSeconds(0);
+                    date.setHours(h);
+                    date.setMinutes(m);
+                    
+                    //cambio hecho al terminar el ciclo $digest actual
+                    $timeout(function() {
+                        scope.$apply(function(){
+                            ngModel.$setViewValue(date);
+                        });
+                    });
+                }
+                
+                //Funcion que se ejecuta al cambiar de hora en la vista
+                scope.changeHour = function() {
+                    if(scope.hours < 0) {
+                        scope.hours = 0;
+                    }
+                    if(scope.hours > 23) {
+                        scope.hours = 23;
+                    }
+                    changeTime(scope.hours, scope.minutes);
+                };
+                
+                //Funcion que se ejecuta al cambiar de minuto en la vista
+                scope.changeMinute = function() {
+                    if(scope.minutes < 0) {
+                        scope.minutes = 0;
+                    }
+                    if(scope.minutes > 59) {
+                        scope.minutes = 59;
+                    }
+                    changeTime(scope.hours, scope.minutes);
+                };
+            },
+            templateUrl: 'directives/timePicker/timePicker.template.html'
+        };
+    }
+]);
 ;/**
  * @description Filtro que deja con mayúscula solo la primera letra de una palabra
  *              o frase.
@@ -3447,40 +4822,61 @@ angular.module('adminPanel.utils').factory('hasProperty', [
     "<div ng-if=addButtonText class=\"row column\"><button type=button class=\"button secondary\" ng-click=addElement() ng-bind=addButtonText></button></div><div class=accordion ng-transclude></div>");
   $templateCache.put("directives/accordion/accordionItem.template.html",
     "<div class=accordion-top><button type=button class=accordion-title ng-click=toggleTab() ng-bind=title></button><div class=accordion-button><button type=button ng-if=deleteButton class=\"button alert\" ng-click=deleteElement()><i class=\"fa fa-times\"></i></button></div></div><div class=accordion-content data-tab-content ng-transclude></div>");
-  $templateCache.put("directives/box/box.template.html",
+  $templateCache.put("directives/boxes/box/box.template.html",
     "<div class=card ng-if=!isHide><button ng-if=closeButton class=close-button type=button ng-click=close()><span>&times;</span></button><div class=card-divider ng-if=title><h1 ng-bind=title></h1></div><div class=card-section><div ng-if=message class=\"message-container callout\" ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\"><h5 ng-if=message.title><i ng-if=\"message.type === 'error'\" class=\"fa fa-exclamation-triangle\"></i><span ng-bind=\"' {{message.title}}'\"></span></h5><p ng-if=!isArray(message.message) ng-bind=message.message></p><ul ng-if=isArray(message.message)><li ng-repeat=\"item in message.message track by $index\" ng-bind=item></li></ul></div><div ng-transclude ap-load></div></div></div>");
-  $templateCache.put("directives/choice/choice.template.html",
-    "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+  $templateCache.put("directives/boxes/boxState/boxState.template.html",
+    "<div class=\"card details-container\" ng-class=\"{'cursor-not-allowed' : state === 'hideContent' || state === 'noEditable', 'cursor-pointer' : state === 'noContent'}\" ng-mouseover=onMouseOver($event) ng-mouseleave=onMouseLeave($event)><div class=card-divider>{{title}}<i ng-if=state class=\"fa {{message.icon}} title-icon\"></i></div><div class=card-section><div><div ng-if=\"mouseOver && state\" class=\"callout message-container\"><h5><i class=\"fa {{message.icon}} medium\"></i>&nbsp; {{message.text}}</h5><p ng-bind=helpMessage></p></div><div ng-class=\"{'hide-content' : state === 'hideContent'}\"><div ng-if=\"!state || state === 'hideContent'\" ng-transclude></div></div></div></div></div>");
+  $templateCache.put("directives/dataSelect/dataSelect.template.html",
+    "<label>{{label}}<div class=data-select-wrapper><div class=input-group><input class=input-group-text-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=disabled><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event) ng-disabled=disabled><span class=caret></span></button></div></div><div class=dropdown ng-class=\"{'is-open': lista.desplegado, 'medium-6 columns': itemDetailsData}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-mouseover=\"onOverItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span>&nbsp;<span>Nuevo</span></li></ul></div><div class=\"medium-6 columns\" ng-if=lista.desplegado ng-class=\"{'medium-6 columns': itemDetailsData}\"><label ng-repeat=\"item in itemDetailsData\">{{item[0]}}<span class=\"input readonly\" type=text ng-bind=\"{{ ('itemOver.' + item[1]) + item[2]}}\"></span></label></div></div></label>");
   $templateCache.put("directives/datePicker/datePicker.template.html",
-    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
+    "<label>{{label}}<div class=\"input-group ap-datepicker\"><span class=\"input-group-label prefix\"><i class=\"far fa-calendar-alt\"></i></span><input class=\"input-group-field date\" type=text readonly></div></label>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
-    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
+    "<label>{{label}}<div class=\"input-group ap-datetimepicker\"><span class=\"input-group-label prefix\"><i class=\"far fa-calendar-alt\"></i></span><input class=\"input-group-field date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div></label>");
   $templateCache.put("directives/fileSaver/fileSaver.template.html",
     "<button class=button type=button><i ng-hide=loading class=\"fa fa-download\"></i><div ng-show=loading class=animation><div style=width:100%;height:100% class=lds-rolling><div></div></div></div><span class=text ng-bind=buttonName></span></button>");
   $templateCache.put("directives/filter/filter.template.html",
     "<ul class=\"accordion filtros\" data-accordion data-allow-all-closed=true><li class=accordion-item data-accordion-item><a href=# class=accordion-title><i class=\"fa fa-filter fa-lg\"></i>&nbsp; Filtros</a><div class=accordion-content data-tab-content ng-transclude></div></li></ul>");
-  $templateCache.put("directives/form/fieldErrorMessages.template.html",
-    "<div ng-repeat=\"error in errors\" ng-show=error.expresion ng-bind=error.message></div>");
+  $templateCache.put("directives/form/form.template.html",
+    "<form name=form novalidate ng-model-options=\"{updateOn: 'default blur'}\"><div class=\"alert callout ng-hide\" ng-show=\"form.$invalid || errorData.errors\"><h5><i class=\"fa fa-exclamation-triangle\"></i>&nbsp;El formulario contiene errores</h5><ul ng-if=errorData.errors><li ng-repeat=\"error in errorData.errors track by $index\" ng-bind=error></li></ul></div><div></div><span ng-click=scroll(formId) class=submit-button><input type=submit validation-submit=form ng-click=submit() class=button value={{submitButtonValue}} title=\"Guardar datos\"></span><button ng-if=\"cancel && !hideCancelButton\" ng-click=cancel() class=\"button secondary\" title=Cancelar>Cancelar</button></form>");
   $templateCache.put("directives/imageLoader/imageLoader.template.html",
     "<div class=image-view><img ng-src={{image.path}} ng-click=loadImage()></div><div class=input-group><div class=input-group-button><label for=exampleFileUpload class=\"button file\"><i class=\"fa fa-file-image-o\"></i></label><input type=file id=exampleFileUpload class=show-for-sr accept=image/*></div><input class=input-group-field type=text readonly ng-value=image.name></div>");
   $templateCache.put("directives/load/load.template.html",
     "<div ng-show=loading class=ap-load-image><img ng-src={{path}}></div><div ng-hide=loading class=ap-load-content><div ng-if=message class=callout ng-class=\"{'success':message.type === 'success','warning':message.type === 'warning','alert':message.type === 'error'}\" ng-bind=message.message></div><div></div></div>");
   $templateCache.put("directives/load/loadingImg.template.html",
     "<img ng-src={{path}}>");
+  $templateCache.put("directives/magellan/magellan.template.html",
+    "<div class=\"card magellan\"><div class=card-divider><h1 ng-bind=title></h1></div><div class=magellan-body><ul class=\"menu vertical\"><li ng-repeat=\"(key, value) in items\"><a href=\"\" ap-go-to-anchor={{value}} ng-bind=key></a></li></ul></div></div>");
   $templateCache.put("directives/messages/message.template.html",
     "<div class=ap-message ng-class=message.type><div ng-bind=message.message></div><button class=close-button type=button ng-click=remove()><span>&times;</span></button></div>");
   $templateCache.put("directives/messages/messagesContainer.template.html",
     "<div class=row><div ng-repeat=\"message in messageList\" class=small-12 ap-message message=message></div></div>");
   $templateCache.put("directives/modals/confirm/confirmModal.template.html",
     "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=\"button alert\" ng-click=yes()>Aceptar</a><a class=\"button secondary\" ng-click=no()>Cancelar</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
+  $templateCache.put("directives/modals/modal/modal.template.html",
+    "<div class=\"ng-modal ng-hide\" ng-show=show><div class=reveal-overlay><div class=\"reveal-overlay ng-modal-bg\" ng-click=hideModal()></div><div class=reveal><div ng-transclude></div><div ng-if=dialogButtons class=float-right><button class=\"button secondary\" ng-click=hideModal()>Cancelar</button><button class=button ng-class=confirmButtonType ng-click=confirm() data-close>Confirmar</button></div><button class=close-button ng-click=hideModal() aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div></div></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
+  $templateCache.put("directives/numberInput/numberInput.template.html",
+    "<label>{{label}}<div class=input-group><span class=input-group-label ng-if=previousLabel ng-bind=previousLabel></span><input class=input-group-field type=number ng-model=ngModel ng-attr-min={{min}} ng-attr-max={{max}} ng-attr-step={{step}} placeholder={{placeholder}} ng-change=updateModel()></div></label>");
   $templateCache.put("directives/pagination/pagination.template.html",
     "<ul class=\"pagination text-center\" role=navigation ng-if=\"pagination.pages.length !== 0\"><li ng-if=pagination.activeLastFirst class=pagination-previous ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.changePage(1)></a></li><li ng-class=\"{'disabled': !pagination.enablePreviousPage}\"><a ng-if=pagination.enablePreviousPage ng-click=pagination.previousPage()>&lsaquo;</a><span ng-if=!pagination.enablePreviousPage>&lsaquo;</span></li><li ng-repeat=\"page in pagination.pages track by $index\" ng-class=\"{'current':page === pagination.currentPage}\"><a ng-if=\"page !== pagination.currentPage\" ng-bind=page ng-click=pagination.changePage(page)></a><span ng-if=\"page === pagination.currentPage\" ng-bind=page></span></li><li ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.nextPage()>&rsaquo;</a><span ng-if=!pagination.enableNextPage>&rsaquo;</span></li><li ng-if=pagination.activeLastFirst class=pagination-next ng-class=\"{'disabled': !pagination.enableNextPage}\"><a ng-if=pagination.enableNextPage ng-click=pagination.changePage(pagination.pageCount)></a></li></ul>");
   $templateCache.put("directives/select/select.template.html",
-    "<div class=input-group><input class=input-group-field type=text ng-model=input.model autocomplete=off ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
+    "<label>{{label}}<div class=select-wrapper><div class=input-group><input class=input-group-text-field type=text ng-model=selectedValue ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=loading autocomplete=off><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown ng-class=\"{'is-open':list.displayed}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && list.options.length > 0\" class=list-group><li ng-repeat=\"option in list.options\" ng-bind-html=\"option | selectOption | highlight:selectedValue\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option === selectedValue}\"></li></ul><ul ng-if=\"!loading && list.options.length === 0\" class=list-group><li style=font-weight:700>No hay opciones disponibles</li></ul></div></div></label>");
+  $templateCache.put("directives/selectMultiple/selectMultiple.template.html",
+    "<ul class=list-group><li ng-repeat=\"value in selectedValues\" class=list-group-item><span class=list-group-item-text ng-bind=value></span><button type=button class=\"button secondary\" ng-click=onClickRemoveButton(value)><i class=\"fa fa-minus medium\"></i></button></li></ul><div class=input-group><input class=input-group-field type=text ng-model=searchValue ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=loading autocomplete=off placeholder=Buscar...><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickAddButton() ng-mousedown=onMousedownButton($event)><i class=\"fa fa-plus medium\"></i></button></div></div><div class=\"dropdown-pane dropdown\" ng-class=\"{'is-open':list.displayed}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && list.options.length > 0\" class=list-group><li ng-repeat=\"option in list.options | filter:searchValue\" ng-bind-html=\"option | highlight:searchValue\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'disabled': selectedValues.indexOf(option) >= 0}\"></li></ul><ul ng-if=\"!loading && list.options.length === 0\" class=list-group><li style=font-weight:700>No hay opciones disponibles</li></ul></div>");
+  $templateCache.put("directives/stepByStep/stepByStep.template.html",
+    "<ul class=steps ng-transclude></ul>");
   $templateCache.put("directives/switch/switch.template.html",
-    "<label ng-bind=title></label><div class=switch><input class=switch-input id={{id}} type=checkbox ng-model=model><label class=switch-paddle for={{id}}></label></div>");
+    "<label ng-bind=label></label><div class=switch><input class=switch-input name={{name}} id={{name}} type=checkbox ng-model=ngModel ng-change=updateModel()><label class=switch-paddle for={{name}}></label></div>");
+  $templateCache.put("directives/tabs/tab.template.html",
+    "<div ng-show=isVisible()><div class=\"tabs-panel is-active\" ng-if=wasOpened() ng-transclude></div></div>");
+  $templateCache.put("directives/tabs/tabs.template.html",
+    "<div><div class=tabs-wrapper><button type=button class=\"arrow-button float-left\" ng-mousedown=scrollToLeft() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToLeft\"><i class=\"fa fa-chevron-left\"></i></button><button type=button class=\"arrow-button float-right\" ng-mousedown=scrollToRight() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToRight\"><i class=\"fa fa-chevron-right\"></i></button><ul class=tabs><li class=tabs-title ng-repeat=\"tab in tabs\" ng-click=switch(tab)><a class={{tab.state}} aria-selected=\"{{tab.name === active}}\" title={{tab.title}}>{{ tab.title }}&nbsp;<i ng-if=tab.endIcon class=\"fa fa-{{tab.endIcon}}\"></i></a></li></ul></div><div class=tabs-content ng-transclude></div></div>");
+  $templateCache.put("directives/textInput/textInput.template.html",
+    "<label>{{label}} <input type=text ng-model=ngModel maxlength={{maxlength}} placeholder={{placeholder}} ng-change=updateModel()></label>");
+  $templateCache.put("directives/textarea/textarea.template.html",
+    "<label>{{label}}<div class=text-area-wrapper><textarea type=text ng-model=ngModel maxlength={{maxlength}} placeholder={{placeholder}} ng-change=updateModel() ng-class=\"{'has-button' : helpInfo}\">\n" +
+    "        </textarea><button ng-if=helpInfo class=\"button secondary tiny\" title=\"Información adicional\" ap-show-modal={{modalId}}><i class=\"fa fa-info medium animate\"></i></button></div></label><div ng-if=helpInfo><ap-modal id={{modalId}}><h1 ng-bind=\"label ? label : 'Información de ayuda'\"></h1><p ng-bind=helpInfo></p></ap-modal></div>");
   $templateCache.put("directives/timePicker/timePicker.template.html",
     "<div class=input-group><span class=input-group-label>Hs</span><input class=input-group-field type=number ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number ng-model=minutes ng-change=changeMinute()></div>");
 }]);

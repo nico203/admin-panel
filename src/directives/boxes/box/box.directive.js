@@ -106,7 +106,7 @@ angular.module('adminPanel').directive('apBox', [
                     }
                 };
             },
-            templateUrl: 'directives/box/box.template.html'
+            templateUrl: 'directives/boxes/box/box.template.html'
         };
     }
 ]);

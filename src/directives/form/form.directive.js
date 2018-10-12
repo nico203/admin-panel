@@ -1,50 +1,89 @@
-angular.module('adminPanel').directive('formValidation', [
-    '$parse','$compile',
-    function($parse,$compile) {
+/**
+ * @description Directiva que reemplaza a <form>. Cuenta con las siguientes funcionaldiades:
+ *  - Llamar a angular-validator para que se verifique si el formulario contiene errores.
+ *  - Mostrar un mensaje en caso de que el formulario no sea correcto.
+ *  - Realizar un scroll hasta el mensaje mencionado previamente una vez presionado el botón de submit.
+ *  - Agregar el botón de submit.
+ *  - Agregar el botón de cancel si existe $scope.cancel.
+ *  - Cambiar el nombre del botón del submit con el valor de $scope.submitButtonValue
+ * 
+ *  Attrs:
+ *      - id: El id de <form>
+ */
+angular.module('adminPanel').directive('apForm',[
+    '$document', '$timeout',
+    function($document, $timeout) {
         return {
-            require: 'form',
-            restrict: 'A',
-            scope: true,
-            link: function(scope, elem, attr, formCtrl) {
-                //Definimos las validaciones
-                var required = function(fieldCtrl, expression) {
-                    if(angular.isUndefined(expression)) {
-                        expression = true;
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: false,
+            link: function($scope, element, attr, ctrl, transclude) {
+                $scope.formId = attr.id;
+                $scope.errorData = {};
+                $scope.submitButtonValue = $scope.submitButtonValue ? $scope.submitButtonValue : 'Guardar';
+                
+                var contentElement = $(element).children().eq(1);
+
+                //Se define la función transclude para que el contenido utilice el mismo scope
+                transclude($scope, function(clone, $scope) {
+                    contentElement.append(clone);
+                });
+
+                $scope.$watch('errorDetails', function() {
+                    if ($scope.errorDetails) {
+                        transformErrorData($scope.errorDetails, $scope.errorData);
+                    } else {
+                        $scope.errorData = {};
                     }
-                    return function(modelValue, viewValue) {
-                        return !expression || !fieldCtrl.$isEmpty(viewValue);
-                    };
-                };
-                var number = function(ctrl) {
-                    
-                };
-                
-                var validators = {
-                    required: required
-                };
-                
-                
-                //Seteamos las validaciones
-                var validations = $parse(attr.formValidation)(scope);
-                scope.validations = {};
-                for(var field in validations) {
-                    var fieldCtrl = formCtrl[field];
-                    var fieldDOMElem = fieldCtrl.$$element;
-                    var messages = {};
-                    for(var validation in validations[field]) {
-                        var validator = validations[field][validation];
-                        fieldCtrl.$validators[validation] = validators[validation](fieldCtrl, validator.expression);
-                        messages[validation] = validator.message;
+                });
+
+                $scope.scroll = function(formId) {
+                    if ($document.scrollToElement) {
+                        var element = angular.element(document.getElementById(formId));
+                        if (element) {
+                            $timeout( function () {
+                                $document.scrollToElement(
+                                    element,
+                                    110,
+                                    500
+                                );
+                            });
+                        }
                     }
-                    scope.validations[field] = {
-                        errors: fieldCtrl.$error,
-                        messages: messages
-                    };
-                    var fieldErrorMessagesDirective = angular.element('<field-error-messages errors="validations.'+field+'.errors" messages="validations.'+field+'.messages">');
-                    $compile(fieldErrorMessagesDirective)(scope);
-                    fieldDOMElem.after(fieldErrorMessagesDirective);
+                };
+
+                /**
+                 * @description Función que crea un objeto con los mensajes de error a partir de la respuesta de symfony
+                 *
+                 * @param {Object} dataObj Objeto data de la respuesta de symfony
+                 * @param {type} newData Objeto donde se guarda el arreglo de errores
+                 * @returns {undefined}
+                 */
+                function transformErrorData(dataObj, newData) {
+                    newData.errors = [];
+                    if (dataObj && dataObj.code === 400 || dataObj.code === 404) {
+                        if (dataObj.errors) {
+                            iterateErrorObject(dataObj.errors, newData);
+                        } else {
+                            newData.errors.push(dataObj.message);
+                        }
+                    }
+
+                    function iterateErrorObject(obj, data) {
+                        for (var property in obj) {
+                            if (obj.hasOwnProperty(property)) {
+                                if (angular.isArray(obj[property]) && property === 'errors') {
+                                    data.errors = data.errors.concat(obj[property]);
+                                } else if (angular.isObject(obj[property])) {
+                                    iterateErrorObject(obj[property], data);
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            templateUrl: 'directives/form/form.template.html'
         };
     }
 ]);

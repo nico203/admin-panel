@@ -1,14 +1,16 @@
 /**
- * @description Select que obtiene las opciones del servidor. Tiene los mismos parámetros
- *              que un select normal + los parámetros "resource" y "field" más abajo detallados.
+ * @description Select que permite seleccionar multiples valores y que obtiene las opciones del servidor.
+ *              Tiene los mismos parámetros que un select normal + los parámetros "resource" y "field" más abajo detallados.
  *
  *  Ejemplo de uso:
- *  <ap-select
+ *  <label>Label del select</label>
+ *
+ *  <ap-select-multiple
  *      name="fieldName"
- *      label="Label del select"
  *      ng-model="nombreEntidad.fieldName"
  *      entity="entityName">
- *  </ap-select>
+ *  </ap-select-multiple>
+ *
  *
  *  Attrs:
  *      - resource: nombre del crudResource que se usará para obtener la
@@ -21,15 +23,10 @@
  *      - entity: Parámetro que se usará en la consulta para obtener las
  *        opciones. El valor por defecto se determina del atributo ng-model.
  *      - ngModel: Modelo que modificará la directiva.
- *      - allowEmpty: Agrega un string vacio como opción en el select. Nota:
- *        si el campo en la BD acepta un string vacio agregar la opción en el
- *        backend, usar este atributo en los casos que no se requiera guardar
- *        el dato, por ejemplo para filtrar una tabla.
- *      - label: Label de input
  */
-angular.module('adminPanel').directive('apSelect',[
-    '$injector', '$timeout', '$document', '$q', 'apSelectProvider',
-    function($injector, $timeout, $document, $q, apSelectProvider) {
+angular.module('adminPanel').directive('apSelectMultiple',[
+    '$injector', '$timeout', '$document', '$q', 'apSelectMultipleProvider',
+    function($injector, $timeout, $document, $q, apSelectMultipleProvider) {
         return {
             restrict: 'E',
             require: 'ngModel',
@@ -37,16 +34,15 @@ angular.module('adminPanel').directive('apSelect',[
                 resource: '@',
                 field: '@',
                 entity: '@',
-                ngModel: '=',
-                label: '@'
+                ngModel: '='
             },
             link: function(scope, element, attrs, ngModelCtrl) {
-                element.addClass('ap-select');
+                element.addClass('select-multiple');
 
-                //Constantes
                 var ENTER_KEY_CODE = 13;
 
                 //Inicializar variables
+
                 var field = scope.field ? scope.field : attrs.name;
                 var resource = scope.resource ? scope.resource : 'Choices';
                 var entity = scope.entity ? scope.entity : null;
@@ -54,14 +50,14 @@ angular.module('adminPanel').directive('apSelect',[
                 var timeoutToggleListPromise = null;
                 var preventClickButton = false;
                 var inputElement = element.find('input');
-                var allowEmpty = angular.isUndefined(attrs.allowEmpty) ? null : true;
-                
+
                 //Si no se paso el atributo entity se calcula con el nombre de ng-model
                 if (!entity && attrs.ngModel) {
                     entity = getEntityName(attrs.ngModel);
                 }
 
                 //Realizar verificaciones y conversiones de parámetros
+
                 if(!resource) {
                     console.error('El recurso esta definido');
                     return;
@@ -78,13 +74,14 @@ angular.module('adminPanel').directive('apSelect',[
                 entity = entity.toLowerCase();
 
                 //Inicializar scope
-                scope.label = scope.label ? scope.label : '';
-                scope.selectedValue = null;
+
+                scope.selectedValues = [];
                 scope.loading = true;
                 scope.list = {
                     options: [],
                     displayed: false
                 };
+                scope.searchValue = '';
 
                 //Obtener servicio para realizar consultas al servidor
                 if($injector.has(resource)) {
@@ -96,28 +93,27 @@ angular.module('adminPanel').directive('apSelect',[
                  * Cargar opciones
                  */
                 function loadOptions() {
-                    var request = apSelectProvider.get(entity, field);
+                    var request = apSelectMultipleProvider.get(entity, field);
                     if(!request) {
                         request = resource.get({entity: entity, field: field});
-                        apSelectProvider.register(entity, field, request);
+                        apSelectMultipleProvider.register(entity, field, request);
                     }
                     request.$promise.then(
                         function(responseSuccess) {
-                            if (typeof responseSuccess.data !== 'object') {
+                            var data = responseSuccess.data;
+                            if (typeof data !== 'object') {
                                 console.error('Los datos recibidos no son validos.');
                                 return;
                             }
-                            scope.list.options = angular.copy(responseSuccess.data);
-
-                            if (allowEmpty && scope.list.options[0] !== '') {
-                                scope.list.options.unshift('');
+                            scope.list.options = data;
+                            if (angular.isDefined(scope.ngModel) && scope.ngModel !== null) {
+                                //Si existe un valor en el modelo se coloca ese valor
+                                scope.selectedValues = scope.ngModel;
                             }
-                            changeSelectedValue(scope.list.options[0], true);
-                            return responseSuccess.data;
+                            return data;
                         },
                         function(responseError) {
                             console.error('Error ' + responseError.status + ': ' + responseError.statusText);
-                            apSelectProvider.remove(entity, field);
                             $q.reject(responseError);
                         }
                     ).finally(function() {
@@ -150,6 +146,7 @@ angular.module('adminPanel').directive('apSelect',[
                             timeoutToggleListPromise = null;
                         });
                     }
+                    scope.searchValue = '';
                 }
 
                 /**
@@ -169,31 +166,38 @@ angular.module('adminPanel').directive('apSelect',[
                 }
 
                 /**
-                 * Buscar y retornar primer coincidencia del valor del input en la lista
+                 * Agregar un elemento a la lista de valores seleccionados
                  */
-                function searchFirstMatch() {
-                    var inputValue = inputElement.val();
-                    return scope.list.options.find(function (item) {
-                        return item.toLowerCase().indexOf(inputValue.toLowerCase()) >= 0;
-                    });
+                function addSelectedValue(value) {
+                    if (angular.isDefined(value) && value !== null) {
+                        if (!isSelected(value)) {
+                            scope.selectedValues.push(value);
+                            ngModelCtrl.$setViewValue(scope.selectedValues);
+                        }
+                    } else {
+                        //Si el valor recibido no está definido se usa el valor del modelo
+                        scope.selectedValues = ngModelCtrl.$modelValue;
+                    }
                 }
 
                 /**
-                 * Cambiar valor seleccionado.
+                 * Quitar un elemento de la lista de valores seleccionados
                  */
-                function changeSelectedValue(newValue, externalChange) {
-                    if (externalChange && angular.isDefined(scope.ngModel) && scope.ngModel !== null) {
-                        scope.selectedValue = ngModelCtrl.$modelValue;
-                    } else if (angular.isDefined(newValue) && newValue !== null) {
-                        scope.selectedValue = newValue;
-                        if (externalChange) {
-                            scope.ngModel = newValue;
-                        } else {
-                            ngModelCtrl.$setViewValue(newValue);
-                        }
+                function removeSelectedValue(value) {
+                    if (angular.isDefined(value) && value !== null) {
+                        scope.selectedValues.splice(scope.selectedValues.indexOf(value), 1);
+                        ngModelCtrl.$setViewValue(scope.selectedValues);
                     } else {
-                        scope.selectedValue = ngModelCtrl.$modelValue;
+                        //Si el valor recibido no está definido se usa el valor del modelo
+                        scope.selectedValues = ngModelCtrl.$modelValue;
                     }
+                }
+
+                /**
+                 * Comprobar si un elemento se encuentra en la lista de elementos seleccionados
+                 */
+                function isSelected(value) {
+                    return (scope.selectedValues.indexOf(value) >= 0);
                 }
 
                 /**
@@ -229,6 +233,8 @@ angular.module('adminPanel').directive('apSelect',[
                     return entity[length-2];
                 }
 
+                //Eventos relacionados con el input
+
                 /**
                  * Evento disparado al cambiar el valor del input
                  */
@@ -248,16 +254,24 @@ angular.module('adminPanel').directive('apSelect',[
                  */
                 scope.onBlurInput = function() {
                     closeList();
-                    changeSelectedValue(searchFirstMatch());
                 };
 
+                //Eventos relacionados con los botones
+
                 /**
-                 * Evento disparado al presionar el botón
+                 * Evento disparado al presionar el botón agregar
                  */
-                scope.onClickButton = function() {
+                scope.onClickAddButton = function() {
                     if(!preventClickButton) {
                         focusInput();
                     }
+                };
+
+                /**
+                 * Evento disparado al presionar el botón quitar
+                 */
+                scope.onClickRemoveButton = function(value) {
+                    removeSelectedValue(value);
                 };
 
                 /**
@@ -267,23 +281,26 @@ angular.module('adminPanel').directive('apSelect',[
                     preventClickButton = listDisplayed();
                 };
 
+                //Eventos relacionados con la lista
+
                 /**
                  * Evento disparado al seleccionar un elemento de la lista
                  */
                 scope.onClickItemList = function(e, item) {
                     e.stopPropagation();
-                    changeSelectedValue(item);
+                    addSelectedValue(item);
                 };
 
-                /**
-                 * Evento disparado al presionar enter
-                 */
+                //Eventos relacionados con entradas del teclado
+
                 function enterHandler(event) {
                     if (listDisplayed() && event.keyCode === ENTER_KEY_CODE) {
                         blurInput();
                         event.preventDefault();
                     }
                 }
+
+                //Eventos relacionados con la directiva
 
                 /**
                  * Evento disparado al destruir la directiva
@@ -292,16 +309,29 @@ angular.module('adminPanel').directive('apSelect',[
                     $document.off('keydown', enterHandler);
                 });
 
-                $document.on('keydown', enterHandler);
+                //Eventos relacionados con el modelo
 
                 /**
-                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse.
+                 * Evento disparado cuando cambia el valor del modelo y la vista necesita actualizarse. Esta función
+                 * epermite que los valores mencionados queden sincronizados.
                  */
                 ngModelCtrl.$render = function() {
-                    loadOptions();
+                    if (angular.isUndefined(scope.ngModel) || scope.ngModel.length === 0 && scope.selectedValues.length > 0) {
+                        //Si el valor del modelo se pierde pero existen valores seleccionados se utilizan los valores seleccionados
+                        scope.ngModel = scope.selectedValues;
+                    }
+                    if (angular.isDefined(scope.ngModel) && angular.isArray(scope.ngModel) && scope.ngModel.length > 0) {
+                        //Si el modelo cambia se usan los valores del modelo
+                        scope.selectedValues = scope.ngModel;
+                    }
                 };
+
+                // Asociar eventos y ejecutar funciones de inicialización
+
+                $document.on('keydown', enterHandler);
+                loadOptions();
             },
-            templateUrl: 'directives/select/select.template.html'
+            templateUrl: 'directives/selectMultiple/selectMultiple.template.html'
         };
     }
 ]);

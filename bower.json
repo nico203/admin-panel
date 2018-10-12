@@ -9,6 +9,7 @@
   "dependencies": {
     "angular": "1.6.x",
     "angular-animate": "1.6.x",
+    "angular-scroll": "^1.0.2",
     "foundation-sites": "^6.3.1",
     "foundation-datepicker": "^1.5.6"
   },

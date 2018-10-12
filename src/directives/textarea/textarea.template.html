@@ -1,0 +1,20 @@
+<label>
+    {{label}}
+    <div class="text-area-wrapper">
+        <textarea
+            type="text"
+            ng-model="ngModel"
+            maxlength="{{maxlength}}"
+            placeholder="{{placeholder}}"
+            ng-change="updateModel()"
+            ng-class="{'has-button' : helpInfo}">
+        </textarea>
+        <button ng-if="helpInfo" class="button secondary tiny" title="Información adicional" ap-show-modal="{{modalId}}"><i class="fa fa-info medium animate"></i></button>
+    </div>
+</label>
+<div ng-if="helpInfo">
+    <ap-modal id="{{modalId}}">
+        <h1 ng-bind="label ? label : 'Información de ayuda'"></h1>
+        <p ng-bind="helpInfo"></p>
+    </ap-modal>
+</div>

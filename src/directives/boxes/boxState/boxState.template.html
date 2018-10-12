@@ -1,0 +1,20 @@
+<div class="card details-container" ng-class="{'cursor-not-allowed' : state === 'hideContent' || state === 'noEditable', 'cursor-pointer' : state === 'noContent'}"
+    ng-mouseover="onMouseOver($event)" ng-mouseleave="onMouseLeave($event)">
+    <div class="card-divider">
+        {{title}}
+        <i ng-if="state" class="fa {{message.icon}} title-icon"></i>
+    </div>
+    <div class="card-section">
+        <div>
+            <div ng-if="mouseOver && state" class="callout message-container">
+                <h5>
+                    <i class="fa {{message.icon}} medium"></i>&nbsp; {{message.text}}
+                </h5>
+                <p ng-bind="helpMessage"></p>
+            </div>
+            <div ng-class="{'hide-content' : state === 'hideContent'}">
+                <div ng-if="!state || state === 'hideContent'" ng-transclude></div>
+            </div>
+        </div>
+    </div>
+</div>

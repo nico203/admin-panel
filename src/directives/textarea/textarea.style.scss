@@ -1,0 +1,18 @@
+.text-area-wrapper {
+
+    position: relative;
+
+    & textarea {
+        resize: vertical;
+        
+        &.has-button {
+            padding-right: 26px;
+        }
+    }
+
+    & button {
+        position: absolute;
+        right: 0px;
+        top: 0px;
+    }
+}

@@ -1,0 +1,14 @@
+<label>
+    {{label}}
+    <div class="input-group">
+        <span class="input-group-label" ng-if="previousLabel" ng-bind="previousLabel"></span>
+        <input class="input-group-field"
+            type="number"
+            ng-model="ngModel"
+            ng-attr-min="{{min}}"
+            ng-attr-max="{{max}}"
+            ng-attr-step="{{step}}"
+            placeholder="{{placeholder}}"
+            ng-change="updateModel()">
+    </div>
+</label>

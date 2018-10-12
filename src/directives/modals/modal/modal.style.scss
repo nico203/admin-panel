@@ -1,0 +1,15 @@
+.ng-modal {
+    .reveal {
+        display:block;
+        visibility: visible;
+        max-height: 90%;
+    }
+
+    .reveal-overlay {
+        display: block;
+    }
+
+    .ng-modal-bg {
+        background-color: transparent;
+    }
+}

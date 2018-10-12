@@ -1,0 +1,47 @@
+<label>
+    {{label}}
+    <div class="data-select-wrapper">
+        <div class="input-group">
+            <input class="input-group-text-field" type="text" ng-model="input.model"
+                ng-change="onChangeInput()"
+                ng-focus="onFocusInput()"
+                ng-blur="onBlurInput()"
+                ng-disabled="disabled"/>
+            <div class="input-group-button">
+                <button type="button" class="button secondary"
+                        ng-click="onClickButton()"
+                        ng-mousedown="onMousedownButton($event)"
+                        ng-disabled="disabled">
+                    <span class="caret"></span>
+                </button>
+            </div>
+        </div>
+        <div class="dropdown" ng-class="{'is-open': lista.desplegado, 'medium-6 columns': itemDetailsData}" >
+            <ul ng-if="loading" class="list-group">
+                <li style="font-weight: bold;">Cargando...</li>
+            </ul>
+            <ul ng-if="!loading && lista.items.length > 0" class="list-group">
+                <li ng-repeat="option in lista.items"
+                    ng-bind-html="option.name | highlight:input.model"
+                    ng-mousedown="onClickItemList($event, option)"
+                    ng-mouseover="onOverItemList($event, option)"
+                    ng-class="{'active':option.$$object.id === itemSelected.$$object.id}"></li>
+            </ul>
+            <ul ng-if="!loading && lista.items.length === 0" class="list-group">
+                <li style="font-weight: bold;">No hay resultados</li>
+            </ul>
+            <ul ng-if="enableNewButton" class="list-group new">
+                <li ng-mousedown="newObject($event)">
+                    <span class="fa fa-plus"></span>&nbsp;
+                    <span>Nuevo</span>
+                </li>
+            </ul>
+        </div>
+        <div class="medium-6 columns" ng-if="lista.desplegado" ng-class="{'medium-6 columns': itemDetailsData}">
+            <label ng-repeat="item in itemDetailsData">
+            {{item[0]}}
+                <span class="input readonly" type="text" ng-bind="{{ ('itemOver.' + item[1]) + item[2]}}"></span>
+            </label>
+        </div>
+    </div>
+</label>

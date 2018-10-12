@@ -1,0 +1,68 @@
+$tabs-bg: #fafafa !default;
+$tabs-color: #0a0a0a !default;
+$tabs-hover-bg: #e6f4f9 !default;
+$tabs-hover-color: #0a0a0a !default;
+$tabs-active-bg: #007295 !default;
+$tabs-active-color: #fff !default;
+
+.tabs-wrapper {
+    border: 1px solid #b3b3b3;
+
+    & .arrow-button {
+        color: $tabs-color;
+        background-color: $tabs-bg;
+        width: 32px;
+        height: 52px;
+
+        &.left {
+            float: left;
+        }
+
+        &.right {
+            float: right;
+        }
+        
+        cursor: pointer;
+
+        &:hover {
+            background-color: $tabs-hover-bg;
+            color: $tabs-hover-color;
+        }
+    }
+
+    & .tabs {
+
+        overflow-x: hidden;
+        white-space: nowrap;
+        border: none;
+
+        & .tabs-title {
+            float: none;
+            display: inline-block;
+        }
+
+        > li a {
+            color: $tabs-color;
+            background-color: $tabs-bg;
+
+            &:hover {
+                background-color: $tabs-hover-bg;
+                color: $tabs-hover-color;
+            }
+
+            &[aria-selected="true"] {
+                background-color: $tabs-active-bg;
+                color: $tabs-active-color;
+                cursor: unset;
+            }
+
+            &.disabled {
+                color: gray;
+                &:hover {
+                    cursor: not-allowed
+                }
+            }
+        }
+    }
+}
+

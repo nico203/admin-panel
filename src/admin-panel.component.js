@@ -1,5 +1,6 @@
 angular.module('adminPanel', [
     'ngAnimate',
+    'duScroll',
     'adminPanel.authentication',
     'adminPanel.crud',
     'adminPanel.topBar',

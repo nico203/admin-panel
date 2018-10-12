@@ -1,10 +1,10 @@
-$select-hover-bg: rgba(0, 0, 0, 0.04) !default;
+$data-select-hover-bg: rgba(0, 0, 0, 0.04) !default;
 
-.ap-select {
+.data-select {
     display: block;
     position: relative;
 
-    .select-wrapper {
+    .data-select-wrapper {
 
         position: relative;
 
@@ -13,18 +13,19 @@ $select-hover-bg: rgba(0, 0, 0, 0.04) !default;
             margin: 0px;
             min-width: 0;
         }
-
+        
         .dropdown {
             @include dropdown-container;
             padding: 0.4rem 0;
             width: 100%;
             top: 39px;
             left: 0;
+            max-height: 0;
             transition: max-height 0.2s;
-            overflow-y: auto;
+            overflow: hidden;
 
             &.is-open {
-                max-height: 300px;
+                max-height: 2048px;
             }
 
             .list-group {
@@ -39,11 +40,29 @@ $select-hover-bg: rgba(0, 0, 0, 0.04) !default;
                     background-color: transparent;
 
                     &:hover {
-                        background-color: $select-hover-bg;
+                        background-color: $data-select-hover-bg;
                     }
 
                     &.active {
                         background: $primary-color;
+                    }
+                }
+
+                &.new {
+                    > li {
+                        font-weight: bold;
+                        text-align: center;
+                        background: rgba(128, 128, 128, 0.23);
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        border-top: 1px solid #c1c1c1;
+                        border-bottom: 1px solid #c1c1c1;
+                        color: #848484;
+                        text-shadow: 1px 1px 1px #fdfdfd;
+
+                        &:hover {
+                            background: rgba(128, 128, 128, 0.45);
+                        }
                     }
                 }
             }
@@ -71,6 +90,12 @@ $select-hover-bg: rgba(0, 0, 0, 0.04) !default;
                     border-color: #d2d2d2 transparent transparent;
                 }
             }
+        }
+
+        .input.readonly {
+            background-color: #b3b3b3;
+            cursor: not-allowed;
+            height: auto;
         }
     }
 }

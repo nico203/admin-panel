@@ -1,5 +1,7 @@
 .ap-datepicker {
-    span {
-        color: #fefefe;
+    cursor: pointer;
+    
+    input[readonly] {
+        cursor: pointer;
     }
 }
