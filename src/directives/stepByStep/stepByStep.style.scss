@@ -16,7 +16,6 @@ $stepbystep-disabled-color: #aaa !default;
     box-sizing: border-box;
     padding-left: 0;
     margin-left: 0px;
-    cursor: pointer;
 
     &.expanded {
         display: flex;
@@ -97,6 +96,7 @@ $stepbystep-disabled-color: #aaa !default;
         color: $stepbystep-color;
         box-sizing: border-box;
         font-size: 1rem;
+        cursor: pointer;
 
         &:hover {
             background-color: $stepbystep-hover-bg;
@@ -111,25 +111,25 @@ $stepbystep-disabled-color: #aaa !default;
         &.active {
             background-color: $stepbystep-active-bg;
             color: $stepbystep-active-color;
-            cursor: auto;
+            cursor: default;
         }
 
         &.active:after {
             background-color: $stepbystep-active-bg;
             color: $stepbystep-active-color;
-            cursor: auto;
+            cursor: default;
         }
 
         &.disabled {
             background-color: $stepbystep-disabled-bg;
             color: $stepbystep-disabled-color;
-            cursor: auto;
+            cursor: not-allowed;
         }
 
         &.disabled:after {
             background-color: $stepbystep-disabled-bg;
             color: $stepbystep-disabled-color;
-            cursor: auto;
+            cursor: not-allowed;
         }
     }
 
