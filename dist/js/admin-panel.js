@@ -3262,21 +3262,23 @@ angular.module('adminPanel').directive('apShowModal',[
                     
                     this.rePaginate = function() {
                         var margin = Math.floor(showPagesCount / 2);
-                        var generate = !((this.bottomPage === 1 && this.currentPage <= margin) ||
-                                (this.topPage === this.pageCount && this.currentPage >= this.pageCount - margin));
-                        if(generate) {
-                            if(this.currentPage - margin < 1) {
-                                this.bottomPage = 1;
-                                this.topPage = this.activeLastFirst ? showPagesCount : this.pageCount;
-                            } else if(this.currentPage + margin > this.pageCount) {
-                                this.topPage = this.pageCount;
-                                this.bottomPage = this.activeLastFirst ? this.pageCount - showPagesCount + 1 : 1;
-                            } else {
-                                this.topPage = this.currentPage + margin;
-                                this.bottomPage = this.currentPage - margin;
-                            }
-                            this.pages = generatePages(this.bottomPage, this.topPage);
+                        if(this.currentPage - margin < 1) {
+                            this.bottomPage = 1;
+                            this.topPage = this.activeLastFirst ? showPagesCount : this.pageCount;
+                        } else if(this.currentPage + margin > this.pageCount) {
+                            this.topPage = this.pageCount;
+                            this.bottomPage = this.activeLastFirst ? this.pageCount - showPagesCount + 1 : 1;
+                        } else {
+                            this.topPage = this.currentPage + margin;
+                            this.bottomPage = this.currentPage - margin;
                         }
+                        if (this.currentPage == this.bottomPage) {
+                            this.enablePreviousPage = false;
+                        }
+                        if (this.currentPage == this.topPage) {
+                            this.enableNextPage = false;
+                        }
+                        this.pages = generatePages(this.bottomPage, this.topPage);
                     };
 
                     this.changePage = function(page) {
