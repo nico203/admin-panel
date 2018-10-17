@@ -2698,13 +2698,15 @@ angular.module('adminPanel').directive('apGoToPath', [
                         var apInfoOnTableDirective = trParent.find('[ap-info-on-table=""]');
                         
                         scope.apInfoOnTableController = apInfoOnTableDirective.controller('apInfoOnTable');
+                        if (!scope.apInfoOnTableController) {
+                            return;
+                        }
                         scope.apInfoOnTableController.setColspan(colspan);
 
                         //envolvemos el container en un tr y lo agregamos despues del tr actual, quedando como un elemento mas de la tabla
                         trParent.after(angular.element('<tr>')
                                 .append(apInfoOnTableDirective));
                     });
-                    
                 };
                 
                 self.toggleButton = function() {
