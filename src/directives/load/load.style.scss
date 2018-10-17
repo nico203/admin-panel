@@ -5,30 +5,19 @@
     
     .ap-load-image {
         position: absolute;
-        top: 0; 
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
         visibility: hidden !important;
         
         img {
             position: absolute; 
             margin: auto;
-            top: 40px;
-            left: 0;
-            right: 0;
-        }
-    }
-    
-    &.loading-remove {
-        animation: 0.4s pulse linear; 
-        /*animation: 0.4s fadeIn linear;*/ 
-    }
-
-    &.loading-add {
-        animation: 0.4s fadeOut linear; 
-        img {
-            animation: 0.4s zoomOut linear; 
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
         }
     }
     
@@ -40,33 +29,4 @@
             visibility: visible !important;
         }
     }
-/*    
-    .ap-load-image {
-        
-        &.ng-hide-remove {
-            animation: 0.4s pulse linear; 
-        }
-        
-        &.ng-hide-add {
-            animation: 0.4s zoomOut linear; 
-        }
-    }
-    
-    .ap-load-content {
-        position: relative;
-        display: block !important;
-        
-        &.ng-hide {
-            z-index: -1;
-            opacity: 0;
-        }
-        
-        &.ng-hide-remove {
-            animation: 0.4s fadeIn linear; 
-        }
-        
-        &.ng-hide-add {
-            animation: 0.4s fadeOut linear; 
-        }
-    }*/
 }
