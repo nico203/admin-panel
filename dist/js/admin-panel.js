@@ -2205,7 +2205,25 @@ angular.module('adminPanel').directive('apDataSelect', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('apDatePicker',[
+;/**
+ * @description Foundation tooltip.
+ */
+angular.module('adminPanel').directive('apDataTooltip', [
+    '$timeout',
+    function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function(scope , element, attrs) {
+                
+                element.attr('data-tooltip', '');
+
+                $timeout(function() {
+                    element.foundation();
+                });
+            }
+        };
+    }
+]);;angular.module('adminPanel').directive('apDatePicker',[
     '$timeout',
     function($timeout) {
         return {
@@ -3713,7 +3731,8 @@ angular.module('adminPanel').directive('apSelectMultiple',[
                 resource: '@',
                 field: '@',
                 entity: '@',
-                ngModel: '='
+                ngModel: '=',
+                label: '@'
             },
             link: function(scope, element, attrs, ngModelCtrl) {
                 element.addClass('select-multiple');
@@ -3753,7 +3772,7 @@ angular.module('adminPanel').directive('apSelectMultiple',[
                 entity = entity.toLowerCase();
 
                 //Inicializar scope
-
+                scope.label = scope.label ? scope.label : '';
                 scope.selectedValues = [];
                 scope.loading = true;
                 scope.list = {
@@ -4849,7 +4868,7 @@ angular.module('adminPanel.utils').factory('hasProperty', [
   $templateCache.put("directives/select/select.template.html",
     "<label>{{label}}<div class=select-wrapper><div class=input-group><input class=input-group-text-field type=text ng-model=selectedValue ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=loading autocomplete=off><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event) tabindex=-1><span class=caret></span></button></div></div><div class=dropdown ng-class=\"{'is-open':list.displayed}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && list.options.length > 0\" class=list-group><li ng-repeat=\"option in list.options\" ng-bind-html=\"option | selectOption | highlight:selectedValue\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option === selectedValue}\"></li></ul><ul ng-if=\"!loading && list.options.length === 0\" class=list-group><li style=font-weight:700>No hay opciones disponibles</li></ul></div></div></label>");
   $templateCache.put("directives/selectMultiple/selectMultiple.template.html",
-    "<ul class=list-group><li ng-repeat=\"value in selectedValues\" class=list-group-item><span class=list-group-item-text ng-bind=value></span><button type=button class=\"button secondary\" ng-click=onClickRemoveButton(value)><i class=\"fa fa-minus medium\"></i></button></li></ul><div class=input-group><input class=input-group-field type=text ng-model=searchValue ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=loading autocomplete=off placeholder=Buscar...><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickAddButton() ng-mousedown=onMousedownButton($event)><i class=\"fa fa-plus medium\"></i></button></div></div><div class=\"dropdown-pane dropdown\" ng-class=\"{'is-open':list.displayed}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && list.options.length > 0\" class=list-group><li ng-repeat=\"option in list.options | filter:searchValue\" ng-bind-html=\"option | highlight:searchValue\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'disabled': selectedValues.indexOf(option) >= 0}\"></li></ul><ul ng-if=\"!loading && list.options.length === 0\" class=list-group><li style=font-weight:700>No hay opciones disponibles</li></ul></div>");
+    "<label>{{label}}</label><ul class=list-group><li ng-repeat=\"value in selectedValues\" class=list-group-item><span class=list-group-item-text ng-bind=value></span><button type=button class=\"button secondary\" ng-click=onClickRemoveButton(value)><i class=\"fa fa-minus medium\"></i></button></li></ul><div class=input-group><input class=input-group-field type=text ng-model=searchValue ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput() ng-disabled=loading autocomplete=off placeholder=Buscar...><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickAddButton() ng-mousedown=onMousedownButton($event)><i class=\"fa fa-plus medium\"></i></button></div></div><div class=\"dropdown-pane dropdown\" ng-class=\"{'is-open':list.displayed}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && list.options.length > 0\" class=list-group><li ng-repeat=\"option in list.options | filter:searchValue\" ng-bind-html=\"option | highlight:searchValue\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'disabled': selectedValues.indexOf(option) >= 0}\"></li></ul><ul ng-if=\"!loading && list.options.length === 0\" class=list-group><li style=font-weight:700>No hay opciones disponibles</li></ul></div>");
   $templateCache.put("directives/stepByStep/stepByStep.template.html",
     "<ul class=steps ng-transclude></ul>");
   $templateCache.put("directives/switch/switch.template.html",

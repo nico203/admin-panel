@@ -34,7 +34,8 @@ angular.module('adminPanel').directive('apSelectMultiple',[
                 resource: '@',
                 field: '@',
                 entity: '@',
-                ngModel: '='
+                ngModel: '=',
+                label: '@'
             },
             link: function(scope, element, attrs, ngModelCtrl) {
                 element.addClass('select-multiple');
@@ -74,7 +75,7 @@ angular.module('adminPanel').directive('apSelectMultiple',[
                 entity = entity.toLowerCase();
 
                 //Inicializar scope
-
+                scope.label = scope.label ? scope.label : '';
                 scope.selectedValues = [];
                 scope.loading = true;
                 scope.list = {
