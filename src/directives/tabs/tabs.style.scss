@@ -53,7 +53,6 @@ $tabs-active-color: #fff !default;
             &[aria-selected="true"] {
                 background-color: $tabs-active-bg;
                 color: $tabs-active-color;
-                cursor: unset;
             }
 
             &.disabled {

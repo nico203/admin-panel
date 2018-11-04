@@ -4158,8 +4158,8 @@ angular.module('adminPanel').directive('apStepByStep',[
         };
     }
 ]);;angular.module('adminPanel').directive('apTabs',[
-    '$location', '$timeout', '$interval', '$window',
-    function($location, $timeout, $interval, $window) {
+    '$location', '$timeout', '$window',
+    function($location, $timeout, $window) {
         return {
             restrict: 'E',
             transclude: true,
@@ -4167,15 +4167,15 @@ angular.module('adminPanel').directive('apStepByStep',[
             scope: {
                 onChange: '&'
             },
-            link: function($scope, elem, attr) {
-                $scope.tabs = {}; //Lista de tabs
+            link: function($scope, elem) {
+                $scope.tabs = {};
+                $scope.active = null;
                 $scope.allowScrollToLeft = false;
                 $scope.allowScrollToRight = true;
                 $scope.enableScrollButtons = false;
-
+                
                 var tabsElement = elem.find('.tabs');
-                var scrollDuration = 500;
-                var scrollPromise;
+                var scrollDuration = 700;
 
                 enableOrDisableScrollButtons();
 
@@ -4194,6 +4194,7 @@ angular.module('adminPanel').directive('apStepByStep',[
                  */
                 $scope.switch = function (tab) {
                     if (tab.state === 'default') {
+                        $scope.scrollToElement($location.hash());
                         $timeout(function() {
                             if ($scope.active !== tab.name) {
                                 $scope.active = tab.name;
@@ -4213,6 +4214,7 @@ angular.module('adminPanel').directive('apStepByStep',[
                     if($location.hash() in $scope.tabs) {
                         $timeout(function() {
                             $scope.active = $location.hash();
+                            $scope.scrollToElement($location.hash());
                         });
                     }
                 });
@@ -4225,9 +4227,11 @@ angular.module('adminPanel').directive('apStepByStep',[
                     scroll(getScrollStep());
                 };
 
-                $scope.mouseUp = function () {
-                    $interval.cancel(scrollPromise);
-                    scrollPromise = null;
+                $scope.scrollToElement = function(tabName) {
+                    $timeout(function() {
+                        var tabElement = angular.element(document.getElementById('tab-' + tabName));
+                        scroll(null, tabElement);
+                    });
                 };
 
                 /**
@@ -4277,23 +4281,21 @@ angular.module('adminPanel').directive('apStepByStep',[
                  * Realiza el desplazamiento del elemento tabs.
                  * @param {int} step cantidad de píxeles que debe desplazarse el 
                  * elemento
+                 * @param {DOMElement} element elemento tab que indica la posición
+                 * final del scroll. Si element existe se ignora el paŕametro step.
                  */
-                function scroll(step) {
-                    tabsElement.scrollLeftAnimated(
-                        tabsElement.scrollLeft() + step, scrollDuration
-                    );
-
-                    if(scrollPromise) {
-                        $interval.cancel(scrollPromise);
+                function scroll(step, element) {
+                    var position = null;
+                    if (element && element[0]) {
+                        position = element.prop('offsetLeft') - 0.5*tabsElement[0].clientWidth-32+0.5*element[0].clientWidth;
+                    } else {
+                        position = tabsElement.scrollLeft() + step;
                     }
 
-                    scrollPromise = $interval(function () {
-                        tabsElement.scrollLeftAnimated(
-                            tabsElement.scrollLeft() + step, scrollDuration
-                        );
-                    }, scrollDuration);
+                    tabsElement.scrollLeftAnimated(
+                        position, scrollDuration
+                    );
                 }
-
             },
             controller: ['$scope', function($scope) {
 
@@ -4312,9 +4314,11 @@ angular.module('adminPanel').directive('apStepByStep',[
                     };
                     if (!$scope.active && state!='disabled') {
                         $scope.active = name;
+                        $scope.scrollToElement(name);
                     }
                     if ($location.hash() === name && state !== 'disabled') {
                         $scope.active = name;
+                        $scope.scrollToElement(name);
                     }
                 };
 
@@ -4876,7 +4880,7 @@ angular.module('adminPanel.utils').factory('hasProperty', [
   $templateCache.put("directives/tabs/tab.template.html",
     "<div ng-show=isVisible()><div class=\"tabs-panel is-active\" ng-if=wasOpened() ng-transclude></div></div>");
   $templateCache.put("directives/tabs/tabs.template.html",
-    "<div><div class=tabs-wrapper><button type=button class=\"arrow-button float-left\" ng-mousedown=scrollToLeft() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToLeft\"><i class=\"fa fa-chevron-left\"></i></button><button type=button class=\"arrow-button float-right\" ng-mousedown=scrollToRight() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToRight\"><i class=\"fa fa-chevron-right\"></i></button><ul class=tabs><li class=tabs-title ng-repeat=\"tab in tabs\" ng-click=switch(tab)><a class={{tab.state}} aria-selected=\"{{tab.name === active}}\" title={{tab.title}}>{{ tab.title }}&nbsp;<i ng-if=tab.endIcon class=\"fa fa-{{tab.endIcon}}\"></i></a></li></ul></div><div class=tabs-content ng-transclude></div></div>");
+    "<div><div class=tabs-wrapper><button type=button class=\"arrow-button float-left\" ng-mousedown=scrollToLeft() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToLeft\"><i class=\"fa fa-chevron-left\"></i></button><button type=button class=\"arrow-button float-right\" ng-mousedown=scrollToRight() ng-mouseup=mouseUp() ng-show=\"enableScrollButtons && allowScrollToRight\"><i class=\"fa fa-chevron-right\"></i></button><ul class=tabs><li class=tabs-title ng-repeat=\"tab in tabs\" ng-click=switch(tab) id=\"{{'tab-' + tab.name}}\"><a class={{tab.state}} aria-selected=\"{{tab.name === active}}\" title={{tab.title}}>{{ tab.title }}&nbsp;<i ng-if=tab.endIcon class=\"fa fa-{{tab.endIcon}}\"></i></a></li></ul></div><div class=tabs-content ng-transclude></div></div>");
   $templateCache.put("directives/textInput/textInput.template.html",
     "<label>{{label}} <input type=text ng-model=ngModel maxlength={{maxlength}} placeholder={{placeholder}} ng-change=updateModel()></label>");
   $templateCache.put("directives/textarea/textarea.template.html",

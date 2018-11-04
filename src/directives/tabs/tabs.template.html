@@ -3,7 +3,7 @@
         <button type="button" class="arrow-button float-left" ng-mousedown="scrollToLeft()" ng-mouseUp="mouseUp()" ng-show="enableScrollButtons && allowScrollToLeft"><i class="fa fa-chevron-left"></i></button>
         <button type="button" class="arrow-button float-right" ng-mousedown="scrollToRight()" ng-mouseUp="mouseUp()" ng-show="enableScrollButtons && allowScrollToRight"><i class="fa fa-chevron-right"></i></button>
         <ul class="tabs">
-            <li class="tabs-title" ng-repeat='tab in tabs' ng-click="switch(tab)">
+            <li class="tabs-title" ng-repeat='tab in tabs' ng-click="switch(tab)" id="{{'tab-' + tab.name}}">
                 <a class="{{tab.state}}" aria-selected="{{tab.name === active}}" title="{{tab.title}}">{{ tab.title }}&nbsp; <i ng-if="tab.endIcon" class="fa fa-{{tab.endIcon}}"></i></a>
             </li>
         </ul>
