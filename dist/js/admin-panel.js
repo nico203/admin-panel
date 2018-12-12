@@ -3017,74 +3017,55 @@ angular.module('adminPanel').directive('apConfirmModal', [
  *        ap-show-modal para saber qué modal abrir.
  */
 angular.module('adminPanel').directive('apModal',[
-    '$timeout', '$document',
-    function($timeout, $document) {
+    '$timeout',
+    function($timeout) {
         return {
             restrict: 'E',
+            priority: 60,
             transclude: true,
-            replace: true,
             scope: {
                 id: '@'
             },
-            link: function(scope, element, attrs, ctrl, transclude) {
-
-                //Constantes
-                var ESC_KEY_CODE = 27;
+            link: function(scope, element, attrs) {
+                
+                //Inicializar foundation
+                var htmlElem = element.find('.reveal');
+                $timeout(function() {
+                    htmlElem.foundation();
+                });
 
                 //Inicializar variables del scope
                 scope.dialogButtons = angular.isUndefined(attrs.dialogButtons) ? false : true;
                 scope.confirmButtonType = attrs.confirmButtonType;
-                scope.show = false;
 
                 scope.hideModal = function() {
-                    scope.show = false;
+                    htmlElem.foundation('close');
                 };
 
                 scope.showModal = function() {
-                    scope.show = true;
+                    htmlElem.foundation('open');
                 };
 
-                function escHandler (event) {
-                    if (scope.show === true && event.keyCode === ESC_KEY_CODE) {
-                        $timeout(scope.hideModal, 0);
-                        event.preventDefault();
-                    }
-                }
-
-                /**
-                 * Evento disparado al destruir la directiva
-                 */
-                scope.$on('$destroy', function() {
-                    $document.off('keydown', escHandler);
-                });
-
-                $document.on('keydown', escHandler);
-            },
-            controller: ['$scope', function($scope) {
-
                 //Evento disparado al presionar el botón confirmar
-                $scope.confirm = function() {
-                    $scope.$emit('modalConfirm', {id: $scope.id});
-                    //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                    $timeout($scope.hideModal, 0);
+                scope.confirm = function() {
+                    scope.$emit('modalConfirm', {id: scope.id});
+                    scope.hideModal();
                 };
 
                 //Event listener para abrir el modal
-                $scope.$on("showModal", function (event, data) {
-                    if (data.id === $scope.id) {
-                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                        $timeout($scope.showModal, 0);
+                scope.$on("showModal", function (event, data) {
+                    if (data.id === scope.id) {
+                        scope.showModal();
                     }
                 });
 
                 //Event listener 2 para abrir el modal
-                $scope.$on('apBox:show', function showOnEvent(e, name) {
-                    if (name === $scope.id) {
-                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                        $timeout($scope.showModal, 0);
+                scope.$on('apBox:show', function showOnEvent(e, name) {
+                    if (name === scope.id) {
+                        scope.showModal();
                     }
                 });
-            }],
+            },
             templateUrl: 'directives/modals/modal/modal.template.html'
         };
     }
@@ -4862,7 +4843,7 @@ angular.module('adminPanel.utils').factory('hasProperty', [
   $templateCache.put("directives/modals/confirm/confirmModal.template.html",
     "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=\"button alert\" ng-click=yes()>Aceptar</a><a class=\"button secondary\" ng-click=no()>Cancelar</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/modals/modal/modal.template.html",
-    "<div class=\"ng-modal ng-hide\" ng-show=show><div class=reveal-overlay><div class=\"reveal-overlay ng-modal-bg\" ng-click=hideModal()></div><div class=reveal><div ng-transclude></div><div ng-if=dialogButtons class=float-right><button class=\"button secondary\" ng-click=hideModal()>Cancelar</button><button class=button ng-class=confirmButtonType ng-click=confirm() data-close>Confirmar</button></div><button class=close-button ng-click=hideModal() aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div></div></div>");
+    "<div class=reveal data-reveal><div ng-transclude></div><div ng-if=dialogButtons class=float-right><button class=\"button secondary\" ng-click=hideModal()>Cancelar</button><button class=button ng-class=confirmButtonType ng-click=confirm() data-close>Confirmar</button></div><button class=close-button ng-click=hideModal() aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
   $templateCache.put("directives/numberInput/numberInput.template.html",

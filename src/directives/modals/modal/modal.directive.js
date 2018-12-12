@@ -19,74 +19,55 @@
  *        ap-show-modal para saber qué modal abrir.
  */
 angular.module('adminPanel').directive('apModal',[
-    '$timeout', '$document',
-    function($timeout, $document) {
+    '$timeout',
+    function($timeout) {
         return {
             restrict: 'E',
+            priority: 60,
             transclude: true,
-            replace: true,
             scope: {
                 id: '@'
             },
-            link: function(scope, element, attrs, ctrl, transclude) {
-
-                //Constantes
-                var ESC_KEY_CODE = 27;
+            link: function(scope, element, attrs) {
+                
+                //Inicializar foundation
+                var htmlElem = element.find('.reveal');
+                $timeout(function() {
+                    htmlElem.foundation();
+                });
 
                 //Inicializar variables del scope
                 scope.dialogButtons = angular.isUndefined(attrs.dialogButtons) ? false : true;
                 scope.confirmButtonType = attrs.confirmButtonType;
-                scope.show = false;
 
                 scope.hideModal = function() {
-                    scope.show = false;
+                    htmlElem.foundation('close');
                 };
 
                 scope.showModal = function() {
-                    scope.show = true;
+                    htmlElem.foundation('open');
                 };
 
-                function escHandler (event) {
-                    if (scope.show === true && event.keyCode === ESC_KEY_CODE) {
-                        $timeout(scope.hideModal, 0);
-                        event.preventDefault();
-                    }
-                }
-
-                /**
-                 * Evento disparado al destruir la directiva
-                 */
-                scope.$on('$destroy', function() {
-                    $document.off('keydown', escHandler);
-                });
-
-                $document.on('keydown', escHandler);
-            },
-            controller: ['$scope', function($scope) {
-
                 //Evento disparado al presionar el botón confirmar
-                $scope.confirm = function() {
-                    $scope.$emit('modalConfirm', {id: $scope.id});
-                    //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                    $timeout($scope.hideModal, 0);
+                scope.confirm = function() {
+                    scope.$emit('modalConfirm', {id: scope.id});
+                    scope.hideModal();
                 };
 
                 //Event listener para abrir el modal
-                $scope.$on("showModal", function (event, data) {
-                    if (data.id === $scope.id) {
-                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                        $timeout($scope.showModal, 0);
+                scope.$on("showModal", function (event, data) {
+                    if (data.id === scope.id) {
+                        scope.showModal();
                     }
                 });
 
                 //Event listener 2 para abrir el modal
-                $scope.$on('apBox:show', function showOnEvent(e, name) {
-                    if (name === $scope.id) {
-                        //Se usa $timeout para ejecutar la función cuando terminen los eventos asíncronos
-                        $timeout($scope.showModal, 0);
+                scope.$on('apBox:show', function showOnEvent(e, name) {
+                    if (name === scope.id) {
+                        scope.showModal();
                     }
                 });
-            }],
+            },
             templateUrl: 'directives/modals/modal/modal.template.html'
         };
     }
