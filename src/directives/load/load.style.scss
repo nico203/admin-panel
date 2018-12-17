@@ -23,7 +23,7 @@
     
     &.loading {
         visibility: hidden;
-        min-height: 200px;
+        max-height: 100px;
         
         .ap-load-image {
             visibility: visible !important;
