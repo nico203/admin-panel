@@ -23,6 +23,7 @@
     
     &.loading {
         visibility: hidden;
+        overflow-y: hidden;
         max-height: 100px;
         
         .ap-load-image {
