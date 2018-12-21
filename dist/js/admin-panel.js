@@ -2377,7 +2377,48 @@ angular.module('adminPanel').directive('apDataTooltip', [
         };
     }
 ]);
-;angular.module('adminPanel').directive('apFileSaver', [
+;/**
+ * @description Directiva que muestra un ícono de font-awesome dependiendo del MIME type
+ *              que recibe.
+ * 
+ *              Ejemplo de uso:
+ *                  <ap-file-icon type={{"image/png"}} fa-prefix="far" fa-size="fa-2x"></ap-file-icon>
+ */
+angular.module('adminPanel').directive('apFileIcon', [
+    function() {
+        return {
+            restrict: 'E',
+            scope: {
+                type: '<',
+                faPrefix: '@',
+                faSize: '@'
+            },
+            link: function(scope) {
+                scope.faPrefix = scope.faPrefix ? scope.faPrefix : 'fas';
+                scope.faSize = scope.faSize ? scope.faSize : '';
+                scope.iconClass = function() {
+                    return scope.faPrefix + ' ' + scope.faSize;
+                };
+                if (!scope.type) {
+                    return;
+                }
+                var typeArray = scope.type.split('/');
+                if (typeArray[0] && typeArray[0] == 'audio') {
+                    scope.type = 'audio';
+                } else if (typeArray[0] && typeArray[0] == 'video') {
+                    scope.type = 'video';
+                } else if (typeArray[0] && typeArray[0] == 'image') {
+                    scope.type = 'image';
+                } else if (scope.type == 'application/vnd.oasis.opendocument.text' || scope.type == 'application/rtf' || scope.type == 'text/plain') {
+                    scope.type = 'text';
+                } else if (scope.type == 'application/x-rar-compressed' || scope.type == 'application/zip' || scope.type == 'application/x-7z-compressed') {
+                    scope.type = 'compressed';
+                }
+            },
+            templateUrl: 'src/directives/fileIcon/fileIcon.template.html'
+        };
+    }
+]);;angular.module('adminPanel').directive('apFileSaver', [
     '$http', 'CrudConfig',
     function ($http, CrudConfig) {
         return {
@@ -2545,6 +2586,25 @@ angular.module('adminPanel').directive('apForm',[
                 }
             },
             templateUrl: 'directives/form/form.template.html'
+        };
+    }
+]);;/**
+ * @description Directiva que inicializa Foundation en el elemento. Útil para
+ *              inicializar componentes básicos de foundation, como por ejemplo
+ *              los dropdowns.
+ * 
+ *              Ejemplo de uso:
+ *                  <div ap-foundation></div>
+ */
+angular.module('app').directive('apFoundation', [
+    '$timeout',
+    function($timeout) {
+        return {
+            restrict: 'A',
+            scope: {},
+            link: function(scope, element) {
+                element.foundation();
+            }
         };
     }
 ]);;/**
@@ -4505,6 +4565,25 @@ angular.module('adminPanel.filters').filter('concat', function () {
         }
     };
 });;/**
+ * @description Filtro que formatea un valor en bytes para usar las unidades B, KB, 
+ *              MB, GB o TB.
+ * 
+ * @param input Valor que será formateado.
+ * @returns {String} Ejemplo: 13,45KB
+ */
+angular.module('adminPanel.filters').filter('formatBytes', function () {
+    return function (input) {
+        if (!input || input < 0) {
+            return '';
+        }
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var pow = Math.floor(Math.log(input) / Math.log(1024));
+        pow = Math.min(pow, units.length - 1);
+        input = input/(1 << (10 * pow));
+
+        return Math.round(input * 10)/10 + ' ' + units[pow];
+    };
+});;/**
  * @description Filtro que resalta una frase de un texto.
  * 
  * @param {String} input Texto que contiene la frase que será resaltada.
@@ -4822,6 +4901,8 @@ angular.module('adminPanel.utils').factory('hasProperty', [
     "<label>{{label}}<div class=\"input-group ap-datepicker\"><span class=\"input-group-label prefix\"><i class=\"far fa-calendar-alt\"></i></span><input class=\"input-group-field date\" type=text readonly></div></label>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
     "<label>{{label}}<div class=\"input-group ap-datetimepicker\"><span class=\"input-group-label prefix\"><i class=\"far fa-calendar-alt\"></i></span><input class=\"input-group-field date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div></label>");
+  $templateCache.put("directives/fileIcon/fileIcon.template.html",
+    "<span ng-switch on=type><i ng-class=iconClass() class=fa-file-pdf ng-switch-when=application/pdf></i><i ng-class=iconClass() class=fa-file-word ng-switch-when=application/msword></i><i ng-class=iconClass() class=fa-file-image ng-switch-when=image></i><i ng-class=iconClass() class=fa-file-audio ng-switch-when=audio></i><i ng-class=iconClass() class=fa-file-video ng-switch-when=video></i><i ng-class=iconClass() class=fa-file-alt ng-switch-when=text></i><i ng-class=iconClass() class=fa-file-archive ng-switch-when=compressed></i><i ng-class=iconClass() class=fa-file ng-switch-default></i></span>");
   $templateCache.put("directives/fileSaver/fileSaver.template.html",
     "<button class=button type=button><i ng-hide=loading class=\"fa fa-download\"></i><div ng-show=loading class=animation><div style=width:100%;height:100% class=lds-rolling><div></div></div></div><span class=text ng-bind=buttonName></span></button>");
   $templateCache.put("directives/filter/filter.template.html",
