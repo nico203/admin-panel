@@ -2596,7 +2596,7 @@ angular.module('adminPanel').directive('apForm',[
  *              Ejemplo de uso:
  *                  <div ap-foundation></div>
  */
-angular.module('app').directive('apFoundation', [
+angular.module('adminPanel').directive('apFoundation', [
     '$timeout',
     function($timeout) {
         return {
