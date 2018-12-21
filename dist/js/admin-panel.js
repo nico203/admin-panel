@@ -2415,7 +2415,7 @@ angular.module('adminPanel').directive('apFileIcon', [
                     scope.type = 'compressed';
                 }
             },
-            templateUrl: 'src/directives/fileIcon/fileIcon.template.html'
+            templateUrl: 'directives/fileIcon/fileIcon.template.html'
         };
     }
 ]);;angular.module('adminPanel').directive('apFileSaver', [
