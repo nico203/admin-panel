@@ -4404,7 +4404,8 @@ angular.module('adminPanel').directive('apStepByStep',[
     }
 ]);
 ;angular.module('adminPanel').directive('apTextarea', [
-    function() {
+    '$timeout',
+    function($timeout) {
         return {
             restrict: 'E',
             require: 'ngModel',
@@ -4426,6 +4427,18 @@ angular.module('adminPanel').directive('apStepByStep',[
 
                 scope.updateModel = function() {
                     ngModelCtrl.$setViewValue(scope.ngModel);
+                    scope.textAreaAdjust();
+                };
+
+                scope.textAreaAdjust = function() {
+                    $timeout(function() {
+                        elem.find("textarea")[0].style.height = "1px";
+                        elem.find("textarea")[0].style.height = (5+elem.find("textarea")[0].scrollHeight)+"px";
+                    });
+                };
+
+                ngModelCtrl.$render = function() {
+                    scope.textAreaAdjust();
                 };
             },
             templateUrl: 'directives/textarea/textarea.template.html'
