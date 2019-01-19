@@ -319,7 +319,6 @@ angular.module('adminPanel.crud').factory('BasicListController', [
             self.listParams = null;
             scope.list = [];
             self.$$crudFactory = new CrudFactory(scope, resource);
-            self.parentData = null;
             self.action = null;
             
             /**
@@ -344,21 +343,12 @@ angular.module('adminPanel.crud').factory('BasicListController', [
              * 
              * @returns {BasicListController}
              */
-            self.list = function(params, actionDefault) {
-                //verificamos si tiene un recurso padre y seteamos el id del recurso padre (obtenido de los parametros) en una variable
-                if(resource.parent !== null) {
-                    if(!params[resource.parent]) {
-                        console.error('BasicListController: El recurso tiene un padre, el cual no fue entregado');
-                        return;
-                    }
-                    self.parentData = params[resource.parent];
-                }
-                
+            self.list = function(params, action) {
                 self.listParams = (params) ? params : {};
                 var promise = null;
                 
                 return $timeout(function () {
-                    self.action = actionDefault || 'get';
+                    self.action = action || 'get';
                     
                     promise = self.$$crudFactory.doRequest(self.action, self.listParams).then(function(responseSuccess) {
                         scope.list = responseSuccess.data;
@@ -381,18 +371,12 @@ angular.module('adminPanel.crud').factory('BasicListController', [
                 });
             };
             
-            self.delete = function (elem, actionDefault) {
-                var action = (actionDefault) ? actionDefault : 'delete';
+            self.delete = function (elem, action) {
+                action = action || 'delete';
                 var obj = {};
                 obj[resource.name] = elem.id;
-                if(resource.parent !== null) {
-                    obj[resource.parent] = self.parentData;
-                }
+                Object.assign(obj, self.listParams);
                 return self.$$crudFactory.doRequest(action, obj).then(function () {
-                    //chequeamos que si el recurso tiene un padre, el id de ese padre se envíe como parametro en el request
-                    if(resource.parent !== null && !self.listParams[resource.parent]) {
-                        self.listParams[resource.parent] = self.parentData;
-                    }
                     self.$$crudFactory.createMessage(CrudConfig.messages.deleteSuccess,'success');
                     return self.list(self.listParams);
                 }, function (responseError) {
