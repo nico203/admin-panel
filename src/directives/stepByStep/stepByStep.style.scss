@@ -8,21 +8,15 @@ $stepbystep-disabled-bg: #fff !default;
 $stepbystep-disabled-color: #aaa !default;
 
 .steps {
-    display: inline-block;
-    font-size: 0px;
+    display: flex;
     overflow: hidden;
     border: 1px solid #ccc;
     line-height: 1;
     box-sizing: border-box;
-    padding-left: 0;
     margin-left: 0px;
-
-    &.expanded {
-        display: flex;
-    }
+    height: 52px;
 
     &.vertical {
-
         li {
             display: block;
 
@@ -59,9 +53,7 @@ $stepbystep-disabled-color: #aaa !default;
     }
 
     &:not(.vertical) {
-
         li {
-
             &:first-child {
                 padding-left: 2.5em;
             }
@@ -88,10 +80,10 @@ $stepbystep-disabled-color: #aaa !default;
     }
 
     li {
-        display: inline-block;
+        display: flex;
+        align-items: center;
         position: relative;
-        padding: 1em 2em 1em 3em;
-        vertical-align: top;
+        padding: 0em 2em 0em 3em;
         background-color: $stepbystep-bg;
         color: $stepbystep-color;
         box-sizing: border-box;
@@ -164,21 +156,22 @@ $stepbystep-disabled-color: #aaa !default;
 
 /* Small only */
 @media screen and (max-width: 39.9375em) {
-    .steps {
+   .steps {
+        display: block;
+        height: auto;
 
-        &.expanded {
-            display: block;
+        li {
+            padding: 1em 2em 1em 2em;
         }
 
         &.even-2,&.even-3,&.even-4,&.even-5,&.even-6 {
             li {
                 width: 100%;
-                padding-left: 2rem;
 
                 &:first-child,&:last-child {
-                    padding-left: 2rem;
+                    padding-left: 2em;
                 }
             }
         }
-    }
+   }
 }
