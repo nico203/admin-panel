@@ -9,11 +9,13 @@
     right: 0;
     padding: 20px;
 }
-.transition.ng-enter         { 
+
+.transition.ng-enter { 
     z-index: -2;
     animation: slideInRight 0.2s both ease; 
 }
-.transition.ng-leave         { 
+
+.transition.ng-leave { 
     z-index: -1;
     transform-origin: 0% 0%; 
     animation: slideOutLeft .2s both ease; 

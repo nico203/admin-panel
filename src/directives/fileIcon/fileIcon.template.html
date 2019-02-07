@@ -1,0 +1,10 @@
+<span ng-switch on="type">
+    <i ng-class="iconClass()" class="fa-file-pdf" ng-switch-when="application/pdf"></i>
+    <i ng-class="iconClass()" class="fa-file-word" ng-switch-when="application/msword"></i>
+    <i ng-class="iconClass()" class="fa-file-image" ng-switch-when="image"></i>
+    <i ng-class="iconClass()" class="fa-file-audio" ng-switch-when="audio"></i>
+    <i ng-class="iconClass()" class="fa-file-video" ng-switch-when="video"></i>
+    <i ng-class="iconClass()" class="fa-file-alt" ng-switch-when="text"></i>
+    <i ng-class="iconClass()" class="fa-file-archive" ng-switch-when="compressed"></i>
+    <i ng-class="iconClass()" class="fa-file" ng-switch-default></i>
+</span>

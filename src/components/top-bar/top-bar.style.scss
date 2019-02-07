@@ -35,4 +35,6 @@ top-bar {
     border-bottom: 1px solid lighten($top-bar-background, 10% );
     box-shadow: $top-bar-shadow;
     z-index: 50;
+    text-align: center;
+    color: white;
 }

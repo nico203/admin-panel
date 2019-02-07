@@ -18,8 +18,10 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         month: 'El mes no es válido'
     };
     var navigationItems = {};
+
+    var topBarTitle = 'Admin Panel';
     
-     var windowMinSizes = {
+    var windowMinSizes = {
         medium: 640,
         large: 1024
     };
@@ -35,7 +37,7 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         imgLoadingRsc = path;
         return this;
     };
-    
+
     /**
      * @param {Integer} pages Paginas por default al listar elementos de una entidad
      */
@@ -43,9 +45,9 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         pagination = pages;
         return this;
     };
-    
+
     /**
-     * @param {Object} msgs Objeto cuyas propiedades son los nombres de los validation tokens y los valores 
+     * @param {Object} msgs Objeto cuyas propiedades son los nombres de los validation tokens y los valores
      * son los mensajes
      */
     this.setDefaultFormMessenges = function(msgs) {
@@ -54,7 +56,7 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
         }
         return this;
     };
-    
+
     /**
      * @param {type} items Objeto que contiene la conformacion del menu
      * var items = {
@@ -65,19 +67,45 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
      *     }
      *   },
      *   ...
+     *
+     * // Example with roles
+     * var items = {
+     *   'Item menu name': {
+     *     link: 'link',
+     *     roles: ['Role1', 'Role2'],
+     *     items: {
+     *       'Nested item menu':{
+     *          link: 'link',
+     *          roles: 'Role2'
+     *       }
+     *     }
+     *   },
+     *   ...
      * }
      */
     this.setNavigationItems = function(items) {
         navigationItems = angular.copy(items);
         for(var item in navigationItems) {
             navigationItems[item].link = (navigationItems[item].link) ? '#!' + navigationItems[item].link : '#';
+            navigationItems[item].roles = navigationItems[item].roles || null;
             for(var nestedItem in navigationItems[item].items) {
-                navigationItems[item].items[nestedItem] = '#!' + navigationItems[item].items[nestedItem];
+                var nestedItemData = navigationItems[item].items[nestedItem];
+                navigationItems[item].items[nestedItem] = {
+                    link: angular.isString(nestedItemData) ? '#!' + nestedItemData : '#!' + nestedItemData.link,
+                    roles: nestedItemData.roles ? nestedItemData.roles : null
+                };
             }
         }
         return this;
     };
-    
+
+    /**
+     * @param {string} title Título de la barra
+     */
+    this.setTopBarTitle = function(title) {
+        topBarTitle = title;
+    };
+
     this.$get = [
         function () {
             return {
@@ -85,6 +113,7 @@ angular.module('adminPanel').provider('AdminPanelConfig', function() {
                 pagination: pagination,
                 defaultFormMessages: defaultFormMessages,
                 navigationItems: navigationItems,
+                topBarTitle: topBarTitle,
                 windowMinSizes: windowMinSizes
             };
         }

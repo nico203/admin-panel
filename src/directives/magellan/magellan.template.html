@@ -1,0 +1,12 @@
+<div class="card magellan">
+    <div class="card-divider">
+        <h1 ng-bind="title"></h1>
+    </div>
+    <div class="magellan-body">
+        <ul class="menu vertical">
+            <li ng-repeat="(key, value) in items">
+                <a href="" ap-go-to-anchor="{{value}}" ng-bind="key"></a>
+            </li>
+        </ul>
+    </div>
+</div>

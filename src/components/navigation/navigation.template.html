@@ -1,12 +1,13 @@
 <ul class="vertical menu">
     <li ng-repeat="(name, item) in items"
         ng-class="{'is-active': baseIndex === $index}">
-        <a href="{{item.link}}" ng-bind="name"></a>
+        <a href="{{item.link}}">{{name}} <i class="fa fa-angle-down arrow-icon"></i></a>
         <ul ng-if="item.items" class="vertical menu nested">
-            <li ng-repeat="(nestedItemName, nestedItemLink) in item.items"
-                ng-class="checkRoute(nestedItemLink)">
-                <a href="{{nestedItemLink}}" ng-bind="nestedItemName"></a>
+            <li ng-repeat="(nestedItemName, nestedItemData) in item.items"
+                ng-class="checkRoute(nestedItemData.link)">
+                <a href="{{nestedItemData.link}}" ng-bind="nestedItemName"></a>
             </li>
         </ul>
     </li>
 </ul>
+

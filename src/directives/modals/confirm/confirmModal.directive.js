@@ -7,23 +7,21 @@
  * }
  */
 
-angular.module('adminPanel').directive('apConfirmModal', [ 
+angular.module('adminPanel').directive('apConfirmModal', [
     '$timeout',
     function($timeout) {
         return {
             restrict: 'AE',
             priority: 60,
             link: function(scope, elem) {
-                var htmlElem = null;
+                var htmlElem = elem.find('.reveal');
                 var fnToRealize = null;
                 
                 //init
                 $timeout(function() {
-                    htmlElem = elem.find('.reveal');
-                    console.log('htmlElem',htmlElem);
                     htmlElem.foundation();
                 });
-                
+
                 scope.yes = function() {
                     if(fnToRealize !== null) {
                         fnToRealize();

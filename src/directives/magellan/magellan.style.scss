@@ -1,0 +1,24 @@
+$magellan-bg: #263238 !default;
+$magellan-color: $white !default;
+$magellan-hover-bg: darken($magellan-bg, 2 ) !default;
+$magellan-hover-color: darken($white, 15) !default;
+
+.magellan {
+    position: fixed;
+    max-height: 86%;
+    overflow-y: auto;
+    background-color: $magellan-bg;
+
+    a {
+        color: $magellan-color;
+
+        &:hover {
+            background-color: $magellan-hover-bg;
+            color: $magellan-hover-color;
+        }
+    }
+
+    .card-divider {
+        display:block;
+    }
+}

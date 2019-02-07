@@ -1,0 +1,24 @@
+<div class="card" ng-if="!isHide">
+    <button ng-if="closeButton" class="close-button" type="button" ng-click="close()">
+        <span>&times;</span>
+    </button>
+    <div class="card-divider" ng-if="title">
+        <h1 ng-bind="title"></h1>
+    </div>
+    <div class="card-section">
+        <div ng-if="message" class="message-container callout" ng-class="{
+            'success':message.type === 'success',
+            'warning':message.type === 'warning',
+            'alert':message.type === 'error'}">
+            <h5 ng-if="message.title">
+                <i ng-if="message.type === 'error'" class="fa fa-exclamation-triangle"></i>
+                <span ng-bind="' {{message.title}}'"></span>
+            </h5>
+            <p ng-if="!isArray(message.message)" ng-bind="message.message"></p>
+            <ul ng-if="isArray(message.message)">
+                <li ng-repeat="item in message.message track by $index" ng-bind="item"></li>
+            </ul>
+        </div>
+        <div ng-transclude ap-load></div>
+    </div>
+</div>

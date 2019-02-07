@@ -2,22 +2,30 @@ $padding: 1.25rem 1rem;
 $font-size: 0.75rem;
 $top-height: 56px !default;
 
-@import 'components/top-bar/top-bar.style';
 @import 'components/navigation/navigation.style';
+@import 'components/top-bar/top-bar.style';
+
 @import 'directives/accordion/accordion.style';
-@import 'directives/box/box.style';
-@import 'directives/load/load.style'; 
+@import 'directives/boxes/box/box.style';
+@import 'directives/boxes/boxState/boxState.style';
+@import 'directives/dataSelect/dataSelect.style';
+@import 'directives/datePicker/datePicker.style';
+@import 'directives/dateTimePicker/dateTimePicker.style';
+@import 'directives/fileSaver/fileSaver.style';
+@import 'directives/imageLoader/imageLoader.style';
+@import 'directives/infoOnTable/infoOnTable.style';
+@import 'directives/load/load.style';
+@import 'directives/magellan/magellan.style';
+@import 'directives/messages/messages.style';
 @import 'directives/pagination/pagination.style';
 @import 'directives/select/select.style';
-@import 'directives/form/formValidation.style';
-@import 'directives/dateTimePicker/dateTimePicker.style';
+@import 'directives/selectMultiple/selectMultiple.style';
+@import 'directives/stepByStep/stepByStep.style';
+@import 'directives/tabs/tabs.style';
+@import 'directives/textarea/textarea.style';
 @import 'directives/timePicker/timePicker.style';
-@import 'directives/imageLoader/imageLoader.style';
-@import 'directives/messages/messages.style';
-@import 'directives/infoOnTable/infoOnTable.style';
-@import 'directives/fileSaver/fileSaver.style';
-@import 'filters/highlight.style';
 
+@import 'filters/highlight/highlight.style';
 
 @include foundation-global-styles;
 @include foundation-grid;
@@ -66,6 +74,10 @@ body {
     left: 0;
     right: 0;
     z-index: 999;
+}
+
+.off-canvas.is-closed {
+    visibility: visible;
 }
 
 #content {

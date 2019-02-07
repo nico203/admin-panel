@@ -1,34 +1,17 @@
 angular.module('adminPanel').directive('apSwitch', [
-    '$timeout',
-    function($timeout) {
+    function() {
         return {
-            restrict: 'AE',
+            restrict: 'E',
             require: 'ngModel',
             scope: {
-                id: '@',
-                title: '@'
+                name: '@',
+                label: '@',
+                ngModel: '='
             },
-            link: function(scope, elem, attr, ngModel) {
-                elem.addClass('row column');
-
-                scope.$watch(function() {
-                    return ngModel.$modelValue;
-                }, function(val) {
-                    if(val) {
-                        var date = new Date(val);
-                        scope.date = date;
-                        $(elem.find('.ap-date')).fdatepicker('update', date);
-                    }
-                });
-                
-                scope.$watch('model', function(val) {
-                    ngModel.$setViewValue(val);
-                });
-                
-                //init
-                $timeout(function(){
-                    elem.foundation();
-                });
+            link: function(scope, elem, attr, ngModelCtrl) {
+                scope.updateModel = function() {
+                    ngModelCtrl.$setViewValue(scope.ngModel);
+                };
             },
             templateUrl: 'directives/switch/switch.template.html'
         };

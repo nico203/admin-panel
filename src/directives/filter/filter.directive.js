@@ -8,9 +8,7 @@ angular.module('adminPanel').directive('apFilters',[
                 var accordionElem = null;
 
                 $timeout(function() {
-                    
                     accordionElem = elem.find('.accordion.filtros');
-                    console.log('elem',accordionElem);
                     accordionElem.foundation();
                 });
                 

@@ -3,8 +3,6 @@
 /* VER efecto CSS Animated Hamburger Icon by Brydave en http://www.hongkiat.com/blog/hamburger-menu-animations/
 para cuando se cambia de pagina*/
 
-/*$background: #3d566e;*/
-$background: rgba(41, 41, 41, 0.25);
 $color: #ecf0f1;
 
 $height-icon: 24px;
@@ -18,7 +16,7 @@ $translateX: 0;
 
 .hambruger-wrapper {
     display: block;
-    background: $background;
+    background: $topbar-background;
     color: $color;
     font-family: 'Montserrat', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -26,10 +24,9 @@ $translateX: 0;
     position: absolute;
     z-index: 12;
     border-radius: $height-line;
-    
-    @media screen and (min-width: 64em) {
-        display: none;
-    }
+    height: 30px;
+    margin-top: -2px;
+    cursor: pointer;
     
     &:hover, &:focus {
         .line-1 {
@@ -52,7 +49,6 @@ $translateX: 0;
     height:$height-icon;
     position:relative;
     display:block;
-    margin: ($height-icon / 2 ) ($height-icon / 2 ) (($height-icon / 2 ) +  $height-line) ($height-icon / 2 );
 
     .line {
         display:block;

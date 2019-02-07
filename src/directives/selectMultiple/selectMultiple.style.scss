@@ -1,0 +1,104 @@
+$select-multiple-hover-bg: rgba(0, 0, 0, 0.04) !default;
+$select-multiple-disabled-bg: #fefefe !default;
+$select-multiple-disabled-color: #8a8a8a !default;
+
+.select-multiple {
+    display: block;
+    position: relative;
+
+    .list-group {
+        margin-bottom: 0px;
+        border: 1px solid #e6e6e6;
+        border-radius: 0;
+        background: #fefefe;
+        box-shadow: none;
+        overflow: hidden;
+        color: #0a0a0a;
+        margin-left: 0px;
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .list-group-item {
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid #e6e6e6;
+        display: flex;
+
+        .list-group-item-text {
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .button {
+            display: block;
+            margin-left: auto;
+            margin-right: 0px;
+        }
+
+        > :last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        &:hover, &:focus {
+            background-color: $select-multiple-hover-bg;
+        }
+    }
+
+    .button {
+        font-size: 0.9rem;
+    }
+
+    .input-group {
+        padding: 0.4rem 0.5rem 0rem 0rem;
+    }
+
+    .dropdown {
+        @include dropdown-container;
+        padding: 0rem 0.5rem 0rem 0rem;
+        width: 100%;
+        top: 100%;
+        left: 0;
+        transition: max-height 0.2s;
+        overflow-y: auto;
+        position: absolute;
+        z-index: 10;
+
+        &.is-open {
+            max-height: 300px;
+        }
+
+        .list-group {
+            list-style-type: none;
+            margin: 0;
+            border: 1px solid #e6e6e6;
+            padding-top: 0.5rem;
+
+            > li {
+                display: block;
+                cursor: pointer;
+                padding: 0.2rem 0.5rem;
+                line-height: 1;
+                background-color: transparent;
+                padding-top: 0.5rem;
+
+                &.disabled {
+                    color: $select-multiple-disabled-color;
+                    cursor: not-allowed;
+                    background-color: $select-multiple-disabled-bg;
+                }
+
+                &:hover {
+                    background-color: $select-multiple-hover-bg;
+                }
+            }
+        }
+    }
+
+    .dropdown-pane {
+        background: transparent;
+        border: none;
+    }
+}

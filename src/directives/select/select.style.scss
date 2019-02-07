@@ -1,85 +1,76 @@
+$select-hover-bg: rgba(0, 0, 0, 0.04) !default;
 
-.select-ap {
+.ap-select {
     display: block;
     position: relative;
-    
-    .dropdown-ap {
-        @include dropdown-container;
-        padding: 0.4rem 0;
-        width: 100%;
-        top: 100%;
-        left: 0;
-        max-height: 0;
-        transition: max-height 0.2s;
-        overflow: hidden;
-        
-        &.is-open {
-            max-height: 300px;
+
+    .select-wrapper {
+
+        position: relative;
+
+        .input-group-text-field {
+            flex: 1 1 0px;
+            margin: 0px;
+            min-width: 0;
         }
 
-        .list-group {
-            list-style-type: none;
-            margin: 0;
+        .dropdown {
+            @include dropdown-container;
+            padding: 0.4rem 0;
+            width: 100%;
+            top: 39px;
+            left: 0;
+            transition: max-height 0.2s;
+            overflow-y: auto;
 
-            > li {
-                display: block;
-                cursor: pointer;
-                padding: 0.4rem 1rem;
-                line-height: 1;
-                background-color: transparent;
-
-                &:hover {
-                    background-color: rgba(0, 0, 0, 0.04);
-                }
-                
-                &.active {
-                    background: $primary-color;
-                }
+            &.is-open {
+                max-height: 300px;
             }
-            
-            &.new {
+
+            .list-group {
+                list-style-type: none;
+                margin: 0;
+
                 > li {
-                    font-weight: bold;
-                    text-align: center;
-                    background: rgba(128, 128, 128, 0.23);
-                    padding-top: 10px;
-                    padding-bottom: 10px;
-                    border-top: 1px solid #c1c1c1;
-                    border-bottom: 1px solid #c1c1c1;
-                    color: #848484;
-                    text-shadow: 1px 1px 1px #fdfdfd;
+                    display: block;
+                    cursor: pointer;
+                    padding: 0.3rem 0.5rem;
+                    line-height: 1;
+                    background-color: transparent;
 
                     &:hover {
-                        background: rgba(128, 128, 128, 0.45);
+                        background-color: $select-hover-bg;
+                    }
+
+                    &.active {
+                        background: $primary-color;
                     }
                 }
             }
         }
-    }
-}
 
+        .caret {
+            position: relative;
+            cursor: pointer;
 
+            &:after {
+                display: block;
+                width: 0;
+                height: 0;
+                border: inset 6px;
+                content: '';
+                border-bottom-width: 0;
+                border-top-style: solid;
+                border-color: #fefefe transparent transparent;
+                position: absolute;
+                top: 50%;
+                margin-top: -3px;
+                right: -0.4rem;
 
-.caret {
-    position: relative;
-    cursor: pointer;
-    
-    &:after {
-        display: block;
-        width: 0;
-        height: 0;
-        border: inset 6px;
-        content: '';
-        border-bottom-width: 0;
-        border-top-style: solid;
-        border-color: #fefefe transparent transparent;
-        position: absolute;
-        top: 50%;
-        margin-top: -3px;
-        right: -0.4rem;
-        
-        &:before {
-            border-color: #d2d2d2 transparent transparent;
+                &:before {
+                    border-color: #d2d2d2 transparent transparent;
+                }
+            }
         }
     }
 }

@@ -16,18 +16,18 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 console.error('CrudResourceFactory: el parametro name debe ser string');
                 throw 'CrudResourceFactory: el parametro name debe ser string';
             }
-            
+
             //url
             if(typeof(url) !== 'string') {
                 console.error('CrudResourceFactory: el parametro url debe ser string');
                 throw 'CrudResourceFactory: el parametro url debe ser string';
             }
-            
+
             //Procesamos los transforms de los request y responses por defecto
             if(!angular.isUndefined(transform) && transform !== null && typeof(transform) !== 'object') {
                 console.error('CrudResourceFactory: el parametro transform debe ser object');
                 throw 'CrudResourceFactory: el parametro transform debe ser object';
-            } 
+            }
             var transforms = {};
             transforms.query = (transform && transform.query) ? function(data) {
                 return {
@@ -48,21 +48,25 @@ angular.module('adminPanel.crud').factory('CrudResource', [
             };
             var paramDefaults = {};
             paramDefaults[name] = '@id';
-            
+
             var options = {
                 cancellable: true
             };
-            
+
             var parentResource = null;
             if(parent) {
                 parentResource = $injector.get(parent);
-                
+
                 //agregamos el parametro requerido para el objeto padre
                 paramDefaults[parentResource.name] = '@' + parentResource.name;
             }
             //concatenamos las url del padre con la del recurso actual
             var resourceUrl = (parentResource) ? parentResource.url + url : url;
-            
+
+            var extrasPostTransformRequest = function(data) {
+                return NormalizeService.normalize(transforms.request(data));
+            };
+
             //Procesamos las acciones del recurso
             var actions = {};
             for(var key in extras) {
@@ -77,10 +81,22 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 if(extra.transformResponse) {
                     extra.transformResponse.unshift($http.defaults.transformResponse[0]);
                 }
-                
+
+                if (extra.method === 'POST') {
+                    if (extra.transformRequest) {
+                        extra.transformRequest.push(extrasPostTransformRequest);
+                        extra.transformRequest.push($http.defaults.transformRequest[0]);
+                    } else {
+                        extra.transformRequest = [
+                            extrasPostTransformRequest,
+                            $http.defaults.transformRequest[0]
+                        ];
+                    }
+                }
+
                 actions[key] = extra;
             }
-            
+
             actions.query = {
                 method: 'GET',
                 transformResponse: [
@@ -115,14 +131,14 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                         if(parentResource) {
                             delete ret[name][parentResource.name];
                         }
-                        
+
                         return ret;
                     },
                     $http.defaults.transformRequest[0]
                 ],
                 cancellable: true
             };
-            
+
             return {
                 name: name,
                 url: resourceUrl,
@@ -130,7 +146,7 @@ angular.module('adminPanel.crud').factory('CrudResource', [
                 $resource: $resource(CrudConfig.basePath + resourceUrl, paramDefaults, actions, options)
             };
         }
-        
+
         return CrudResourceFactory;
     }
 ]);

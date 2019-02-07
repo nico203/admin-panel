@@ -37,9 +37,7 @@ angular.module('adminPanel').directive('apImageLoader', [
                 //evento que escucha el model para hacer el bindeo de las variables
                 var modelWatcher = scope.$watch(function () {
                     return ngModel.$modelValue;
-                }, function (modelValue) {
-                    console.log('modelValue',modelValue);
-                });
+                }, function (modelValue) {});
                 
                 //Desacoplamos los eventos al eliminar el objeto
                 scope.$on('$destroy', function() {

@@ -1,5 +1,5 @@
-<label ng-bind="title"></label>
+<label ng-bind="label"></label>
 <div class="switch">
-    <input class="switch-input" id="{{id}}" type="checkbox" ng-model="model">
-    <label class="switch-paddle" for="{{id}}"></label>
-</div>  
+    <input class="switch-input" name="{{name}}" id="{{name}}" type="checkbox" ng-model="ngModel" ng-change="updateModel()">
+    <label class="switch-paddle" for="{{name}}"></label>
+</div>
