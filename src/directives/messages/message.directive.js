@@ -15,7 +15,7 @@ angular.module('adminPanel').directive('apMessage', [
                 };
                 
                 $timeout(function() {
-//                    scope.remove();
+                   scope.remove();
                 }, 5000);
             },
             templateUrl: 'directives/messages/message.template.html'

@@ -4,6 +4,9 @@ angular.module('adminPanel').directive('apLoad', [
     return {
         restrict: 'A',
         priority: 50,
+        scope: {
+            apLoad: '=?'
+        },
         link: function(scope, elem, attr) {
             //controla que no haya una directiva ap-load en sus elementos hijos
             var name = attr.apLoad;
@@ -24,6 +27,17 @@ angular.module('adminPanel').directive('apLoad', [
             scope.hide = function () {
                 $animate.addClass(elem, 'loading');
             };
+
+            // generamos un watcher para porder mantener el control de la vista
+            scope.$watch(function () {
+                return scope.apLoad;
+            }, function(val) {
+                if (val) {
+                    scope.hide();
+                } else {
+                    scope.show();
+                }
+            });
 
             var startEventDestructor = scope.$on('apLoad:start', function(e) {
                 e.stopPropagation();

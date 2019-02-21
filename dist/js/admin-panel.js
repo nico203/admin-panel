@@ -1934,6 +1934,9 @@ angular.module('adminPanel').directive('formFieldError', [
     return {
         restrict: 'A',
         priority: 50,
+        scope: {
+            apLoad: '=?'
+        },
         link: function(scope, elem, attr) {
             //controla que no haya una directiva ap-load en sus elementos hijos
             var name = attr.apLoad;
@@ -1954,6 +1957,17 @@ angular.module('adminPanel').directive('formFieldError', [
             scope.hide = function () {
                 $animate.addClass(elem, 'loading');
             };
+
+            // generamos un watcher para porder mantener el control de la vista
+            scope.$watch(function () {
+                return scope.apLoad;
+            }, function(val) {
+                if (val) {
+                    scope.hide();
+                } else {
+                    scope.show();
+                }
+            });
 
             var startEventDestructor = scope.$on('apLoad:start', function(e) {
                 e.stopPropagation();
@@ -2019,7 +2033,7 @@ angular.module('adminPanel').directive('formFieldError', [
                 };
                 
                 $timeout(function() {
-//                    scope.remove();
+                   scope.remove();
                 }, 5000);
             },
             templateUrl: 'directives/messages/message.template.html'
@@ -2088,20 +2102,19 @@ angular.module('adminPanel').directive('apConfirmModal', [
                 
                 //init
                 $timeout(function() {
-                    htmlElem = elem.find('.reveal');
-                    console.log('htmlElem',htmlElem);
-                    htmlElem.foundation();
+                    htmlElem = new Foundation.Reveal(elem.find('.reveal'));
+                    console.log('htmlElem', htmlElem);
                 });
                 
                 scope.yes = function() {
                     if(fnToRealize !== null) {
                         fnToRealize();
                     }
-                    htmlElem.foundation('close');
+                    htmlElem.$element.foundation('close');
                 };
                 
                 scope.no = function() {
-                    htmlElem.foundation('close');
+                    htmlElem.$element.foundation('close');
                 };
                 
                 scope.$on('ap-confirm-modal:show', function(e, data) {
@@ -2111,7 +2124,7 @@ angular.module('adminPanel').directive('apConfirmModal', [
                     fnToRealize = angular.isFunction(data.fn) ? data.fn : null;
                     
                     $timeout(function() {
-                        htmlElem.foundation('open');
+                        htmlElem.$element.foundation('open');
                     });
                 });
             },
@@ -2968,7 +2981,7 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/messages/messagesContainer.template.html",
     "<div class=\"row expanded\"><div ng-repeat=\"message in messageList\" class=small-12 ap-message message=message></div></div>");
   $templateCache.put("directives/modals/confirm/confirmModal.template.html",
-    "<div class=reveal data-reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=button ng-click=yes()>Si</a><a class=button ng-click=no()>No</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
+    "<div class=reveal><h1 ng-bind=title></h1><p class=lead ng-bind=text></p><div class=button-group><a class=button ng-click=yes()>Si</a><a class=button ng-click=no()>No</a></div><button class=close-button data-close aria-label=\"Close modal\" type=button><span aria-hidden=true>&times;</span></button></div>");
   $templateCache.put("directives/msfCoordenadas/msfCoordenadas.template.html",
     "<div class=\"row column\"><div class=\"callout secondary text-center\">Podés obtener los datos de<u><a href=https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php target=_blank>acá</a></u></div></div><div class=\"row column\"><label ng-class=\"{'is-invalid-label':error}\"><input style=margin-bottom:3px type=text ng-class=\"{'is-invalid-input':error}\" ng-model=coordenadas ng-change=cambioCoordeandas()><span ng-class=\"{'is-visible':error}\" style=margin-top:7px class=form-error>El campo ingresado contiene errores.</span></label></div><div class=row><div class=\"columns small-12 large-6\"><label>Latitud <input type=text ng-value=model.latitud readonly></label></div><div class=\"columns small-12 large-6\"><label>Longitud <input type=text ng-value=model.longitud readonly></label></div></div>");
   $templateCache.put("directives/pagination/pagination.template.html",

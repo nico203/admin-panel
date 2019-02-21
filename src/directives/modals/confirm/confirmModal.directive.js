@@ -19,20 +19,19 @@ angular.module('adminPanel').directive('apConfirmModal', [
                 
                 //init
                 $timeout(function() {
-                    htmlElem = elem.find('.reveal');
-                    console.log('htmlElem',htmlElem);
-                    htmlElem.foundation();
+                    htmlElem = new Foundation.Reveal(elem.find('.reveal'));
+                    console.log('htmlElem', htmlElem);
                 });
                 
                 scope.yes = function() {
                     if(fnToRealize !== null) {
                         fnToRealize();
                     }
-                    htmlElem.foundation('close');
+                    htmlElem.$element.foundation('close');
                 };
                 
                 scope.no = function() {
-                    htmlElem.foundation('close');
+                    htmlElem.$element.foundation('close');
                 };
                 
                 scope.$on('ap-confirm-modal:show', function(e, data) {
@@ -42,7 +41,7 @@ angular.module('adminPanel').directive('apConfirmModal', [
                     fnToRealize = angular.isFunction(data.fn) ? data.fn : null;
                     
                     $timeout(function() {
-                        htmlElem.foundation('open');
+                        htmlElem.$element.foundation('open');
                     });
                 });
             },
