@@ -1,0 +1,9 @@
+<ap-box title="{{title}}">
+    <div ng-if="newRoute" class="row columns">
+        <a ng-href="{{newRoute}}" class="button">Nuevo</a>
+    </div>
+    <div ng-transclude="form"></div>
+    <div ap-load>
+        <div class="small-12" ng-transclude="list"></div>
+    </div>
+</ap-box>

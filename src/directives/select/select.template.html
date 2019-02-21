@@ -1,0 +1,33 @@
+<div class="input-group">
+    <input class="input-group-field" type="text" ng-model="input.model" 
+           ng-change="onChangeInput()"
+           ng-focus="onFocusInput()"
+           ng-blur="onBlurInput()" />
+    <div class="input-group-button">
+        <button type="button" class="button secondary" 
+                ng-click="onClickButton()"
+                ng-mousedown="onMousedownButton($event)">
+            <span class="caret"></span>
+        </button>
+    </div>
+</div>
+<div class="dropdown-ap " ng-class="{'is-open':lista.desplegado}">
+    <ul ng-if="loading" class="list-group">
+        <li style="font-weight: bold;">Cargando...</li>
+    </ul>
+    <ul ng-if="!loading && lista.items.length > 0" class="list-group">
+        <li ng-repeat="option in lista.items" 
+            ng-bind-html="option.name | highlight:input.model"
+            ng-mousedown="onClickItemList($event, option)"
+            ng-class="{'active':option.$$object.id === itemSelected.$$object.id}"></li>
+    </ul>
+    <ul ng-if="!loading && lista.items.length === 0" class="list-group">
+        <li style="font-weight: bold;">No hay resultados</li>
+    </ul>
+    <ul ng-if="enableNewButton" class="list-group new">
+        <li ng-mousedown="newObject($event)">
+            <span class="fa fa-plus"></span>
+            <span>Nuevo</span>
+        </li>
+    </ul>
+</div>

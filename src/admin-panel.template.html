@@ -1,0 +1,17 @@
+<div ap-user>
+    <div class="wrapper-header">
+        <top-bar></top-bar>
+    </div>
+    <div class="off-canvas-wrapper">
+        <div class="off-canvas position-left reveal-for-large" data-transition="overlap" id="offCanvas" data-off-canvas>
+            <navigation></navigation>
+        </div>
+        <div class="off-canvas-content" data-off-canvas-content>
+            <div ap-message-container></div>
+            <div id="content" class="row column expanded">
+                <div ng-view></div>
+            </div>
+        </div>
+    </div>
+    <ap-confirm-modal></ap-confirm-modal>
+</div>

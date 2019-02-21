@@ -1,0 +1,98 @@
+// Foundation
+// -----
+$menu-nested-margin: 0;
+
+// Navigation
+$navigation-background: #263238 !default;
+$menu-item-color: $white !default;
+$menu-item-background-hover: darken( $navigation-background, 2 ) !default;
+$menu-item-color-hover: darken( $white, 15 ) !default;
+$menu-item-color-active: $menu-item-color !default;
+$menu-item-background-active: darken($navigation-background, 5) !default;
+
+// Nested menues
+$nested-menu-background: darken( $navigation-background, 10 ) !default;
+$nested-menu-border-color: darken( $navigation-background, 8 ) !default;
+$nested-menu-item-background-hover: darken( $nested-menu-background, 2 ) !default;
+$nested-menu-item-color-hover: $menu-item-color-hover !default;
+$nested-menu-item-color-active: $menu-item-color !default;
+$nested-menu-item-background-active: lighten($nested-menu-background, 2 ) !default;
+
+// off canvas 
+$offcanvas-background: $navigation-background;
+
+@include foundation-accordion;
+@include foundation-accordion-menu;
+@include foundation-menu;
+@include foundation-menu-icon;
+@include foundation-off-canvas;
+
+
+navigation {
+    display: block;
+    position: relative;
+    top: $top-height !important;
+    left: 0px;
+    bottom: 0px;
+    padding-top: 8px;
+    background: $navigation-background;
+    
+    > .menu {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .3s linear,visibility .3s linear;
+
+        &.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+    
+    .menu {
+        li {
+            background: none;
+            transition: background .25s;
+        
+            a {
+                background: none;
+                transition: background .25s;
+                color: $menu-item-color;
+            }
+            
+            &.is-active {
+                > a {
+                    color: $menu-item-color-active;
+                    background: $menu-item-background-active;
+                }
+            }
+            
+            &:hover {
+                color: $menu-item-color-hover;
+                background: $menu-item-background-hover;
+            }
+        }
+
+        .nested {
+            background: $nested-menu-background;
+            border-top: 1px solid $nested-menu-border-color;
+            border-bottom: 1px solid $nested-menu-border-color;
+            
+            li {
+                a {
+                    &:hover {
+                        background: $nested-menu-item-background-hover;
+                        color: $nested-menu-item-color-hover;
+                    }
+                }
+                
+                &.is-active {
+                    a {
+                        color: $nested-menu-item-color-active;
+                        background: $nested-menu-item-background-active;
+                    }
+                }
+            }
+        }
+    }
+}
+    

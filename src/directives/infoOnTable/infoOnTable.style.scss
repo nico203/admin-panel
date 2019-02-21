@@ -1,0 +1,54 @@
+@mixin plusMinus($width, $lineWidth, $color) {
+    box-sizing: border-box;
+    transition: transform 0.3s;
+    width: $width;
+    height: $width;
+    transform: rotate(180deg);
+    position: relative;
+    &.open {
+        transform: rotate(0deg);
+    }
+    &::before {
+        content: '';
+        display: block;
+        width: $width;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+        transform: rotate(90deg);
+        transition: width 0.3s;
+    }
+    &.open::before {
+        content: '';
+        display: block;
+        width: 0px;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+        transform: rotate(90deg);
+    }
+    &::after {
+        content: '';
+        display: block;
+        width: $width;
+        height:0px;
+        border-bottom: solid $lineWidth $color;
+        position: absolute;
+        bottom:$width /2 - $lineWidth/2;
+    }
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.ap-info-on-table {
+    width: 100%;
+    padding: 0.5rem 0.625rem 0.625rem;
+}
+
+.ap-info {
+    @include plusMinus(14px, 4px, $primary-color);
+}

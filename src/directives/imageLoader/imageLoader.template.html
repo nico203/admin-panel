@@ -1,0 +1,13 @@
+<div class="image-view">
+    <img ng-src="{{image.path}}" ng-click="loadImage()">
+</div>
+<div class="input-group">
+    <div class="input-group-button">
+        <label for="exampleFileUpload" class="button file">
+            <i class="fa fa-file-image-o"></i>
+        </label>
+        <input type="file" id="exampleFileUpload" class="show-for-sr"
+               accept="image/*">
+    </div>
+    <input class="input-group-field" type="text" readonly ng-value="image.name">
+</div>

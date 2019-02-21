@@ -1,0 +1,11 @@
+<div ng-show="loading" class="ap-load-image">
+    <img ng-src="{{path}}">
+</div>
+<div ng-hide="loading" class="ap-load-content">
+    <div ng-if="message" class="callout" ng-class="{
+        'success':message.type === 'success',
+        'warning':message.type === 'warning',
+        'alert':message.type === 'error'
+    }" ng-bind="message.message"></div>
+    <div ></div>
+</div>

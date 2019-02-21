@@ -1,0 +1,27 @@
+<div class="row column">
+    <div class="callout secondary text-center">
+        Podés obtener los datos de 
+        <u><a href="https://www.santafe.gov.ar/idesf/servicios/generador-de-coordenadas/tramite.php" target="_blank">acá</a></u>
+    </div>
+</div>
+<div class="row column">
+    <label ng-class="{'is-invalid-label':error}">
+        <input style="margin-bottom: 3px;" type="text"
+           ng-class="{'is-invalid-input':error}"
+           ng-model="coordenadas" ng-change="cambioCoordeandas()"/>
+        <span ng-class="{'is-visible':error}" style="margin-top: 7px;"
+            class="form-error">El campo ingresado contiene errores.</span>
+    </label>
+</div>
+<div class="row">
+    <div class="columns small-12 large-6">
+        <label>Latitud
+            <input type="text" ng-value="model.latitud" readonly>
+        </label>
+    </div>
+    <div class="columns small-12 large-6">
+        <label>Longitud
+            <input type="text" ng-value="model.longitud" readonly>
+        </label>
+    </div>
+</div>
