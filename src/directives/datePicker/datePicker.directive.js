@@ -6,7 +6,7 @@ angular.module('adminPanel').directive('apDatePicker', ['$timeout', function($ti
             format: '@?' /* NO TENIDO EN CUENTA */
         },
         link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-datepicker');
+            elem.addClass('row expanded collapse date ap-datepicker');
             scope.date = null;
             var options = {
                 format: 'dd/mm/yyyy'

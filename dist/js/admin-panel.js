@@ -1438,7 +1438,7 @@ angular.module('adminPanel').directive('apBox', [
             format: '@?' /* NO TENIDO EN CUENTA */
         },
         link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-datepicker');
+            elem.addClass('row expanded collapse date ap-datepicker');
             scope.date = null;
             var options = {
                 format: 'dd/mm/yyyy'
@@ -1486,7 +1486,7 @@ angular.module('adminPanel').directive('apBox', [
             format: '@?' /* NO TENIDO EN CUENTA */
         },
         link: function(scope, elem, attr, ngModel) {
-            elem.addClass('row collapse date ap-datetimepicker');
+            elem.addClass('row expanded collapse date ap-datetimepicker');
             scope.hours = null;
             scope.minutes = null;
             scope.date = null;
