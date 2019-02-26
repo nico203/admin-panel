@@ -1506,7 +1506,7 @@ angular.module('adminPanel').directive('apBox', [
                     $(elem.find('.ap-date')).fdatepicker('update', date);
                     scope.hours = date.getHours();
                     scope.minutes = date.getMinutes();
-                }
+                } 
             });
             
             //Funcion que realiza el cambio de la hora en el modelo
