@@ -3,7 +3,8 @@ angular.module('adminPanel').directive('apDateTimePicker', ['$timeout', function
         restrict: 'AE',
         require: 'ngModel',
         scope: {
-            format: '@?' /* NO TENIDO EN CUENTA */
+            format: '@?', /* NO TENIDO EN CUENTA */
+            isInvalid: '=' /* setea el estado de error */
         },
         link: function(scope, elem, attr, ngModel) {
             elem.addClass('row expanded collapse date ap-datetimepicker');

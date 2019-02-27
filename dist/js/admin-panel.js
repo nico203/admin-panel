@@ -1435,7 +1435,8 @@ angular.module('adminPanel').directive('apBox', [
         restrict: 'AE',
         require: 'ngModel',
         scope: {
-            format: '@?' /* NO TENIDO EN CUENTA */
+            format: '@?', /* NO TENIDO EN CUENTA */
+            isInvalid: '=' /* setea el estado de error */
         },
         link: function(scope, elem, attr, ngModel) {
             elem.addClass('row expanded collapse date ap-datepicker');
@@ -1483,7 +1484,8 @@ angular.module('adminPanel').directive('apBox', [
         restrict: 'AE',
         require: 'ngModel',
         scope: {
-            format: '@?' /* NO TENIDO EN CUENTA */
+            format: '@?', /* NO TENIDO EN CUENTA */
+            isInvalid: '=' /* setea el estado de error */
         },
         link: function(scope, elem, attr, ngModel) {
             elem.addClass('row expanded collapse date ap-datetimepicker');
@@ -2961,9 +2963,9 @@ angular.module('adminPanel').directive('apSelect', [
   $templateCache.put("directives/choice/choice.template.html",
     "<div class=input-group><input class=input-group-field type=text ng-model=input.model ng-change=onChangeInput() ng-focus=onFocusInput() ng-blur=onBlurInput()><div class=input-group-button><button type=button class=\"button secondary\" ng-click=onClickButton() ng-mousedown=onMousedownButton($event)><span class=caret></span></button></div></div><div class=dropdown-ap ng-class=\"{'is-open':lista.desplegado}\"><ul ng-if=loading class=list-group><li style=font-weight:700>Cargando...</li></ul><ul ng-if=\"!loading && lista.items.length > 0\" class=list-group><li ng-repeat=\"option in lista.items\" ng-bind-html=\"option.name | highlight:input.model\" ng-mousedown=\"onClickItemList($event, option)\" ng-class=\"{'active':option.$$object.id === itemSelected.$$object.id}\"></li></ul><ul ng-if=\"!loading && lista.items.length === 0\" class=list-group><li style=font-weight:700>No hay resultados</li></ul><ul ng-if=enableNewButton class=\"list-group new\"><li ng-mousedown=newObject($event)><span class=\"fa fa-plus\"></span><span>Nuevo</span></li></ul></div>");
   $templateCache.put("directives/datePicker/datePicker.template.html",
-    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly></div>");
+    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input ng-class=\"{'is-invalid-input': isInvalid}\" class=\"input-group-field ap-date\" type=text readonly></div>");
   $templateCache.put("directives/dateTimePicker/dateTimePicker.template.html",
-    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
+    "<div class=input-group><span class=\"input-group-label prefix\"><i class=\"fa fa-calendar\"></i></span><input ng-class=\"{'is-invalid-input': isInvalid}\" class=\"input-group-field ap-date\" type=text readonly><span class=input-group-label>Hs</span><input ng-class=\"{'is-invalid-input': isInvalid}\" class=input-group-field type=number style=width:60px ng-model=hours ng-change=changeHour()><span class=input-group-label>Min</span><input ng-class=\"{'is-invalid-input': isInvalid}\" class=input-group-field type=number style=width:60px ng-model=minutes ng-change=changeMinute()></div>");
   $templateCache.put("directives/fileSaver/fileSaver.template.html",
     "<button class=button type=button><i ng-hide=loading class=\"fa fa-download\"></i><div ng-show=loading class=animation><div style=width:100%;height:100% class=lds-rolling><div></div></div></div><span class=text ng-bind=buttonName></span></button>");
   $templateCache.put("directives/filter/filter.template.html",
